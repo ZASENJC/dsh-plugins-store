@@ -2,11 +2,11 @@ name: Sync catalog
 
 on:
   schedule:
-    - cron: '17 2 * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: sync-catalog
@@ -33,19 +33,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify catalog
+      - name: Test and build
         run: |
           npm test
           npm run build
 
-      - name: Commit catalog changes
+      - name: Configure deployment SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DSH_DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DSH_DEPLOY_KNOWN_HOSTS }}
         run: |
-          if git diff --quiet -- src/data/catalog.json; then
-            echo "Catalog is already current."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/catalog.json
-          git commit -m "data: sync dsh plugin catalog"
-          git push
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/dsh-store-deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/dsh-store-deploy ~/.ssh/known_hosts
+
+      - name: Publish to dsh.aitreez.com
+        env:
+          DEPLOY_HOST: ${{ secrets.DSH_DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DSH_DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DSH_DEPLOY_USER }}
+        run: |
+          deploy_sha="$(git rev-parse HEAD)"
+          tar -C dist -czf - . | ssh \
+            -i ~/.ssh/dsh-store-deploy \
+            -p "$DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "deploy $deploy_sha"

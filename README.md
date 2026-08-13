@@ -45,7 +45,7 @@ npm test
 npm run build
 ```
 
-推送到 `main` 后，GitHub Actions 会自动构建并部署 GitHub Pages；目录数据每天自动同步一次。
+推送到 `main` 后，GitHub Actions 会自动构建并部署 GitHub Pages。目录数据每 30 分钟自动同步一次；同步、测试和构建成功后，静态站点会原子发布到生产服务器。
 
 ## 许可证
 

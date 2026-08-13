@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 022
+export LC_ALL=C
+
+readonly APP_DIR="/opt/dsh-plugins-store"
+readonly RELEASES_DIR="${APP_DIR}/releases"
+readonly CURRENT_LINK="${APP_DIR}/current"
+
+read -r action commit_sha extra <<< "${SSH_ORIGINAL_COMMAND:-}"
+if [[ "${action:-}" != "deploy" || ! "${commit_sha:-}" =~ ^[0-9a-f]{40}$ || -n "${extra:-}" ]]; then
+  echo "Rejected deployment command" >&2
+  exit 64
+fi
+
+mkdir -p "${RELEASES_DIR}"
+release_name="$(date -u +%Y%m%dT%H%M%SZ)-${commit_sha:0:12}"
+release_dir="${RELEASES_DIR}/${release_name}"
+archive_path="$(mktemp "${APP_DIR}/incoming.XXXXXX.tar.gz")"
+archive_names_path="${archive_path}.names"
+archive_verbose_path="${archive_path}.verbose"
+
+cleanup() {
+  rm -f -- "${archive_path}"
+  rm -f -- "${archive_names_path}" "${archive_verbose_path}"
+  if [[ -d "${release_dir}" && ! -f "${release_dir}/.published" ]]; then
+    rm -rf -- "${release_dir}"
+  fi
+}
+trap cleanup EXIT
+
+# Limit a compromised deployment key to a 128 MiB incoming archive.
+ulimit -f 262144
+timeout 120 cat > "${archive_path}"
+
+tar -tzf "${archive_path}" > "${archive_names_path}"
+tar -tvzf "${archive_path}" > "${archive_verbose_path}"
+
+if grep -Eq '(^/|(^|/)\.\.(/|$))' "${archive_names_path}"; then
+  echo "Rejected unsafe archive path" >&2
+  exit 65
+fi
+
+if awk 'substr($1, 1, 1) != "-" && substr($1, 1, 1) != "d" { bad = 1 } END { exit bad ? 0 : 1 }' "${archive_verbose_path}"; then
+  echo "Rejected non-file archive entry" >&2
+  exit 65
+fi
+
+mkdir "${release_dir}"
+tar -xzf "${archive_path}" -C "${release_dir}" --no-same-owner --no-same-permissions
+
+if [[ ! -s "${release_dir}/index.html" || ! -d "${release_dir}/_astro" ]]; then
+  echo "Rejected incomplete site artifact" >&2
+  exit 66
+fi
+
+printf '%s\n' "${commit_sha}" > "${release_dir}/.commit-sha"
+touch "${release_dir}/.published"
+ln -sfn "releases/${release_name}" "${APP_DIR}/current.next"
+mv -Tf "${APP_DIR}/current.next" "${CURRENT_LINK}"
+
+mapfile -t stale_releases < <(
+  find "${RELEASES_DIR}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
+    sort -r |
+    tail -n +4
+)
+
+for stale_release in "${stale_releases[@]}"; do
+  [[ "${stale_release}" =~ ^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{12}$ ]] || continue
+  stale_path="${RELEASES_DIR}/${stale_release}"
+  [[ "${stale_path}" == "${RELEASES_DIR}/"* ]] || continue
+  rm -rf -- "${stale_path}"
+done
+
+echo "Published ${release_name}"
