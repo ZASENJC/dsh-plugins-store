@@ -1,5 +1,6 @@
 ---
 import { CodeXml } from '@lucide/astro'
+import { Github } from 'simple-icons-astro'
 
 import '../styles/global.css'
 
@@ -42,6 +43,16 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
             <CodeXml size={16} stroke-width={1.6} />
             <span>GitHub Topic</span>
           </a>
+          <a
+            class="icon-button"
+            href="https://github.com/ZASENJC/dsh-plugins-store"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="查看项目源码"
+            title="查看项目源码"
+          >
+            <Github size={17} aria-hidden="true" />
+          </a>
         </nav>
       </div>
     </header>
@@ -50,7 +61,19 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     </main>
     <footer class="site-footer">
       <div class="container site-footer__inner">
-        <p>DSH插件商店</p>
+        <div class="site-footer__brand">
+          <p>DSH插件商店</p>
+          <span aria-hidden="true">·</span>
+          <a
+            href="https://github.com/ZASENJC/dsh-plugins-store"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="查看 DSH插件商店项目源码"
+          >
+            <Github size={12} aria-hidden="true" />
+            © 2026 ZASENJC · MIT
+          </a>
+        </div>
         <p>数据来自 GitHub Topic，收录不代表审核、兼容或安全背书。</p>
       </div>
     </footer>
@@ -95,6 +118,12 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     text-transform: uppercase;
   }
 
+  .site-header nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .site-footer {
     border-top: 1px solid var(--hairline);
     color: var(--mute);
@@ -110,6 +139,35 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
   .site-footer p {
     margin: 0;
+  }
+
+  .site-footer__brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .site-footer__brand a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--mute);
+    font-size: inherit;
+    line-height: inherit;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 3px;
+    transition: color 160ms ease, text-decoration-color 160ms ease;
+  }
+
+  .site-footer__brand a :global(svg) {
+    flex: 0 0 auto;
+  }
+
+  .site-footer__brand a:hover {
+    color: var(--ink);
+    text-decoration-color: currentColor;
   }
 
   @media (max-width: 767px) {
