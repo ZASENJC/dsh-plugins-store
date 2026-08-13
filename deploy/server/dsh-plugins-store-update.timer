@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh DSH Plugin Store every hour
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5m
+Persistent=true
+Unit=dsh-plugins-store-update.service
+
+[Install]
+WantedBy=timers.target
