@@ -1,0 +1,126 @@
+---
+import { CodeXml } from '@lucide/astro'
+
+import '../styles/global.css'
+
+interface Props {
+  title?: string
+  description?: string
+}
+
+const {
+  title = 'DSH插件商店（DSH-plugin store）',
+  description = '自动收录和分类 GitHub dsh-plugin Topic 项目。',
+} = Astro.props
+const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="brand" href={baseUrl} aria-label="返回 DSH 插件商店首页">
+          <span class="brand__name">DSH插件商店</span>
+          <span class="brand__en">DSH-plugin store</span>
+        </a>
+        <nav aria-label="主导航">
+          <a
+            class="outline-button"
+            href="https://github.com/topics/dsh-plugin"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <CodeXml size={16} stroke-width={1.6} />
+            <span>GitHub Topic</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="container site-footer__inner">
+        <p>DSH插件商店</p>
+        <p>数据来自 GitHub Topic，收录不代表审核、兼容或安全背书。</p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .site-header {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    border-bottom: 1px solid rgba(33, 35, 39, 0.86);
+    background: rgba(10, 10, 10, 0.94);
+    backdrop-filter: blur(14px);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 64px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .brand__name {
+    font-size: 15px;
+    line-height: 20px;
+  }
+
+  .brand__en {
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    line-height: 20px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .site-footer {
+    border-top: 1px solid var(--hairline);
+    color: var(--mute);
+  }
+
+  .site-footer__inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 48px;
+    font-size: 13px;
+  }
+
+  .site-footer p {
+    margin: 0;
+  }
+
+  @media (max-width: 767px) {
+    .brand__en,
+    nav .outline-button span {
+      display: none;
+    }
+
+    .site-footer__inner {
+      display: grid;
+      padding-block: 32px;
+    }
+  }
+</style>

@@ -1,0 +1,275 @@
+---
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  CalendarDays,
+  Check,
+  CircleAlert,
+  CircleDot,
+  Copy,
+  ExternalLink,
+  GitFork,
+  CodeXml,
+  Scale,
+  Star,
+} from '@lucide/astro'
+
+import ProjectCard from '../../components/ProjectCard.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import type { Catalog, CatalogEntry } from '../../lib/catalog'
+import { formatCompactNumber, formatRelativeDate } from '../../lib/catalog'
+import { getCategory, getProjectTypeLabel } from '../../lib/classification'
+import catalogData from '../../data/catalog.json'
+
+export function getStaticPaths() {
+  const catalog = catalogData as Catalog
+  return catalog.repositories.map((repository) => ({
+    params: { id: repository.slug },
+    props: { repository },
+  }))
+}
+
+interface Props {
+  repository: CatalogEntry
+}
+
+const { repository } = Astro.props as Props
+const category = getCategory(repository.category)
+const installableTypes = new Set(['plugin', 'skill', 'collection', 'channel'])
+const showInstallReference = installableTypes.has(repository.projectType)
+const installCommand = `dsh plugin --profile web add github:${repository.fullName}`
+const related = (catalogData as Catalog).repositories
+  .filter((item) => item.repositoryId !== repository.repositoryId && item.category === repository.category)
+  .slice(0, 3)
+const absoluteDate = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(new Date(repository.pushedAt))
+const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
+---
+
+<BaseLayout title={`${repository.name} · DSH插件商店`} description={repository.description}>
+  <section class="detail-hero">
+    <div class="container">
+      <a class="back-link" href={baseUrl}><ArrowLeft size={16} stroke-width={1.6} /> 返回目录</a>
+
+      <div class="detail-hero__grid">
+        <div class="detail-identity">
+          <div class="detail-eyebrow">
+            <span class="category-dot" style={`--category-color: ${category.color}`}></span>
+            <span class="mono-label">{category.label}</span>
+            <span>{getProjectTypeLabel(repository.projectType)}</span>
+          </div>
+          <div class="detail-title">
+            <img src={repository.owner.avatarUrl} width="56" height="56" alt="" />
+            <div>
+              <h1>{repository.name}</h1>
+              <p>{repository.fullName}</p>
+            </div>
+          </div>
+          <p class="detail-description">{repository.description}</p>
+          <div class="detail-actions">
+            <a class="primary-button" href={repository.url} target="_blank" rel="noreferrer">
+              <CodeXml size={17} stroke-width={1.6} /> 查看仓库
+              <ArrowUpRight size={15} stroke-width={1.6} />
+            </a>
+            {repository.homepage && (
+              <a class="outline-button" href={repository.homepage} target="_blank" rel="noreferrer">
+                <ExternalLink size={16} stroke-width={1.6} /> 项目主页
+              </a>
+            )}
+          </div>
+        </div>
+
+        <dl class="detail-metrics" aria-label="仓库指标">
+          <div><dt><Star size={15} stroke-width={1.6} /> Stars</dt><dd>{formatCompactNumber(repository.stars)}</dd></div>
+          <div><dt><GitFork size={15} stroke-width={1.6} /> Forks</dt><dd>{formatCompactNumber(repository.forks)}</dd></div>
+          <div><dt><CircleDot size={15} stroke-width={1.6} /> Issues</dt><dd>{formatCompactNumber(repository.openIssues)}</dd></div>
+          <div><dt><CalendarDays size={15} stroke-width={1.6} /> 更新</dt><dd>{formatRelativeDate(repository.pushedAt)}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="detail-content">
+    <div class="container detail-content__grid">
+      <div class="detail-main">
+        <section class="detail-section">
+          <p class="mono-label">PROJECT TOPICS</p>
+          <h2>项目标签</h2>
+          <div class="topic-cloud">
+            {repository.topics.map((topic) => (
+              <a
+                href={`${baseUrl}topics/${encodeURIComponent(topic)}`}
+                aria-label={`查看包含 ${topic} 标签的所有项目`}
+              >
+                {topic}
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section class="detail-section classification-section">
+          <p class="mono-label">CLASSIFICATION EVIDENCE</p>
+          <h2>分类依据</h2>
+          <div class="classification-grid">
+            <div><span>项目类型</span><strong>{getProjectTypeLabel(repository.projectType)}</strong></div>
+            <div><span>功能分类</span><strong>{category.label}</strong></div>
+            <div>
+              <span>规则置信度</span>
+              <strong>{repository.classificationConfidence === 'high' ? '高' : repository.classificationConfidence === 'medium' ? '中' : '低'}</strong>
+            </div>
+          </div>
+          <p class="classification-note">
+            系统优先读取 GitHub Topics，再与站内分类词典和词根规则比对。当前命中：
+            {repository.matchedTopics.length > 0 ? repository.matchedTopics.join('、') : '无有效分类标签'}。
+          </p>
+        </section>
+
+        {showInstallReference && (
+          <section class="detail-section install-section">
+            <div class="install-heading">
+              <div><p class="mono-label">INSTALL REFERENCE</p><h2>安装参考</h2></div>
+              <span><CircleAlert size={15} stroke-width={1.6} /> 未验证</span>
+            </div>
+            <div class="command-row">
+              <code id="install-command">{installCommand}</code>
+              <button class="icon-button" id="copy-command" type="button" aria-label="复制安装参考" title="复制安装参考">
+                <Copy class="copy-icon" size={16} stroke-width={1.6} />
+                <Check class="check-icon" size={16} stroke-width={1.6} />
+              </button>
+            </div>
+            <p>该命令依据官方 GitHub 安装格式生成，尚未确认仓库结构、构建脚本或当前 DSH 兼容性。</p>
+          </section>
+        )}
+      </div>
+
+      <aside class="repository-facts" aria-label="仓库信息">
+        <p class="mono-label">REPOSITORY FACTS</p>
+        <dl>
+          <div><dt>主要语言</dt><dd>{repository.language ?? '未知'}</dd></div>
+          <div><dt>许可证</dt><dd><Scale size={14} stroke-width={1.6} /> {repository.license ?? '未声明'}</dd></div>
+          <div><dt>最后推送</dt><dd>{absoluteDate}</dd></div>
+          <div><dt>归档状态</dt><dd>{repository.archived ? '已归档' : '活跃'}</dd></div>
+          <div><dt>数据来源</dt><dd>GitHub Topic</dd></div>
+          <div><dt>验证状态</dt><dd class="status-warning">尚未验证</dd></div>
+        </dl>
+        <p class="facts-note">收录仅代表仓库添加了 `dsh-plugin` Topic，不构成安全、质量或兼容性背书。</p>
+      </aside>
+    </div>
+  </section>
+
+  {related.length > 0 && (
+    <section class="related-section">
+      <div class="container">
+        <div class="related-heading">
+          <div><p class="mono-label">MORE IN CATEGORY</p><h2>同类项目</h2></div>
+          <a class="outline-button" href={`${baseUrl}?category=${repository.category}`}>浏览分类</a>
+        </div>
+        <div class="related-grid">
+          {related.map((item) => <ProjectCard repository={item} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <script is:inline>
+    const copyButton = document.getElementById('copy-command')
+    if (copyButton) {
+      copyButton.addEventListener('click', async () => {
+        const command = document.getElementById('install-command').textContent
+        await navigator.clipboard.writeText(command)
+        copyButton.classList.add('is-copied')
+        copyButton.setAttribute('aria-label', '已复制')
+        window.setTimeout(() => {
+          copyButton.classList.remove('is-copied')
+          copyButton.setAttribute('aria-label', '复制安装参考')
+        }, 1600)
+      })
+    }
+  </script>
+</BaseLayout>
+
+<style>
+  .detail-hero { border-bottom: 1px solid var(--hairline); }
+  .detail-hero .container { padding-block: 28px 56px; }
+  .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--mute); font-size: 13px; }
+  .back-link:hover { color: var(--ink); }
+  .detail-hero__grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.6fr); gap: 80px; align-items: end; padding-top: 56px; }
+  .detail-eyebrow, .detail-title, .detail-actions, .detail-metrics dt, .repository-facts dd, .install-heading > span { display: flex; align-items: center; }
+  .detail-eyebrow { gap: 9px; }
+  .detail-eyebrow > span:last-child { border-left: 1px solid var(--hairline); color: var(--mute); font-size: 12px; padding-left: 10px; }
+  .category-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--category-color); }
+  .detail-title { min-width: 0; gap: 18px; margin-top: 18px; }
+  .detail-title img { width: 56px; height: 56px; flex: 0 0 auto; border-radius: 50%; }
+  .detail-title > div { min-width: 0; }
+  h1, h2, .detail-title p, .detail-description, .install-section > p, .classification-note, .facts-note { margin: 0; }
+  h1 { overflow-wrap: anywhere; font-size: clamp(42px, 6vw, 72px); font-weight: 400; line-height: 1; letter-spacing: 0; }
+  .detail-title p { margin-top: 6px; color: var(--mute); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0; }
+  .detail-description { max-width: 760px; margin-top: 24px; color: var(--body); font-size: 18px; line-height: 30px; }
+  .detail-actions { flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .primary-button { display: inline-flex; min-height: 40px; align-items: center; gap: 8px; border: 1px solid var(--ink); border-radius: 9999px; background: var(--ink); color: var(--canvas); font-size: 14px; padding: 8px 16px; }
+  .detail-metrics { display: grid; grid-template-columns: repeat(2, 1fr); margin: 0; border-block: 1px solid var(--hairline); }
+  .detail-metrics div { padding: 18px; }
+  .detail-metrics div:nth-child(even) { border-left: 1px solid var(--hairline); }
+  .detail-metrics div:nth-child(n + 3) { border-top: 1px solid var(--hairline); }
+  .detail-metrics dt { gap: 7px; color: var(--mute); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0; text-transform: uppercase; }
+  .detail-metrics dd { margin: 7px 0 0; font-family: var(--font-mono); font-size: 20px; }
+  .detail-content { padding-block: 56px 64px; }
+  .detail-content__grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 64px; align-items: start; }
+  .detail-main { display: grid; min-width: 0; gap: 56px; }
+  .detail-section { min-width: 0; border-top: 1px solid var(--hairline); padding-top: 24px; }
+  .detail-section h2, .related-heading h2 { margin: 8px 0 24px; font-size: 28px; font-weight: 400; line-height: 36px; }
+  .topic-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+  .topic-cloud a { display: inline-flex; min-height: 32px; align-items: center; border: 1px solid var(--outline); border-radius: 9999px; color: var(--body); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0; padding-inline: 12px; transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease; }
+  .topic-cloud a:hover { border-color: var(--outline-strong); background: var(--canvas-soft); color: var(--ink); }
+  .classification-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--hairline); }
+  .classification-grid div { display: grid; gap: 6px; padding: 16px; }
+  .classification-grid div + div { border-left: 1px solid var(--hairline); }
+  .classification-grid span { color: var(--mute); font-size: 12px; }
+  .classification-grid strong { font-size: 15px; font-weight: 400; }
+  .classification-note { margin-top: 18px; color: var(--mute); font-size: 13px; line-height: 22px; }
+  .install-heading { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
+  .install-heading h2 { margin-bottom: 16px; }
+  .install-heading > span { gap: 6px; border: 1px solid rgba(255, 194, 133, 0.35); border-radius: 9999px; color: #ffc285; font-size: 11px; padding: 5px 10px; }
+  .command-row { display: flex; width: 100%; min-width: 0; align-items: center; gap: 12px; border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--canvas-soft); padding: 10px 10px 10px 16px; }
+  .command-row code { min-width: 0; flex: 1; overflow-x: auto; color: var(--body); font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+  .check-icon, .is-copied .copy-icon { display: none; }
+  .is-copied .check-icon { display: block; }
+  .install-section > p { margin-top: 12px; color: var(--mute); font-size: 12px; line-height: 20px; }
+  .repository-facts { position: sticky; top: 92px; border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--canvas-card); padding: 24px; }
+  .repository-facts dl { margin: 16px 0 0; }
+  .repository-facts dl div { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--hairline); padding-block: 13px; }
+  .repository-facts dt, .repository-facts dd { font-size: 12px; }
+  .repository-facts dt { color: var(--mute); }
+  .repository-facts dd { gap: 6px; margin: 0; text-align: right; }
+  .repository-facts .status-warning { color: #ffc285; }
+  .facts-note { margin-top: 12px; color: var(--mute); font-size: 11px; line-height: 18px; }
+  .related-section { border-top: 1px solid var(--hairline); padding-block: 56px 64px; }
+  .related-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+  .related-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+  @media (max-width: 1023px) {
+    .detail-hero__grid, .detail-content__grid { grid-template-columns: 1fr; gap: 40px; }
+    .repository-facts { position: static; }
+    .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 767px) {
+    .detail-hero .container { padding-block: 20px 40px; }
+    .detail-hero__grid { gap: 32px; padding-top: 36px; }
+    .detail-title { align-items: flex-start; }
+    h1 { font-size: 42px; line-height: 46px; }
+    .detail-description { font-size: 16px; line-height: 26px; }
+    .primary-button, .detail-actions .outline-button { min-height: 44px; }
+    .detail-content { padding-block: 40px 48px; }
+    .detail-main { gap: 40px; }
+    .classification-grid { grid-template-columns: 1fr; }
+    .classification-grid div + div { border-top: 1px solid var(--hairline); border-left: 0; }
+    .topic-cloud a { min-height: 44px; }
+    .install-heading { align-items: flex-start; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>

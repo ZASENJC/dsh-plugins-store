@@ -1,0 +1,657 @@
+---
+import { ChevronDown, Search, SlidersHorizontal } from '@lucide/astro'
+
+import ProjectCard from '../components/ProjectCard.astro'
+import BaseLayout from '../layouts/BaseLayout.astro'
+import type { Catalog } from '../lib/catalog'
+import { CATEGORIES, PROJECT_TYPES } from '../lib/classification'
+import catalogData from '../data/catalog.json'
+
+const catalog = catalogData as Catalog
+const initialRepositories = catalog.repositories.slice(0, 24)
+const generatedDate = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+}).format(new Date(catalog.generatedAt))
+const serializedCatalog = JSON.stringify(catalog.repositories).replace(/</g, '\\u003c')
+const serializedCategories = JSON.stringify(CATEGORIES).replace(/</g, '\\u003c')
+const serializedTypes = JSON.stringify(PROJECT_TYPES).replace(/</g, '\\u003c')
+const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
+---
+
+<BaseLayout>
+  <section class="catalog-head">
+    <div class="container catalog-head__inner">
+      <div class="catalog-head__title">
+        <p class="mono-label">DSH-PLUGIN STORE / LIVE CATALOG</p>
+        <h1>DSH插件商店</h1>
+        <p>自动读取 GitHub 项目标签，为 DSH 生态建立可检索的项目目录。</p>
+      </div>
+
+      <dl class="catalog-stats" aria-label="目录统计">
+        <div>
+          <dt>已收录</dt>
+          <dd>{catalog.stats.fetched}</dd>
+        </div>
+        <div>
+          <dt>功能分类</dt>
+          <dd>{CATEGORIES.length}</dd>
+        </div>
+        <div>
+          <dt>更新时间</dt>
+          <dd>{generatedDate}</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="catalog-tools" aria-label="目录筛选">
+    <div class="container">
+      <div class="search-row">
+        <label class="search-field">
+          <span class="visually-hidden">搜索项目</span>
+          <Search size={19} stroke-width={1.6} />
+          <input id="catalog-search" type="search" placeholder="搜索名称、作者、描述或标签" autocomplete="off" />
+        </label>
+
+        <label class="select-field">
+          <SlidersHorizontal size={16} stroke-width={1.6} />
+          <span class="select-value" id="type-filter-value">全部类型</span>
+          <select id="type-filter" aria-label="项目类型">
+            <option value="all">全部类型</option>
+            {PROJECT_TYPES.map((type) => (
+              <option value={type.id}>{type.label} · {catalog.stats.projectTypes[type.id] ?? 0}</option>
+            ))}
+          </select>
+          <ChevronDown size={15} stroke-width={1.6} />
+        </label>
+
+        <label class="select-field">
+          <span class="select-value" id="sort-filter-value">最多 Star</span>
+          <select id="sort-filter" aria-label="排序方式">
+            <option value="stars">最多 Star</option>
+            <option value="updated">最近更新</option>
+            <option value="name">名称排序</option>
+          </select>
+          <ChevronDown size={15} stroke-width={1.6} />
+        </label>
+      </div>
+
+      <div class="category-row" id="category-filter" aria-label="功能分类">
+        <button class="category-filter is-active" type="button" data-category="all">
+          全部 <span>{catalog.stats.fetched}</span>
+        </button>
+        {CATEGORIES.map((category) => (
+          <button class="category-filter" type="button" data-category={category.id}>
+            <i style={`--category-color: ${category.color}`}></i>
+            {category.label}
+            <span>{catalog.stats.categories[category.id] ?? 0}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="catalog-results">
+    <div class="container">
+      <div class="results-head">
+        <p><span id="result-count">{catalog.stats.fetched}</span> 个项目</p>
+        <p><i></i> Topic 已收录 · 尚未安装验证</p>
+      </div>
+
+      <div class="project-grid" id="project-grid">
+        {initialRepositories.map((repository) => <ProjectCard repository={repository} />)}
+      </div>
+
+      <div class="empty-state" id="empty-state" hidden>
+        <p class="mono-label">NO MATCHES</p>
+        <h2>没有找到匹配项目</h2>
+        <p>当前筛选条件下没有结果。</p>
+        <button class="outline-button" id="clear-filters" type="button">清除筛选</button>
+      </div>
+
+      <div class="load-row">
+        <button class="outline-button" id="load-more" type="button">
+          加载更多
+          <span id="remaining-count">{Math.max(0, catalog.stats.fetched - initialRepositories.length)}</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <script id="catalog-data" type="application/json" set:html={serializedCatalog} is:inline></script>
+  <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
+  <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
+  <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
+
+  <script is:inline>
+    const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
+    const categories = JSON.parse(document.getElementById('category-data').textContent)
+    const projectTypes = JSON.parse(document.getElementById('type-data').textContent)
+    const baseUrl = JSON.parse(document.getElementById('base-url').textContent)
+    const categoryById = new Map(categories.map((category) => [category.id, category]))
+    const typeById = new Map(projectTypes.map((type) => [type.id, type]))
+    const grid = document.getElementById('project-grid')
+    const sourceCard = grid.querySelector('[data-project-card]').cloneNode(true)
+    const searchInput = document.getElementById('catalog-search')
+    const typeFilter = document.getElementById('type-filter')
+    const sortFilter = document.getElementById('sort-filter')
+    const typeFilterValue = document.getElementById('type-filter-value')
+    const sortFilterValue = document.getElementById('sort-filter-value')
+    const categoryFilter = document.getElementById('category-filter')
+    const resultCount = document.getElementById('result-count')
+    const loadMore = document.getElementById('load-more')
+    const remainingCount = document.getElementById('remaining-count')
+    const emptyState = document.getElementById('empty-state')
+    const clearFilters = document.getElementById('clear-filters')
+    const pageSize = 24
+    const requestedCategory = new URLSearchParams(window.location.search).get('category')
+    let selectedCategory = categoryById.has(requestedCategory) ? requestedCategory : 'all'
+    let visibleCount = pageSize
+
+    const compactNumber = (value) => {
+      if (value < 1000) return String(value)
+      if (value < 1000000) return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k`
+      return `${(value / 1000000).toFixed(1).replace(/\.0$/, '')}m`
+    }
+
+    const relativeDate = (value) => {
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return '未知'
+      const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000))
+      if (days === 0) return '今天'
+      if (days < 30) return `${days} 天前`
+      if (days < 365) return `${Math.floor(days / 30)} 个月前`
+      return `${Math.floor(days / 365)} 年前`
+    }
+
+    const setText = (card, selector, value) => {
+      const target = card.querySelector(selector)
+      if (target) target.textContent = value
+    }
+
+    const createCard = (repository) => {
+      const card = sourceCard.cloneNode(true)
+      const category = categoryById.get(repository.category)
+      const projectType = typeById.get(repository.projectType)
+      const detailUrl = `${baseUrl}plugins/${repository.slug}`
+      const searchable = [
+        repository.name,
+        repository.fullName,
+        repository.description,
+        repository.language || '',
+        ...repository.topics,
+      ].join(' ').toLocaleLowerCase('zh-CN')
+
+      card.dataset.search = searchable
+      card.dataset.category = repository.category
+      card.dataset.type = repository.projectType
+      card.dataset.stars = String(repository.stars)
+      card.dataset.updated = repository.pushedAt
+      card.querySelector('[data-field="category-dot"]').style.setProperty('--category-color', category.color)
+      setText(card, '[data-field="category"]', category.label)
+      setText(card, '[data-field="project-type"]', projectType.label)
+      setText(card, '[data-field="owner"]', repository.owner.login)
+      setText(card, '[data-field="description"]', repository.description)
+      setText(card, '[data-field="stars"]', compactNumber(repository.stars))
+      setText(card, '[data-field="forks"]', compactNumber(repository.forks))
+      setText(card, '[data-field="issues"]', compactNumber(repository.openIssues))
+      setText(card, '[data-field="updated"]', relativeDate(repository.pushedAt))
+
+      const avatar = card.querySelector('[data-field="avatar"]')
+      avatar.src = repository.owner.avatarUrl
+      avatar.alt = ''
+      const detailLink = card.querySelector('[data-field="detail-link"]')
+      detailLink.href = detailUrl
+      detailLink.textContent = repository.name
+      const openLink = card.querySelector('[data-field="open-link"]')
+      openLink.href = detailUrl
+      openLink.setAttribute('aria-label', `查看 ${repository.name} 详情`)
+
+      const topicList = card.querySelector('[data-field="topics"]')
+      topicList.replaceChildren(...repository.topics.slice(0, 4).map((topic) => {
+        const item = document.createElement('span')
+        item.textContent = topic
+        return item
+      }))
+      return card
+    }
+
+    const getFilteredRepositories = () => {
+      const query = searchInput.value.trim().toLocaleLowerCase('zh-CN')
+      const selectedType = typeFilter.value
+      const filtered = repositories.filter((repository) => {
+        const searchable = [
+          repository.name,
+          repository.fullName,
+          repository.description,
+          repository.language || '',
+          ...repository.topics,
+        ].join(' ').toLocaleLowerCase('zh-CN')
+        return (!query || searchable.includes(query))
+          && (selectedCategory === 'all' || repository.category === selectedCategory)
+          && (selectedType === 'all' || repository.projectType === selectedType)
+      })
+
+      return filtered.sort((left, right) => {
+        if (sortFilter.value === 'updated') return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
+        if (sortFilter.value === 'name') return left.name.localeCompare(right.name)
+        return right.stars - left.stars || left.name.localeCompare(right.name)
+      })
+    }
+
+    const render = () => {
+      const filtered = getFilteredRepositories()
+      const visible = filtered.slice(0, visibleCount)
+      grid.replaceChildren(...visible.map(createCard))
+      resultCount.textContent = String(filtered.length)
+      emptyState.hidden = filtered.length !== 0
+      grid.hidden = filtered.length === 0
+      const remaining = Math.max(0, filtered.length - visible.length)
+      loadMore.hidden = remaining === 0
+      remainingCount.textContent = String(remaining)
+    }
+
+    const resetAndRender = () => {
+      visibleCount = pageSize
+      render()
+    }
+
+    const syncSelectValue = (select, target) => {
+      target.textContent = select.selectedOptions[0]?.textContent ?? ''
+    }
+
+    searchInput.addEventListener('input', resetAndRender)
+    typeFilter.addEventListener('change', () => {
+      syncSelectValue(typeFilter, typeFilterValue)
+      resetAndRender()
+    })
+    sortFilter.addEventListener('change', () => {
+      syncSelectValue(sortFilter, sortFilterValue)
+      resetAndRender()
+    })
+    categoryFilter.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-category]')
+      if (!button) return
+      selectedCategory = button.dataset.category
+      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
+        item.classList.toggle('is-active', item === button)
+      })
+      resetAndRender()
+    })
+    loadMore.addEventListener('click', () => {
+      visibleCount += pageSize
+      render()
+    })
+    clearFilters.addEventListener('click', () => {
+      searchInput.value = ''
+      typeFilter.value = 'all'
+      sortFilter.value = 'stars'
+      syncSelectValue(typeFilter, typeFilterValue)
+      syncSelectValue(sortFilter, sortFilterValue)
+      selectedCategory = 'all'
+      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
+        item.classList.toggle('is-active', item.dataset.category === 'all')
+      })
+      resetAndRender()
+      searchInput.focus()
+    })
+    document.addEventListener('keydown', (event) => {
+      if (event.key === '/' && document.activeElement !== searchInput) {
+        event.preventDefault()
+        searchInput.focus()
+      }
+      if (event.key === 'Escape' && document.activeElement === searchInput) {
+        searchInput.value = ''
+        searchInput.blur()
+        resetAndRender()
+      }
+    })
+    if (selectedCategory !== 'all') {
+      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
+        item.classList.toggle('is-active', item.dataset.category === selectedCategory)
+      })
+      resetAndRender()
+    }
+  </script>
+</BaseLayout>
+
+<style>
+  .catalog-head {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .catalog-head__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(360px, 0.8fr);
+    gap: 64px;
+    align-items: end;
+    padding-block: 64px 48px;
+  }
+
+  .catalog-head__title h1 {
+    margin: 16px 0;
+    font-size: clamp(44px, 7vw, 84px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .catalog-head__title > p:last-child {
+    max-width: 620px;
+    margin: 0;
+    color: var(--body);
+    font-size: 18px;
+    line-height: 28px;
+  }
+
+  .catalog-stats {
+    display: grid;
+    grid-template-columns: 0.8fr 0.8fr 1.4fr;
+    margin: 0;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .catalog-stats div {
+    padding: 18px 16px;
+  }
+
+  .catalog-stats div + div {
+    border-left: 1px solid var(--hairline);
+  }
+
+  .catalog-stats dt {
+    margin-bottom: 8px;
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .catalog-stats dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .catalog-tools {
+    position: sticky;
+    z-index: 10;
+    top: 64px;
+    border-bottom: 1px solid var(--hairline);
+    background: rgba(10, 10, 10, 0.96);
+    backdrop-filter: blur(16px);
+    padding-block: 16px 14px;
+  }
+
+  .search-row {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) auto auto;
+    gap: 8px;
+  }
+
+  .search-field,
+  .select-field {
+    display: flex;
+    min-height: 46px;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--canvas-soft);
+    color: var(--mute);
+    padding-inline: 14px;
+  }
+
+  .select-field {
+    position: relative;
+  }
+
+  .search-field:focus-within,
+  .select-field:focus-within {
+    border-color: var(--outline-strong);
+  }
+
+  .search-field input {
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .search-field input {
+    width: 100%;
+  }
+
+  .search-field input::placeholder {
+    color: var(--mute);
+  }
+
+  .select-field select {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    appearance: none;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  .select-field > svg,
+  .select-value {
+    pointer-events: none;
+  }
+
+  .select-value {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-top: 12px;
+    scrollbar-width: none;
+  }
+
+  .category-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-filter {
+    display: inline-flex;
+    min-height: 34px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid var(--hairline);
+    border-radius: 9999px;
+    background: transparent;
+    color: var(--body);
+    font-size: 12px;
+    padding-inline: 12px;
+  }
+
+  .category-filter:hover,
+  .category-filter.is-active {
+    border-color: var(--outline-strong);
+    background: var(--canvas-soft);
+    color: var(--ink);
+  }
+
+  .category-filter i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--category-color);
+  }
+
+  .category-filter span {
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .catalog-results {
+    min-height: 70vh;
+    padding-block: 24px 64px;
+  }
+
+  .results-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 4px 20px;
+    color: var(--mute);
+    font-size: 12px;
+  }
+
+  .results-head p {
+    margin: 0;
+  }
+
+  .results-head p:last-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .results-head i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffc285;
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .load-row {
+    display: flex;
+    justify-content: center;
+    min-height: 96px;
+    padding-top: 32px;
+  }
+
+  .load-row button span {
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .empty-state {
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+    padding-block: 64px;
+    text-align: center;
+  }
+
+  .empty-state h2 {
+    margin: 12px 0 4px;
+    font-size: 28px;
+    font-weight: 400;
+  }
+
+  .empty-state > p:not(.mono-label) {
+    margin: 0 0 24px;
+    color: var(--mute);
+  }
+
+  @media (max-width: 1023px) {
+    .catalog-head__inner {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+
+    .project-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767px) {
+    .catalog-head__inner {
+      gap: 32px;
+      padding-block: 40px 32px;
+    }
+
+    .catalog-head__title h1 {
+      margin-block: 12px;
+      font-size: 48px;
+      line-height: 52px;
+    }
+
+    .catalog-head__title > p:last-child {
+      font-size: 16px;
+      line-height: 24px;
+    }
+
+    .catalog-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .catalog-stats div:last-child {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--hairline);
+      border-left: 0;
+    }
+
+    .catalog-tools {
+      position: static;
+    }
+
+    .search-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .search-field {
+      grid-column: 1 / -1;
+    }
+
+    .search-field,
+    .select-field {
+      min-height: 48px;
+    }
+
+    .select-field select {
+      width: 100%;
+    }
+
+    .category-filter {
+      min-height: 44px;
+    }
+
+    .results-head {
+      align-items: flex-start;
+    }
+
+    .results-head p:last-child {
+      max-width: 160px;
+      text-align: right;
+    }
+
+    .project-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

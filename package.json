@@ -1,0 +1,26 @@
+{
+  "name": "dsh-plugin-store",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "sync": "tsx scripts/sync-github.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@astrojs/check": "latest",
+    "@lucide/astro": "^1.31.0",
+    "astro": "latest",
+    "typescript": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "latest",
+    "tsx": "latest",
+    "vitest": "latest"
+  }
+}

@@ -1,0 +1,203 @@
+---
+import { ArrowLeft, Tag } from '@lucide/astro'
+
+import ProjectCard from '../../components/ProjectCard.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import type { Catalog, CatalogEntry } from '../../lib/catalog'
+import catalogData from '../../data/catalog.json'
+
+interface Props {
+  topic: string
+  repositories: CatalogEntry[]
+}
+
+export function getStaticPaths() {
+  const catalog = catalogData as Catalog
+  const topics = [...new Set(catalog.repositories.flatMap((repository) => repository.topics))]
+    .sort((left, right) => left.localeCompare(right))
+
+  return topics.map((topic) => ({
+    params: { topic },
+    props: {
+      topic,
+      repositories: catalog.repositories.filter((repository) => repository.topics.includes(topic)),
+    },
+  }))
+}
+
+const { topic, repositories } = Astro.props as Props
+const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
+---
+
+<BaseLayout
+  title={`${topic} 标签 · DSH插件商店`}
+  description={`浏览 GitHub Topic 为 ${topic} 的 DSH 生态项目。`}
+>
+  <section class="topic-hero">
+    <div class="container">
+      <a class="back-link" href={baseUrl}><ArrowLeft size={16} stroke-width={1.6} /> 返回目录</a>
+      <div class="topic-hero__content">
+        <div>
+          <p class="mono-label">GITHUB TOPIC</p>
+          <h1><Tag size={30} stroke-width={1.4} /> {topic}</h1>
+        </div>
+        <p><strong>{repositories.length}</strong> 个项目包含此标签</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="topic-results">
+    <div class="container">
+      <div class="results-head">
+        <p>{repositories.length} 个项目</p>
+        <p><i></i> GitHub Topic 精确匹配</p>
+      </div>
+      <div class="project-grid">
+        {repositories.map((repository) => <ProjectCard repository={repository} />)}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .topic-hero {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .topic-hero .container {
+    padding-block: 28px 48px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--mute);
+    font-size: 13px;
+  }
+
+  .back-link:hover {
+    color: var(--ink);
+  }
+
+  .topic-hero__content {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 48px;
+    padding-top: 56px;
+  }
+
+  h1,
+  .topic-hero__content > p,
+  .results-head p {
+    margin: 0;
+  }
+
+  h1 {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+    overflow-wrap: anywhere;
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  h1 svg {
+    flex: 0 0 auto;
+    color: var(--mute);
+  }
+
+  .topic-hero__content > p {
+    flex: 0 0 auto;
+    color: var(--mute);
+    font-size: 14px;
+  }
+
+  .topic-hero__content strong {
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 400;
+  }
+
+  .topic-results {
+    min-height: 70vh;
+    padding-block: 24px 64px;
+  }
+
+  .results-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 4px 20px;
+    color: var(--mute);
+    font-size: 12px;
+  }
+
+  .results-head p:last-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .results-head i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a0c3ec;
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (max-width: 1023px) {
+    .project-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767px) {
+    .topic-hero .container {
+      padding-block: 20px 40px;
+    }
+
+    .topic-hero__content {
+      display: grid;
+      gap: 24px;
+      padding-top: 36px;
+    }
+
+    h1 {
+      align-items: flex-start;
+      font-size: 42px;
+      line-height: 46px;
+    }
+
+    .topic-hero__content > p {
+      padding-top: 16px;
+      border-top: 1px solid var(--hairline);
+    }
+
+    .results-head {
+      align-items: flex-start;
+    }
+
+    .results-head p:last-child {
+      max-width: 160px;
+      text-align: right;
+    }
+
+    .project-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
