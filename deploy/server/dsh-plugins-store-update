@@ -15,12 +15,15 @@ readonly REPOSITORY_URL="https://github.com/ZASENJC/dsh-plugins-store.git"
 mkdir -p "${APP_DIR}" "${RELEASES_DIR}" "${NPM_CONFIG_CACHE}"
 
 if [[ ! -d "${REPOSITORY_DIR}/.git" ]]; then
-  git clone --depth 1 --branch main "${REPOSITORY_URL}" "${REPOSITORY_DIR}"
+  git clone --branch main "${REPOSITORY_URL}" "${REPOSITORY_DIR}"
 fi
 
 cd "${REPOSITORY_DIR}"
 git restore --source=HEAD -- src/data/catalog.json
-git fetch --depth 1 origin main
+if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
+  git fetch --unshallow origin
+fi
+git fetch origin main
 git merge --ff-only FETCH_HEAD
 
 lock_hash="$(sha256sum package-lock.json | cut -d' ' -f1)"
