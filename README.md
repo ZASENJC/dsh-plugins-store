@@ -2,7 +2,7 @@
 
 自动收录并整理 GitHub [`dsh-plugin`](https://github.com/topics/dsh-plugin) Topic 项目，提供搜索、分类、排序和标签聚合浏览。
 
-[访问 DSH-plugin store](https://zasenjc.github.io/dsh-plugins-store/)
+[访问 DSH-plugin store](https://dsh.aitreez.com/)
 
 ## 功能
 
