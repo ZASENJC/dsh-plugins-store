@@ -12,6 +12,7 @@ ExecStart=/usr/bin/flock -n /run/lock/dsh-plugins-store-update.lock /usr/local/s
 Environment=PATH=/opt/nodejs/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=HOME=/opt/dsh-plugins-store
 Environment=NPM_CONFIG_CACHE=/opt/dsh-plugins-store/.npm-cache
+Environment=ASTRO_TELEMETRY_DISABLED=1
 UMask=0022
 Nice=10
 IOSchedulingClass=idle

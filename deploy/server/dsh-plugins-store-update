@@ -4,6 +4,7 @@ set -Eeuo pipefail
 export PATH="/opt/nodejs/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export HOME="/opt/dsh-plugins-store"
 export NPM_CONFIG_CACHE="/opt/dsh-plugins-store/.npm-cache"
+export ASTRO_TELEMETRY_DISABLED=1
 
 readonly APP_DIR="/opt/dsh-plugins-store"
 readonly REPOSITORY_DIR="${APP_DIR}/repository"
@@ -30,7 +31,7 @@ if [[ "${lock_hash}" != "${installed_hash}" || ! -d node_modules ]]; then
 fi
 
 npm run sync
-npm run build
+./node_modules/.bin/astro build
 
 release_name="$(date -u +%Y%m%dT%H%M%SZ)"
 release_dir="${RELEASES_DIR}/${release_name}"
