@@ -74,8 +74,9 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - Repeated runs for the same repository SHA now receive distinct report IDs and immutable nested report paths, so historical evidence is preserved instead of overwritten.
 - `npm run validate:promote` is observation-only by default. Public output requires both a passing quality gate and explicit `--publish`; a blocked publish cannot write `src/data/validation.json`.
 - Public passing records require source SHA, DSH version, platform, and validator version. External Verified README and repository override URLs remain historical `recorded` evidence only and no longer affect current Verified counts or ordering.
+- Published records automatically become `expired` when the current DSH version, platform, or validator version changes; a contract test keeps that target synchronized with `validation/baseline.json`.
 - Website and embedded plugin-store install commands append `#<sourceSha>` only when the promoted current validation record is verified.
 - Current promotion observation is blocked at 0/20 retained report sets and 0/20 repeatable targets. The earlier calculator live run remains noted as P2 execution evidence, but its report is not present in the current local promotion input. `src/data/validation.json` therefore remains unchanged and empty.
-- Final checks: 37 test files and 178 tests pass; coverage is 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript and the 1835-page Astro build pass; the rebuilt embedded plugin passes 41 focused tests.
+- Final checks: 37 test files and 181 tests pass; coverage is 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript and the 1835-page Astro build pass; the rebuilt embedded plugin passes 41 focused tests.
 - P0-P4 contain no external Issue creation path. P5 remains deferred.
 - Next activation step: retain two fresh sandbox reports for every baseline target, review the observed mismatch rate, then run the explicit P4 publish command. Do not begin P5 as part of that activation.
