@@ -11,6 +11,9 @@ export default defineConfig({
         'src/lib/hero-motion.ts',
         'src/lib/readme.ts',
         'src/lib/seo.ts',
+        'packages/dsh-plugin-store/src/catalog.js',
+        'packages/dsh-plugin-store/src/controller.js',
+        'packages/dsh-plugin-store/src/index.js',
       ],
       thresholds: {
         branches: 80,

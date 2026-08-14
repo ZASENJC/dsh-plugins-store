@@ -4,6 +4,7 @@ import {
   CatalogStore,
   buildInstallCommand,
   filterCatalogRepositories,
+  formatCompactNumber,
 } from '../src/catalog.js'
 
 const repositories = [
@@ -83,6 +84,41 @@ describe('plugin catalog filtering', () => {
     )
     expect(buildInstallCommand(repositories[2])).toBeNull()
   })
+
+  it('uses deterministic name and recommended tie breakers for stable mounted views', () => {
+    const tied = [
+      {
+        ...repositories[1],
+        repositoryId: 4,
+        name: 'Same name',
+        fullName: 'z/same',
+        topics: undefined,
+        stars: 20,
+        verified: true,
+        awesomeListed: true,
+      },
+      {
+        ...repositories[0],
+        name: 'Same name',
+        fullName: 'a/same',
+        awesomeListed: true,
+      },
+    ]
+
+    expect(filterCatalogRepositories(tied, {
+      query: 'same',
+      category: 'all',
+      verifiedOnly: false,
+      sort: 'name',
+    }).map(({ fullName }) => fullName)).toEqual(['a/same', 'z/same'])
+    expect(filterCatalogRepositories(tied, {
+      query: '',
+      category: 'all',
+      verifiedOnly: false,
+      sort: 'recommended',
+    }).map(({ fullName }) => fullName)).toEqual(['a/same', 'z/same'])
+    expect(formatCompactNumber(12500)).not.toBe('12500')
+  })
 })
 
 describe('remote catalog state', () => {
@@ -130,5 +166,55 @@ describe('remote catalog state', () => {
       catalog: null,
       error: 'offline',
     })
+  })
+
+  it('rejects malformed responses and reports non-Error failures without trusting them', async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => null })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ schemaVersion: 2, repositories }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ schemaVersion: 1 }) })
+      .mockRejectedValueOnce('network unavailable')
+    const store = new CatalogStore({
+      fetcher,
+      urls: ['one', 'two', 'three', 'four'],
+    })
+
+    await store.load()
+
+    expect(store.getSnapshot()).toMatchObject({
+      status: 'error',
+      catalog: null,
+      error: 'network unavailable',
+    })
+    expect(() => new CatalogStore({ fetcher: null })).toThrow('当前环境不支持目录请求')
+  })
+
+  it('deduplicates concurrent loads, reuses ready data, and refreshes only when forced', async () => {
+    let resolveResponse
+    const fetcher = vi.fn(() => new Promise((resolve) => {
+      resolveResponse = resolve
+    }))
+    const store = new CatalogStore({ fetcher, urls: ['catalog'] })
+
+    const first = store.load()
+    const concurrent = store.load()
+    expect(concurrent).toBe(first)
+    resolveResponse({
+      ok: true,
+      json: async () => ({ schemaVersion: 1, repositories }),
+    })
+    await first
+    await store.load()
+    expect(fetcher).toHaveBeenCalledOnce()
+
+    const refresh = store.load({ force: true })
+    resolveResponse({
+      ok: true,
+      json: async () => ({ schemaVersion: 1, repositories: repositories.slice(0, 1) }),
+    })
+    await refresh
+
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(store.getSnapshot().catalog.repositories).toHaveLength(1)
   })
 })

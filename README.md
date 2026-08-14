@@ -33,6 +33,7 @@
 - 支持分类、项目类型和更新时间等筛选排序
 - 提供项目详情、分类依据和同标签项目页面
 - 每 30 分钟自动同步 GitHub 仓库数据
+- 提供可安装的 DSH Web 插件，通过 `/store`、会话工具栏和设置页浏览同一目录
 
 ## 数据说明
 
@@ -50,6 +51,15 @@ npm run dev
 ```
 
 默认访问地址：`http://localhost:4321/`。
+
+构建 DSH Web 插件：
+
+```bash
+npm run build:plugin
+npm pack ./packages/dsh-plugin-store
+```
+
+插件安装与卸载方式见 [`packages/dsh-plugin-store/README.md`](packages/dsh-plugin-store/README.md)。
 
 重新同步目录时运行：
 

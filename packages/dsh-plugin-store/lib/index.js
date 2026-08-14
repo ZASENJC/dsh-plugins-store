@@ -1,0 +1,1 @@
+var r="dsh-plugin-store",s=["commands"];function n(e){e.commands.register({name:"store",description:"Browse the DSH plugin store",handler:({rawInput:t})=>t.trim()===""?{kind:"success"}:{kind:"error",text:"Usage: /store"}})}export{n as apply,s as inject,r as name};

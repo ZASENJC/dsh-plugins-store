@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
+    "build:plugin": "node packages/dsh-plugin-store/build.mjs",
+    "pack:plugin": "npm run build:plugin && npm pack ./packages/dsh-plugin-store",
     "preview": "astro preview",
     "sync": "tsx scripts/sync-github.ts",
     "test": "vitest run",
@@ -24,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^26.2.0",
     "@vitest/coverage-v8": "latest",
+    "esbuild": "^0.28.2",
     "tsx": "latest",
     "vitest": "latest"
   }
