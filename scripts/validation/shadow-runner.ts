@@ -28,6 +28,11 @@ export interface ShadowRunSummary {
   decisions: Partial<Record<StructureCheckResult['decision'], number>>
   queueable: number
   reportPaths: string[]
+  loadFailures: Array<{
+    repositoryId: number
+    code: 'SNAPSHOT_LOAD_FAILED'
+    reason: '仓库快照或扫描基础设施不可用'
+  }>
 }
 
 async function writeReportAtomically(outputDir: string, report: ValidationReport): Promise<string> {
@@ -70,10 +75,21 @@ export async function runShadowBatch({
     decisions: {},
     queueable: 0,
     reportPaths: [],
+    loadFailures: [],
   }
 
   for (const repository of repositories) {
-    const snapshot = await snapshotLoader(repository)
+    let snapshot: RepositoryStructureSnapshot
+    try {
+      snapshot = await snapshotLoader(repository)
+    } catch {
+      summary.loadFailures.push({
+        repositoryId: repository.repositoryId,
+        code: 'SNAPSHOT_LOAD_FAILED',
+        reason: '仓库快照或扫描基础设施不可用',
+      })
+      continue
+    }
     const result = runStructureCheck(snapshot, target)
     const reportPath = await writeReportAtomically(outputDir, result.report)
     summary.reportsWritten += 1

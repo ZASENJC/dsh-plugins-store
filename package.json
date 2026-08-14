@@ -11,6 +11,7 @@
     "pack:plugin": "npm run build:plugin && npm pack ./packages/dsh-plugin-store",
     "preview": "astro preview",
     "sync": "tsx scripts/sync-github.ts",
+    "validate:shadow": "tsx scripts/validation/shadow-cli.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

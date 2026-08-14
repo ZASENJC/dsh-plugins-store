@@ -21,7 +21,7 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 | Phase | Scope | Status | Exit Gate |
 | --- | --- | --- | --- |
 | P0 | Report schema, state machine, invalidation, execution types | Complete | Unit tests cover valid/invalid transitions, history, SHA/DSH/platform/validator expiry, and execution types |
-| P1 | Discovery, execution-type recognition, structure check, shadow workflow | In progress | Full catalog produces sanitized reports; `validation.json` remains unchanged |
+| P1 | Discovery, execution-type recognition, structure check, shadow workflow | Implemented; observation pending | Full catalog produces sanitized reports; `validation.json` remains unchanged |
 | P2 | About 20 known Linux headless/tool baselines | Pending | Each target is SHA-pinned and produces a repeatable sandbox report or explicit inconclusive result |
 | P3 | DSH Web + Playwright, collection and channel/MCP validators | Pending | Validator-specific fixtures pass without real credentials or external services |
 | P4 | False-positive observation gate, Verified promotion, SHA-pinned install | Pending | Promotion refuses insufficient or stale evidence and accepts a passing observed baseline |
@@ -60,4 +60,7 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - P1 core GREEN: 24 focused P0/P1 tests pass. Shadow reports are immutable and atomic, unknown projects remain `unrecognized`, scanner outages are infrastructure failures, and no public validation or Issue writer is reachable.
 - Restored the root package metadata after npm added unrelated README-derived fields; retained only the required `yaml` parser dependency.
 - P1 snapshot/scanner GREEN: 30 focused tests pass. Numeric repository identity is revalidated, default branches resolve to full SHAs, truncated trees are rejected, source blobs are not downloaded, and sanitized Trivy/OSV/Gitleaks adapters use fixed container versions and read-only source mounts.
-- Next: wire catalog discovery, safe fixed-SHA archive acquisition, and the artifact-only shadow workflow.
+- P1 workflow GREEN: 38 focused tests pass. Catalog discovery is stable-sharded, fixed-SHA archives are expanded in a non-root networkless container, one repository failure cannot abort a shard, and scheduled CI uploads artifacts only with `contents: read`.
+- TypeScript checks pass with the one-shot `--ignoreDeprecations 6.0` flag; the repository's existing `baseUrl` setting blocks an unqualified TypeScript 7 check.
+- P1 full-catalog observation remains open until the sharded CI run completes; no public status is written before that gate.
+- Next: define the approximately 20-project P2 baseline and restricted Linux sandbox command/result contract.

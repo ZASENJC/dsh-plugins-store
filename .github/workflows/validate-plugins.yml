@@ -1,0 +1,64 @@
+name: Validate plugins (shadow)
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+    inputs:
+      shards:
+        description: JSON array of shard indexes to run
+        required: true
+        default: '[0]'
+      shard_count:
+        description: Total shard count
+        required: true
+        default: '1'
+      limit:
+        description: Maximum repositories per shard, 0 means all
+        required: true
+        default: '5'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-validation-shadow
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: ${{ fromJSON(github.event_name == 'schedule' && '[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]' || inputs.shards) }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SHARD_COUNT: ${{ github.event_name == 'schedule' && '20' || inputs.shard_count }}
+      VALIDATION_LIMIT: ${{ github.event_name == 'schedule' && '0' || inputs.limit }}
+      DSH_VALIDATION_VERSION: 0.1.0-rc.6
+      VALIDATOR_VERSION: 0.1.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run shadow validation shard
+        run: >-
+          npm run validate:shadow --
+          --output "validation/reports/shard-${{ matrix.shard }}"
+          --shard-index "${{ matrix.shard }}"
+          --shard-count "$SHARD_COUNT"
+          --limit "$VALIDATION_LIMIT"
+      - name: Upload sanitized shadow reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-validation-shadow-${{ matrix.shard }}
+          path: validation/reports/shard-${{ matrix.shard }}/
+          if-no-files-found: warn
+          retention-days: 30
