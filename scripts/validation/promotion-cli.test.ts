@@ -2,9 +2,9 @@ import { access, mkdtemp, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
-import { parsePromotionOptions, writePromotionOutput } from './promotion-cli'
+import { parsePromotionOptions, runPromotionCli, writePromotionOutput } from './promotion-cli'
 
 const emptyFeed = {
   schemaVersion: 1 as const,
@@ -33,5 +33,17 @@ describe('P4 promotion CLI', () => {
     await expect(writePromotionOutput({ outputPath, feed: emptyFeed, publish: true, eligible: true }))
       .resolves.toEqual({ published: true })
     expect(JSON.parse(await readFile(outputPath, 'utf8'))).toEqual(emptyFeed)
+  })
+
+  it('treats a missing report directory as zero observations instead of an infrastructure crash', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dsh-promotion-empty-'))
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+
+    await expect(runPromotionCli([
+      '--reports', join(root, 'missing-reports'),
+      '--output', join(root, 'validation.json'),
+    ])).resolves.toBeUndefined()
+    expect(stdout).toHaveBeenCalledWith(expect.stringContaining('BASELINE_COVERAGE_INSUFFICIENT'))
+    stdout.mockRestore()
   })
 })
