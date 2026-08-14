@@ -23,6 +23,7 @@ describe('P2 validator image contract', () => {
     expect(copySource).toContain('cp')
     expect(smoke).toContain('tool-registration')
     expect(postflight).toContain('/proc/net')
+    expect(postflight).toContain("entry.isDirectory() && entry.name !== 'node_modules'")
     expect(`${copySource}${smoke}${postflight}`).not.toMatch(/https?:\/\//)
   })
 })
