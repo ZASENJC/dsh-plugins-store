@@ -24,7 +24,25 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 ---
 
 <BaseLayout>
-  <section class="catalog-head">
+  <section class="catalog-head" data-catalog-head>
+    <div class="catalog-head__art" aria-hidden="true">
+      <img
+        class="catalog-head__art-base"
+        src={`${baseUrl}deepseek-pixel.png`}
+        alt=""
+        width="96"
+        height="96"
+        decoding="async"
+      />
+      <img
+        class="catalog-head__art-focus"
+        src={`${baseUrl}deepseek-pixel.png`}
+        alt=""
+        width="96"
+        height="96"
+        decoding="async"
+      />
+    </div>
     <div class="container catalog-head__inner">
       <div class="catalog-head__title">
         <p class="mono-label">DSH-PLUGIN STORE / LIVE CATALOG</p>
@@ -133,6 +151,38 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
   <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
   <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
+
+  <script>
+    import { getHeroMotion } from '../lib/hero-motion'
+
+    const catalogHead = document.querySelector<HTMLElement>('[data-catalog-head]')
+    const supportsMotion = window.matchMedia('(pointer: fine)').matches
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (catalogHead && supportsMotion) {
+      let animationFrame = 0
+
+      catalogHead.addEventListener('pointermove', (event) => {
+        cancelAnimationFrame(animationFrame)
+        const motion = getHeroMotion(event.clientX, event.clientY, catalogHead.getBoundingClientRect())
+
+        animationFrame = requestAnimationFrame(() => {
+          catalogHead.style.setProperty('--hero-mark-x', `${motion.offsetX}px`)
+          catalogHead.style.setProperty('--hero-mark-y', `${motion.offsetY}px`)
+          catalogHead.style.setProperty('--hero-light-x', `${motion.lightX}%`)
+          catalogHead.style.setProperty('--hero-light-y', `${motion.lightY}%`)
+        })
+      })
+
+      catalogHead.addEventListener('pointerleave', () => {
+        cancelAnimationFrame(animationFrame)
+        catalogHead.style.removeProperty('--hero-mark-x')
+        catalogHead.style.removeProperty('--hero-mark-y')
+        catalogHead.style.removeProperty('--hero-light-x')
+        catalogHead.style.removeProperty('--hero-light-y')
+      })
+    }
+  </script>
 
   <script is:inline>
     const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
@@ -378,10 +428,54 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
 <style>
   .catalog-head {
+    --hero-light-x: 50%;
+    --hero-light-y: 50%;
+    --hero-mark-x: 0px;
+    --hero-mark-y: 0px;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     border-bottom: 1px solid var(--hairline);
+    background: var(--canvas);
+  }
+
+  .catalog-head__art {
+    position: absolute;
+    z-index: 0;
+    top: 46%;
+    left: max(-72px, calc((100% - var(--container)) / 2 - 92px));
+    width: clamp(480px, 52vw, 720px);
+    aspect-ratio: 1;
+    pointer-events: none;
+    transform: translate3d(var(--hero-mark-x), calc(-50% + var(--hero-mark-y)), 0);
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    -webkit-mask-image: radial-gradient(ellipse at 45% 48%, #000 0%, rgba(0, 0, 0, 0.9) 44%, transparent 76%);
+    mask-image: radial-gradient(ellipse at 45% 48%, #000 0%, rgba(0, 0, 0, 0.9) 44%, transparent 76%);
+  }
+
+  .catalog-head__art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: invert(1) grayscale(1);
+  }
+
+  .catalog-head__art-base {
+    opacity: 0.065;
+  }
+
+  .catalog-head__art-focus {
+    opacity: 0.06;
+    -webkit-mask-image: radial-gradient(circle at var(--hero-light-x) var(--hero-light-y), #000 0%, rgba(0, 0, 0, 0.86) 12%, transparent 34%);
+    mask-image: radial-gradient(circle at var(--hero-light-x) var(--hero-light-y), #000 0%, rgba(0, 0, 0, 0.86) 12%, transparent 34%);
   }
 
   .catalog-head__inner {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(360px, 0.8fr);
     gap: 64px;
@@ -650,6 +744,20 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   }
 
   @media (max-width: 767px) {
+    .catalog-head__art {
+      top: 34%;
+      left: -104px;
+      width: 440px;
+    }
+
+    .catalog-head__art-base {
+      opacity: 0.05;
+    }
+
+    .catalog-head__art-focus {
+      display: none;
+    }
+
     .catalog-head__inner {
       gap: 32px;
       padding-block: 40px 32px;

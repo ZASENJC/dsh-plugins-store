@@ -8,6 +8,7 @@ export default defineConfig({
         'src/lib/classification.ts',
         'src/lib/catalog.ts',
         'src/lib/github-content.ts',
+        'src/lib/hero-motion.ts',
         'src/lib/readme.ts',
         'src/lib/seo.ts',
       ],
