@@ -108,3 +108,11 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - RED intent: one fresh verified report for every configured baseline target must pass promotion and produce public records, with no repeat-observation block reason or metric.
 - GREEN: removed the repeat-observation block reason and metric. One fresh report for each of all 20 baseline targets passes promotion and produces 20 public records; exact bindings, full coverage, conflicting outcomes, and unexpected outcomes remain enforced. Seven focused promotion and CLI tests pass.
 - Final verification: 37 test files and 185 tests pass; coverage is 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines. TypeScript and `git diff --check origin/main..HEAD` pass. Read-only promotion sees 1/20 targets, is blocked only by baseline coverage, and remains `published: false`.
+
+### 2026-08-14 - Bounded full-chain publication
+
+- User authorized the validation module to process the full catalog-to-store chain while remaining independent from catalog discovery and explicitly required bounded concurrency rather than launching hundreds of validators together.
+- Selected architecture: catalog sync publishes an immutable catalog artifact; validation runs the 20-target canary serially, then 20 stable catalog shards with at most four jobs in parallel and one candidate at a time inside each shard; a final trusted job promotes, builds, and deploys only after the canary and every shard complete.
+- Third-party validation jobs receive no deployment credentials. Missing Web/Channel/Collection/native contracts become retained `inconclusive` reports; they must never be promoted by pretending a validator ran.
+- Existing mature references remain OpenSSF Scorecard and StepSecurity Harden-Runner, both active Apache-2.0 projects. GitHub Actions native matrix and concurrency controls are used for scheduling to avoid adding an orchestration dependency.
+- RED scope: correct the OSV v2 `scan source` command, define a sequential dynamic candidate runner, separate canary gate reports from candidate publication reports, and enforce catalog-artifact/concurrency/credential boundaries in Workflow tests.

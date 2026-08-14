@@ -153,4 +153,21 @@ describe('P4 promotion quality gate', () => {
       sandbox: { status: 'passed' },
     })
   })
+
+  it('uses isolated canary reports for the gate and publishes one latest record per repository', () => {
+    const gateReports = reportsForAll(1)
+    const currentSha = 'f'.repeat(40)
+    const currentReport = reportFor(baseline.targets[0], 3, 'verified', { sourceSha: currentSha })
+
+    const feed = buildPublicValidationFeed(
+      baseline,
+      [...gateReports, currentReport],
+      '2026-08-14T14:00:00.000Z',
+      gateReports,
+    )
+
+    expect(feed.records).toHaveLength(20)
+    expect(feed.records.filter(({ repositoryId }) => repositoryId === baseline.targets[0].repositoryId))
+      .toEqual([expect.objectContaining({ sourceSha: currentSha })])
+  })
 })

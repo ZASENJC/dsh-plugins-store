@@ -15,7 +15,10 @@ const emptyFeed = {
 describe('P4 promotion CLI', () => {
   it('defaults to observation-only mode and requires an explicit publish flag', () => {
     expect(parsePromotionOptions([])).toMatchObject({ publish: false })
-    expect(parsePromotionOptions(['--publish'])).toMatchObject({ publish: true })
+    expect(parsePromotionOptions(['--publish', '--gate-reports', 'canary'])).toMatchObject({
+      publish: true,
+      gateReportsPath: expect.stringContaining('canary'),
+    })
   })
 
   it('does not write public state without publish or when the quality gate is blocked', async () => {
