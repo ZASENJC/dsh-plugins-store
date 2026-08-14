@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { parseValidationReport, type ValidationReport } from '../../src/lib/validation-report'
 import type { ValidationFeed } from '../../src/lib/validation'
 import { parseBaseline } from './baseline'
-import { assessPromotionGate, buildPublicValidationFeed } from './promotion'
+import { assessPromotionGate, buildPublicValidationFeed, mergeValidationFeeds } from './promotion'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 
@@ -14,6 +14,7 @@ export interface PromotionOptions {
   baselinePath: string
   reportsPath: string
   gateReportsPath: string
+  previousFeedPath: string | null
   outputPath: string
   publish: boolean
 }
@@ -24,7 +25,7 @@ function valueAfter(args: string[], name: string): string | undefined {
 }
 
 export function parsePromotionOptions(args: string[]): PromotionOptions {
-  const valued = new Set(['--baseline', '--reports', '--gate-reports', '--output'])
+  const valued = new Set(['--baseline', '--reports', '--gate-reports', '--previous-feed', '--output'])
   const known = new Set([...valued, '--publish'])
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
@@ -39,6 +40,9 @@ export function parsePromotionOptions(args: string[]): PromotionOptions {
     baselinePath: resolve(valueAfter(args, '--baseline') ?? join(root, 'validation/baseline.json')),
     reportsPath,
     gateReportsPath: resolve(valueAfter(args, '--gate-reports') ?? reportsPath),
+    previousFeedPath: valueAfter(args, '--previous-feed')
+      ? resolve(valueAfter(args, '--previous-feed')!)
+      : null,
     outputPath: resolve(valueAfter(args, '--output') ?? join(root, 'src/data/validation.json')),
     publish: args.includes('--publish'),
   }
@@ -98,9 +102,15 @@ export async function runPromotionCli(args = process.argv.slice(2)): Promise<voi
     ? reports
     : [...gateReports, ...reports]
   const assessment = assessPromotionGate(baseline, gateReports)
-  const feed = assessment.eligible
+  const currentFeed = assessment.eligible
     ? buildPublicValidationFeed(baseline, publicationReports, new Date().toISOString(), gateReports)
     : { schemaVersion: 1 as const, generatedAt: new Date().toISOString(), records: [] }
+  const feed = assessment.eligible && options.previousFeedPath
+    ? mergeValidationFeeds(
+      JSON.parse(await readFile(options.previousFeedPath, 'utf8')) as ValidationFeed,
+      currentFeed,
+    )
+    : currentFeed
   const result = await writePromotionOutput({
     outputPath: options.outputPath,
     feed,

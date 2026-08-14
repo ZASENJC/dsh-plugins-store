@@ -1,5 +1,5 @@
 import { parseValidationReport, type ValidationReport } from '../../src/lib/validation-report'
-import type { ValidationFeed, ValidationRecord } from '../../src/lib/validation'
+import { parseValidationFeed, type ValidationFeed, type ValidationRecord } from '../../src/lib/validation'
 import type { BaselineTarget, ValidationBaseline } from './baseline'
 
 export const MINIMUM_BASELINE_TARGETS = 20
@@ -173,5 +173,18 @@ export function buildPublicValidationFeed(
     schemaVersion: 1,
     generatedAt,
     records: records.sort((left, right) => left.repositoryId - right.repositoryId),
+  }
+}
+
+export function mergeValidationFeeds(
+  previous: ValidationFeed,
+  current: ValidationFeed,
+): ValidationFeed {
+  const records = parseValidationFeed(previous)
+  for (const [repositoryId, record] of parseValidationFeed(current)) records.set(repositoryId, record)
+  return {
+    schemaVersion: 1,
+    generatedAt: current.generatedAt,
+    records: [...records.values()].sort((left, right) => left.repositoryId - right.repositoryId),
   }
 }

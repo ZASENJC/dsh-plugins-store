@@ -9,6 +9,7 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).toContain("cron: '*/30 * * * *'")
     expect(syncWorkflow).toContain('plugin-catalog-snapshot')
     expect(syncWorkflow).toContain('plugin-validation-state')
+    expect(syncWorkflow).toMatch(/Restore last successful validation feed[\s\S]*continue-on-error: true/)
     expect(syncWorkflow).toContain('src/data/catalog.json')
     expect(syncWorkflow).not.toContain('validate:candidates')
     expect(syncWorkflow).not.toMatch(/needs:\s+.*validat/)

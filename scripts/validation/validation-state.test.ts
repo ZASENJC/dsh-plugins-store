@@ -157,4 +157,25 @@ describe('incremental validation cursor', () => {
     expect(selectValidationDelta(catalog, next, target, 20, '2026-08-14T17:01:00.000Z').repositoryIds)
       .toEqual([4])
   })
+
+  it('does not carry an old cursor through a forced full revalidation', () => {
+    const previous = state([{ repositoryId: 4, pushedAt: catalog.repositories[3].pushedAt }])
+    const selection: ValidationSelection = {
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T16:01:00.000Z',
+      mode: 'full',
+      catalogGeneratedAt: catalog.generatedAt,
+      target,
+      repositoryIds: [4],
+      shards: [3],
+    }
+
+    expect(buildValidationState(
+      catalog,
+      previous,
+      selection,
+      [report(4, 'infrastructure')],
+      '2026-08-14T16:20:00.000Z',
+    ).entries).toEqual([])
+  })
 })

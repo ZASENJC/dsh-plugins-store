@@ -1,10 +1,8 @@
 name: Validate plugins
 
 on:
-  workflow_run:
-    workflows: ['Sync catalog']
-    types: [completed]
-    branches: [main]
+  schedule:
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -16,30 +14,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  baseline:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    outputs:
+      has_changes: ${{ steps.selection.outputs.has_changes }}
+      first_run: ${{ steps.selection.outputs.first_run }}
+      shards: ${{ steps.selection.outputs.shards }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-
-      - name: Download catalog snapshot
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
-        with:
-          name: plugin-catalog-snapshot
-          path: catalog-snapshot
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Restore catalog snapshot
-        if: github.event_name == 'workflow_run'
-        run: cp catalog-snapshot/catalog.json src/data/catalog.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -50,11 +35,107 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run 20-target canary serially
+      - name: Resolve latest successful catalog and validation state
+        run: |
+          mkdir -p validation-input/previous
+          catalog_found=false
+          sync_run_ids="$(gh run list --workflow sync-catalog.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          for run_id in $sync_run_ids; do
+            artifact_dir="/tmp/dsh-catalog-$run_id"
+            if gh run download "$run_id" --name plugin-catalog-snapshot --dir "$artifact_dir" 2>/dev/null \
+              && test -f "$artifact_dir/catalog.json"; then
+              cp "$artifact_dir/catalog.json" validation-input/catalog.json
+              catalog_found=true
+              break
+            fi
+          done
+          if test "$catalog_found" = false; then
+            cp src/data/catalog.json validation-input/catalog.json
+          fi
+
+          state_found=false
+          validation_run_ids="$(gh run list --workflow validate-plugins.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          for run_id in $validation_run_ids; do
+            artifact_dir="/tmp/dsh-validation-state-$run_id"
+            if gh run download "$run_id" --name plugin-validation-state --dir "$artifact_dir" 2>/dev/null \
+              && test -f "$artifact_dir/state.json" \
+              && test -f "$artifact_dir/validation.json" \
+              && find "$artifact_dir/canary" -type f -name '*.json' -print -quit | grep -q .; then
+              cp -R "$artifact_dir/." validation-input/previous/
+              state_found=true
+              break
+            fi
+          done
+          if test "$state_found" = true; then
+            cp validation-input/previous/validation.json validation-input/previous-validation.json
+          else
+            cp src/data/validation.json validation-input/previous-validation.json
+          fi
+
+      - name: Select full or incremental validation set
+        id: selection
+        run: |
+          previous_args=()
+          if test -f validation-input/previous/state.json; then
+            previous_args=(--previous validation-input/previous/state.json)
+          fi
+          npm run --silent validate:select -- \
+            --catalog validation-input/catalog.json \
+            --baseline validation/baseline.json \
+            --output validation-input/selection.json \
+            --shard-count 20 \
+            "${previous_args[@]}" > validation-input/selection-summary.json
+          node -e 'const fs=require("fs"); const summary=JSON.parse(fs.readFileSync("validation-input/selection-summary.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,"has_changes="+String(summary.repositoryCount>0)+"\nfirst_run="+String(summary.firstRun)+"\nshards="+JSON.stringify(summary.shards)+"\n")'
+
+      - name: Upload immutable validation input
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-validation-input
+          path: validation-input/
+          if-no-files-found: error
+          retention-days: 30
+
+  baseline:
+    needs: prepare
+    if: needs.prepare.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout validation source
+        uses: actions/checkout@v4
+
+      - name: Download validation input
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-validation-input
+          path: validation-input
+
+      - name: Restore catalog snapshot
+        run: cp validation-input/catalog.json src/data/catalog.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run initial 20-target canary serially
+        if: needs.prepare.outputs.first_run == 'true'
         run: >-
           npm run validate:baseline --
           --output validation/reports/canary
           --limit 0
+
+      - name: Reuse compatible canary evidence
+        if: needs.prepare.outputs.first_run != 'true'
+        run: |
+          mkdir -p validation/reports/canary
+          cp -R validation-input/previous/canary/. validation/reports/canary/
 
       - name: Enforce canary promotion gate
         run: |
@@ -62,24 +143,24 @@ jobs:
             --reports validation/reports/canary > /tmp/canary-gate.json
           node -e "const result=require('/tmp/canary-gate.json'); if(!result.assessment.eligible){console.error(result.assessment.reasons.join(',')); process.exit(1)}"
 
-      - name: Upload sanitized canary reports
-        if: always()
+      - name: Upload current canary reports
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-validation-canary
+          name: plugin-validation-canary-current
           path: validation/reports/canary/
           if-no-files-found: error
           retention-days: 30
 
   validate:
-    needs: baseline
+    needs: [prepare, baseline]
+    if: needs.prepare.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 4
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+        shard: ${{ fromJSON(needs.prepare.outputs.shards) }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DSH_VALIDATION_VERSION: 0.1.0-rc.6
@@ -87,21 +168,15 @@ jobs:
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Download catalog snapshot
-        if: github.event_name == 'workflow_run'
+      - name: Download validation input
         uses: actions/download-artifact@v4
         with:
-          name: plugin-catalog-snapshot
-          path: catalog-snapshot
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          name: plugin-validation-input
+          path: validation-input
 
       - name: Restore catalog snapshot
-        if: github.event_name == 'workflow_run'
-        run: cp catalog-snapshot/catalog.json src/data/catalog.json
+        run: cp validation-input/catalog.json src/data/catalog.json
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -112,16 +187,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run P1 structure shard serially
+      - name: Run selected P1 structure shard serially
         run: |
           npm run --silent validate:shadow -- \
             --output validation/reports/structure \
+            --selection validation-input/selection.json \
             --shard-index "${{ matrix.shard }}" \
             --shard-count 20 \
             --limit 0 > /tmp/shadow-summary.json
           node -e "const result=require('/tmp/shadow-summary.json'); if(result.loadFailures.length || result.reportsWritten !== result.discovered){console.error('P1 shard is incomplete'); process.exit(1)}"
 
-      - name: Run sandbox candidates serially
+      - name: Run selected sandbox candidates serially
         run: >-
           npm run validate:candidates --
           --reports validation/reports/structure
@@ -136,33 +212,25 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  publish:
-    needs: [baseline, validate]
+  promote:
+    needs: [prepare, baseline, validate]
+    if: needs.prepare.outputs.has_changes == 'true' && needs.baseline.result == 'success' && needs.validate.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
-      - name: Checkout validated source
+      - name: Checkout validation source
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Download catalog snapshot
-        if: github.event_name == 'workflow_run'
+      - name: Download validation input
         uses: actions/download-artifact@v4
         with:
-          name: plugin-catalog-snapshot
-          path: catalog-snapshot
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          name: plugin-validation-input
+          path: validation-input
 
-      - name: Restore catalog snapshot
-        if: github.event_name == 'workflow_run'
-        run: cp catalog-snapshot/catalog.json src/data/catalog.json
-
-      - name: Download canary reports
+      - name: Download current canary reports
         uses: actions/download-artifact@v4
         with:
-          name: plugin-validation-canary
+          name: plugin-validation-canary-current
           path: validation-artifacts/canary
 
       - name: Download candidate reports
@@ -181,40 +249,59 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Promote SHA-bound validation evidence
+      - name: Promote incremental SHA-bound evidence
         run: >-
           npm run validate:promote --
           --reports validation-artifacts/candidates
           --gate-reports validation-artifacts/canary
-          --output src/data/validation.json
+          --previous-feed validation-input/previous-validation.json
+          --output validation-state/validation.json
           --publish
 
-      - name: Build promoted store
-        run: npm run build
+      - name: Advance validation cursor after completed evidence
+        run: >-
+          npm run validate:state --
+          --catalog validation-input/catalog.json
+          --previous validation-input/previous/state.json
+          --selection validation-input/selection.json
+          --reports validation-artifacts/candidates
+          --output validation-state/state.json
 
-      - name: Configure deployment SSH
-        env:
-          DEPLOY_SSH_KEY: ${{ secrets.DSH_DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DSH_DEPLOY_KNOWN_HOSTS }}
+      - name: Retain reusable canary evidence
         run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/dsh-store-deploy
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/dsh-store-deploy ~/.ssh/known_hosts
+          mkdir -p validation-state/canary
+          cp -R validation-artifacts/canary/. validation-state/canary/
 
-      - name: Publish verified store to dsh.aitreez.com
-        env:
-          DEPLOY_HOST: ${{ secrets.DSH_DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DSH_DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DSH_DEPLOY_USER }}
-          VALIDATED_COMMIT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      - name: Upload successful validation state
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-validation-state
+          path: validation-state/
+          if-no-files-found: error
+          retention-days: 30
+
+  checkpoint:
+    needs: prepare
+    if: needs.prepare.outputs.has_changes == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download validation input
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-validation-input
+          path: validation-input
+
+      - name: Refresh unchanged validation state artifact
         run: |
-          deploy_sha="$(printf '%s' "$VALIDATED_COMMIT:$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT" | sha256sum | cut -c1-40)"
-          tar -C dist -czf - . | ssh \
-            -i ~/.ssh/dsh-store-deploy \
-            -p "$DEPLOY_PORT" \
-            -o BatchMode=yes \
-            -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "deploy $deploy_sha"
+          mkdir -p validation-state/canary
+          cp validation-input/previous/state.json validation-state/state.json
+          cp validation-input/previous-validation.json validation-state/validation.json
+          cp -R validation-input/previous/canary/. validation-state/canary/
+
+      - name: Upload unchanged validation state
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-validation-state
+          path: validation-state/
+          if-no-files-found: error
+          retention-days: 30

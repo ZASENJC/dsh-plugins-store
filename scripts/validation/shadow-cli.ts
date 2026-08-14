@@ -8,6 +8,7 @@ import { downloadPinnedArchive, extractPinnedArchive } from './archive-downloade
 import { loadGitHubSnapshot } from './github-snapshot'
 import { runScannerCommands, type ScannerResults } from './scanner-adapters'
 import { runShadowBatch, type ShadowCatalogRepository } from './shadow-runner'
+import { parseValidationSelection } from './validation-state'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const projectTypeIds = new Set<string>(PROJECT_TYPES.map(({ id }) => id))
@@ -63,12 +64,16 @@ export function selectRepositoryShard(
   repositories: ShadowCatalogRepository[],
   shardIndex: number,
   shardCount: number,
+  selectedRepositoryIds?: ReadonlySet<number>,
 ): ShadowCatalogRepository[] {
   if (!Number.isSafeInteger(shardCount) || shardCount < 1
     || !Number.isSafeInteger(shardIndex) || shardIndex < 0 || shardIndex >= shardCount) {
     throw new Error('Invalid validation shard coordinates')
   }
-  return repositories.filter((_, index) => index % shardCount === shardIndex)
+  return repositories.filter((repository, index) => (
+    index % shardCount === shardIndex
+    && (selectedRepositoryIds === undefined || selectedRepositoryIds.has(repository.repositoryId))
+  ))
 }
 
 interface CliOptions {
@@ -76,6 +81,7 @@ interface CliOptions {
   shardIndex: number
   shardCount: number
   limit: number
+  selectionPath: string | null
 }
 
 function parseInteger(value: string | undefined, option: string): number {
@@ -97,6 +103,7 @@ export function parseShadowCliOptions(args: string[]): CliOptions {
     shardIndex: parseInteger(values.get('--shard-index') ?? '0', '--shard-index'),
     shardCount: parseInteger(values.get('--shard-count') ?? '1', '--shard-count'),
     limit: parseInteger(values.get('--limit') ?? '0', '--limit'),
+    selectionPath: values.has('--selection') ? resolve(values.get('--selection')!) : null,
   }
 }
 
@@ -104,7 +111,12 @@ export async function runShadowCli(args = process.argv.slice(2)): Promise<void> 
   const options = parseShadowCliOptions(args)
   const catalog = JSON.parse(await readFile(join(root, 'src/data/catalog.json'), 'utf8'))
   const discovered = discoverCatalogRepositories(catalog)
-  const shard = selectRepositoryShard(discovered, options.shardIndex, options.shardCount)
+  const selected = options.selectionPath === null
+    ? undefined
+    : new Set(parseValidationSelection(
+      JSON.parse(await readFile(options.selectionPath, 'utf8')),
+    ).repositoryIds)
+  const shard = selectRepositoryShard(discovered, options.shardIndex, options.shardCount, selected)
   const repositories = options.limit > 0 ? shard.slice(0, options.limit) : shard
   const now = new Date().toISOString()
 

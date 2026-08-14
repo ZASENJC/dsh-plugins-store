@@ -2,10 +2,11 @@ name: Sync catalog
 
 on:
   schedule:
-    - cron: '23 2 * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -27,6 +28,26 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Restore last successful validation feed
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          restored=false
+          run_ids="$(gh run list --workflow validate-plugins.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          for run_id in $run_ids; do
+            artifact_dir="validation-restore/$run_id"
+            if gh run download "$run_id" --name plugin-validation-state --dir "$artifact_dir" 2>/dev/null \
+              && test -f "$artifact_dir/validation.json"; then
+              cp "$artifact_dir/validation.json" src/data/validation.json
+              restored=true
+              break
+            fi
+          done
+          if test "$restored" = false; then
+            echo "No prior validation artifact is available; catalog refresh will use the checked-in feed."
+          fi
 
       - name: Sync GitHub Topic
         run: npm run sync
@@ -61,8 +82,9 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DSH_DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DSH_DEPLOY_PORT }}
           DEPLOY_USER: ${{ secrets.DSH_DEPLOY_USER }}
+          SOURCE_COMMIT: ${{ github.sha }}
         run: |
-          deploy_sha="$(git rev-parse HEAD)"
+          deploy_sha="$(printf '%s' "$SOURCE_COMMIT:$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT" | sha256sum | cut -c1-40)"
           tar -C dist -czf - . | ssh \
             -i ~/.ssh/dsh-store-deploy \
             -p "$DEPLOY_PORT" \
