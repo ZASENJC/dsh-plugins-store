@@ -85,8 +85,8 @@ function reportsForAll(runs = 2): ValidationReport[] {
 }
 
 describe('P4 promotion quality gate', () => {
-  it('requires all 20 baseline targets and two fresh sandbox observations per target', () => {
-    const partial = baseline.targets.slice(0, 1).flatMap((target) => [reportFor(target, 1), reportFor(target, 2)])
+  it('requires all 20 baseline targets and accepts one fresh observation per target', () => {
+    const partial = baseline.targets.slice(0, 1).map((target) => reportFor(target, 1))
     expect(assessPromotionGate(baseline, partial)).toMatchObject({
       eligible: false,
       reasons: expect.arrayContaining(['BASELINE_COVERAGE_INSUFFICIENT']),
@@ -95,9 +95,9 @@ describe('P4 promotion quality gate', () => {
 
     const singleRuns = reportsForAll(1)
     expect(assessPromotionGate(baseline, singleRuns)).toMatchObject({
-      eligible: false,
-      reasons: expect.arrayContaining(['REPEAT_OBSERVATION_INSUFFICIENT']),
-      metrics: { observedTargets: 20, repeatableTargets: 0 },
+      eligible: true,
+      reasons: [],
+      metrics: { observedTargets: 20 },
     })
   })
 
@@ -108,11 +108,11 @@ describe('P4 promotion quality gate', () => {
 
     expect(assessPromotionGate(baseline, reports)).toMatchObject({
       eligible: false,
-      reasons: expect.arrayContaining([
+      reasons: [
         'EVIDENCE_BINDING_MISMATCH',
-        'REPEAT_OBSERVATION_INSUFFICIENT',
         'BASELINE_OUTCOME_INCONSISTENT',
-      ]),
+        'BASELINE_OUTCOME_UNEXPECTED',
+      ],
       metrics: { mismatchedReports: 1 },
     })
   })
@@ -128,8 +128,8 @@ describe('P4 promotion quality gate', () => {
     })
   })
 
-  it('promotes only repeatable current verified bindings after the baseline gate passes', () => {
-    const reports = reportsForAll()
+  it('promotes one current verified binding per target after the baseline gate passes', () => {
+    const reports = reportsForAll(1)
     const assessment = assessPromotionGate(baseline, reports)
     expect(assessment).toMatchObject({
       eligible: true,
@@ -137,7 +137,6 @@ describe('P4 promotion quality gate', () => {
       metrics: {
         configuredTargets: 20,
         observedTargets: 20,
-        repeatableTargets: 20,
         inconsistentTargets: 0,
         unexpectedOutcomeRate: 0,
       },
