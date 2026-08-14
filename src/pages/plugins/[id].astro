@@ -53,6 +53,7 @@ const validationStageStatusLabels = {
   passed: '已通过',
   failed: '未通过',
   inconclusive: '需要复核',
+  quarantined: '安全复核',
   skipped: '不适用',
 }
 const validationUpdatedAt = repository.validation.updatedAt
@@ -196,7 +197,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
               )}
             </dl>
           )}
-          {repository.validation.reason && <p class="validation-reason">{repository.validation.reason}</p>}
+          {repository.validation.reason && <p class="validation-reason" data-tone={repository.validation.tone}>{repository.validation.reason}</p>}
           {(repository.validation.reportUrl || repository.validation.issueUrl) && (
             <div class="validation-actions">
               {repository.validation.reportUrl && (
@@ -612,12 +613,15 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   .validation-step[data-status='failed'] .validation-step__mark i { background: #ff9c8c; }
   .validation-step[data-status='inconclusive'] .validation-step__mark { border-color: #c49358; }
   .validation-step[data-status='inconclusive'] .validation-step__mark i { background: #ffc285; }
+  .validation-step[data-status='quarantined'] .validation-step__mark { border-color: #d4a85f; }
+  .validation-step[data-status='quarantined'] .validation-step__mark i { background: #ffd58f; }
   .validation-step[data-status='skipped'] { opacity: 0.45; }
   .validation-evidence { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 16px 0 0; }
   .validation-evidence div { min-width: 0; border-left: 1px solid var(--hairline); padding-left: 12px; }
   .validation-evidence dt { color: var(--mute); font-size: 10px; }
   .validation-evidence dd { margin: 4px 0 0; overflow: hidden; font-family: var(--font-mono); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
   .validation-reason { margin: 16px 0 0; border-left: 2px solid #d9786c; color: var(--body); font-size: 12px; line-height: 20px; padding-left: 12px; }
+  .validation-reason[data-tone='warning'] { border-left-color: #c49358; }
   .validation-actions { gap: 8px; margin-top: 16px; }
   .validation-actions .outline-button { min-height: 36px; }
   .install-heading { display: flex; justify-content: space-between; gap: 24px; align-items: center; }

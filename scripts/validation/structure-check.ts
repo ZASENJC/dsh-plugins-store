@@ -477,29 +477,31 @@ export function runStructureCheck(
   const scannerUnavailable = snapshot.scans.trivy.status === 'unavailable'
     || snapshot.scans.osv.status === 'unavailable'
     || snapshot.scans.gitleaks?.status === 'unavailable'
-  const secretFindings = snapshot.scans.trivy.secrets.length
-    + (snapshot.scans.gitleaks?.secrets.length ?? 0)
-  const vulnerabilityFindings = [
-    ...snapshot.scans.trivy.vulnerabilities,
-    ...snapshot.scans.osv.vulnerabilities,
-  ]
+  const trivySecrets = snapshot.scans.trivy.secrets
+  const gitleaksSecrets = snapshot.scans.gitleaks?.secrets ?? []
+  const trivyVulnerabilities = snapshot.scans.trivy.vulnerabilities
+  const osvVulnerabilities = snapshot.scans.osv.vulnerabilities
+  const secretFindings = trivySecrets.length + gitleaksSecrets.length
+  const vulnerabilityFindings = [...trivyVulnerabilities, ...osvVulnerabilities]
   if (snapshot.scans.trivy.status === 'unavailable') {
     check(checks, 'TRIVY_SCAN_UNAVAILABLE', 'not-run', 'security', 'Trivy result is unavailable.', undefined, 'trivy')
-  } else if (secretFindings > 0) {
+  } else if (trivySecrets.length > 0) {
     check(checks, 'SECRET_SCAN_QUARANTINE', 'quarantined', 'security', 'Potential secret material requires private human review.', undefined, 'trivy')
+  } else if (trivyVulnerabilities.length > 0) {
+    check(checks, 'TRIVY_VULNERABILITY_REVIEW_REQUIRED', 'quarantined', 'security', 'Known vulnerabilities require policy review.', undefined, 'trivy')
   } else {
     check(checks, 'TRIVY_SCAN_CLEAN', 'passed', 'security', 'Trivy vulnerability and secret scan produced no blocking findings.', undefined, 'trivy')
   }
   if (snapshot.scans.osv.status === 'unavailable') {
     check(checks, 'OSV_SCAN_UNAVAILABLE', 'not-run', 'security', 'OSV result is unavailable.', undefined, 'osv-scanner')
-  } else if (vulnerabilityFindings.length > 0) {
+  } else if (osvVulnerabilities.length > 0) {
     check(checks, 'VULNERABILITY_REVIEW_REQUIRED', 'quarantined', 'security', 'Known vulnerabilities require policy review.', undefined, 'osv-scanner')
   } else {
     check(checks, 'OSV_SCAN_CLEAN', 'passed', 'security', 'OSV scan produced no known vulnerability findings.', undefined, 'osv-scanner')
   }
   if (snapshot.scans.gitleaks?.status === 'unavailable') {
     check(checks, 'GITLEAKS_SCAN_UNAVAILABLE', 'not-run', 'security', 'Gitleaks result is unavailable.', undefined, 'gitleaks')
-  } else if ((snapshot.scans.gitleaks?.secrets.length ?? 0) > 0) {
+  } else if (gitleaksSecrets.length > 0) {
     check(checks, 'GITLEAKS_SCAN_QUARANTINE', 'quarantined', 'security', 'Potential secret material requires private human review.', undefined, 'gitleaks')
   } else if (snapshot.scans.gitleaks) {
     check(checks, 'GITLEAKS_SCAN_CLEAN', 'passed', 'security', 'Gitleaks scan produced no secret findings.', undefined, 'gitleaks')

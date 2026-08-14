@@ -160,6 +160,7 @@ function completedRecord(record: ValidationRecord): boolean {
   return record.sourceSha !== null && (
     record.structure.status === 'failed'
     || record.structure.status === 'inconclusive'
+    || record.structure.status === 'quarantined'
     || (record.structure.status === 'passed'
       && ['passed', 'failed', 'inconclusive', 'skipped'].includes(record.sandbox.status))
   )
