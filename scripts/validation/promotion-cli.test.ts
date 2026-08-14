@@ -15,9 +15,12 @@ const emptyFeed = {
 describe('P4 promotion CLI', () => {
   it('defaults to observation-only mode and requires an explicit publish flag', () => {
     expect(parsePromotionOptions([])).toMatchObject({ publish: false })
-    expect(parsePromotionOptions(['--publish', '--gate-reports', 'canary'])).toMatchObject({
+    expect(parsePromotionOptions([
+      '--publish', '--gate-reports', 'canary', '--previous-feed', 'previous.json',
+    ])).toMatchObject({
       publish: true,
       gateReportsPath: expect.stringContaining('canary'),
+      previousFeedPath: expect.stringContaining('previous.json'),
     })
   })
 

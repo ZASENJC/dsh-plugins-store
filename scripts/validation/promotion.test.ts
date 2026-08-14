@@ -7,6 +7,7 @@ import { parseBaseline, type BaselineTarget } from './baseline'
 import {
   assessPromotionGate,
   buildPublicValidationFeed,
+  mergeValidationFeeds,
 } from './promotion'
 
 const baseline = parseBaseline(JSON.parse(readFileSync('validation/baseline.json', 'utf8')))
@@ -169,5 +170,29 @@ describe('P4 promotion quality gate', () => {
     expect(feed.records).toHaveLength(20)
     expect(feed.records.filter(({ repositoryId }) => repositoryId === baseline.targets[0].repositoryId))
       .toEqual([expect.objectContaining({ sourceSha: currentSha })])
+  })
+
+  it('preserves unchanged verified records while replacing incremental repository results', () => {
+    const previous = buildPublicValidationFeed(
+      baseline,
+      reportsForAll(1),
+      '2026-08-14T14:00:00.000Z',
+    )
+    const changed = baseline.targets[0]
+    const currentSha = 'f'.repeat(40)
+    const incremental = buildPublicValidationFeed(
+      baseline,
+      [...reportsForAll(1), reportFor(changed, 3, 'verified', { sourceSha: currentSha })],
+      '2026-08-14T16:00:00.000Z',
+      reportsForAll(1),
+    )
+
+    const merged = mergeValidationFeeds(previous, {
+      ...incremental,
+      records: incremental.records.filter(({ repositoryId }) => repositoryId === changed.repositoryId),
+    })
+    expect(merged.records).toHaveLength(previous.records.length)
+    expect(merged.records.find(({ repositoryId }) => repositoryId === changed.repositoryId)?.sourceSha)
+      .toBe(currentSha)
   })
 })

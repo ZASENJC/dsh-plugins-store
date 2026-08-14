@@ -127,3 +127,11 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - GREEN verification: 5 focused workflow/runner/scanner/promotion files pass 15 tests; the complete suite passes 38 files and 189 tests. Coverage is 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines. TypeScript passes, YAML parsing finds the expected `baseline`, `validate`, and `publish` jobs, and Astro builds 1835 pages.
 - No full-catalog Action, live deployment, or hundreds-plugin local execution was started in this implementation run. The current observed canary evidence remains 1/20 until the workflow is published and run.
 - Evidence retention is not yet permanent: GitHub Action artifacts are configured for 30 days. Permanent sanitized-history storage requires a separately authorized durable backend or repository-write policy; do not claim the artifact archive satisfies the permanent-history requirement.
+
+### 2026-08-14 - Decoupled incremental scheduling
+
+- User requires catalog discovery and publication every 30 minutes regardless of validation health, while validation runs independently once per hour.
+- The first successful validation cursor must select every validation-eligible catalog entry. Later runs select only a new numeric repository ID or an entry whose catalog `pushedAt` changed; the sandbox still binds the resolved full source SHA.
+- Validation target or canary baseline changes invalidate the cursor and force one new full run. A failed validation run must not advance the cursor.
+- The validation workflow will publish an artifact containing its cursor, current public validation feed, and reusable canary evidence. It will not deploy the store directly. Catalog sync will best-effort restore the newest successful validation feed before building, but missing or failed validation state must not fail catalog discovery or deployment.
+- RED scope: full/incremental/empty selection, stable shard selection, cursor advancement, prior-feed preservation, 30-minute versus hourly scheduling, and absence of deployment credentials from the validation workflow.
