@@ -11,9 +11,11 @@ describe('awesome-dsh-plugins catalog matching', () => {
       <table>
         <tbody>
           <tr><td><a href="https://github.com/dsh-external/dsh-live-stats">Live</a></td><td>插件</td><td>关注</td><td>Stats</td></tr>
+          <tr><td><a href="https://github.com/Owner/Compatible">Compatible</a></td><td>插件</td><td>兼容</td><td>Ready</td></tr>
           <tr><td><a href="https://github.com/Owner/Needs-Work">Needs work</a></td><td>插件</td><td>需适配</td><td>Patch</td></tr>
           <tr><td><a href="https://github.com/Owner/Research-Me">Research</a></td><td>插件</td><td>待调研</td><td>Research</td></tr>
           <tr><td><a href="https://github.com/Owner/Placeholder">Placeholder</a></td><td>插件</td><td>占位</td><td>Reserved</td></tr>
+          <tr><td><a href="https://github.com/Owner/Not-Applicable">N/A</a></td><td>插件</td><td>不适用</td><td>Skip</td></tr>
           <tr><td><a href="https://github.com/Owner/Removed">Removed</a></td><td>插件</td><td>已删除</td><td>Gone</td></tr>
         </tbody>
       </table>
@@ -21,6 +23,7 @@ describe('awesome-dsh-plugins catalog matching', () => {
     `
 
     expect([...extractAwesomeRepositoryNames(html)].sort()).toEqual([
+      'compatible',
       'dsh-live-stats',
       'needs-work',
       'research-me',
@@ -36,6 +39,7 @@ describe('GitHub README rendering', () => {
           <h1>Plugin</h1>
           <a href="../CHANGELOG.md">Changelog</a>
           <a href="#install">Install</a>
+          <a href="https://example.com/docs">External docs</a>
           <img src="../assets/demo.png" alt="Demo">
         </article>
       </div>
@@ -49,7 +53,15 @@ describe('GitHub README rendering', () => {
     expect(rendered).toContain('<h1>Plugin</h1>')
     expect(rendered).toContain('href="https://github.com/Owner/Plugin/blob/main/CHANGELOG.md"')
     expect(rendered).toContain('href="#install"')
+    expect(rendered).toContain('href="https://example.com/docs"')
     expect(rendered).toContain('src="https://raw.githubusercontent.com/Owner/Plugin/main/assets/demo.png"')
     expect(rendered).not.toContain('id="readme"')
+  })
+
+  it('returns an empty string when GitHub does not return a README article', () => {
+    expect(prepareReadmeHtml('<p>Not found</p>', {
+      fullName: 'Owner/Plugin',
+      defaultBranch: 'main',
+    })).toBe('')
   })
 })
