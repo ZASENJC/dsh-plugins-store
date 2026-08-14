@@ -22,8 +22,8 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 | --- | --- | --- | --- |
 | P0 | Report schema, state machine, invalidation, execution types | Complete | Unit tests cover valid/invalid transitions, history, SHA/DSH/platform/validator expiry, and execution types |
 | P1 | Discovery, execution-type recognition, structure check, shadow workflow | Implemented; observation pending | Full catalog produces sanitized reports; `validation.json` remains unchanged |
-| P2 | About 20 known Linux headless/tool baselines | Pending | Each target is SHA-pinned and produces a repeatable sandbox report or explicit inconclusive result |
-| P3 | DSH Web + Playwright, collection and channel/MCP validators | Pending | Validator-specific fixtures pass without real credentials or external services |
+| P2 | About 20 known Linux headless/tool baselines | Implemented; 1/20 observed | Each target is SHA-pinned and produces a repeatable sandbox report or explicit inconclusive result |
+| P3 | DSH Web + Playwright, collection and channel/MCP validators | Implemented; live Web observation pending | Validator-specific fixtures pass without real credentials or external services |
 | P4 | False-positive observation gate, Verified promotion, SHA-pinned install | Pending | Promotion refuses insufficient or stale evidence and accepts a passing observed baseline |
 | P5 | Opt-in Issue bot, Windows/macOS | Deferred | Requires separate authorization |
 
@@ -63,4 +63,10 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - P1 workflow GREEN: 38 focused tests pass. Catalog discovery is stable-sharded, fixed-SHA archives are expanded in a non-root networkless container, one repository failure cannot abort a shard, and scheduled CI uploads artifacts only with `contents: read`.
 - TypeScript checks pass with the one-shot `--ignoreDeprecations 6.0` flag; the repository's existing `baseUrl` setting blocks an unqualified TypeScript 7 check.
 - P1 full-catalog observation remains open until the sharded CI run completes; no public status is written before that gate.
-- Next: define the approximately 20-project P2 baseline and restricted Linux sandbox command/result contract.
+- P2 GREEN: the 20-entry baseline is bound to numeric repository IDs and full source SHAs. Acquisition and execution are separate; execution is non-root, networkless, secret-free, `linux/amd64`, resource-bounded, and disposable.
+- P2 live evidence: the calculator sample completed `queued -> running -> install_passed -> runtime_passed -> smoke_passed -> verified`; its container and volume were removed. The other 19 baseline targets remain unobserved, so this is not yet a baseline quality result.
+- P3 GREEN: Web/Playwright, collection, channel/MCP, and validator-routing contracts pass 15 focused tests. Missing contracts or unsupported platforms become `inconclusive` rather than false failures.
+- P3 image evidence: `dsh-web-validator:0.1.0` built for `linux/amd64`, runs as `pwuser`, and loads Playwright 1.55.0, `ws` 8.18.3, and DSH 0.1.0-rc.6 from the trusted validator path.
+- P3 has not yet observed a real Web plugin contract; no Web result is eligible for promotion.
+- Combined P0-P3 validation suite: 16 files and 66 tests pass; TypeScript passes with `--ignoreDeprecations 6.0`.
+- Next: implement the P4 observation/promotion gate and remove the legacy README-to-current-Verified trust path. Publishing must remain disabled until the baseline gate is genuinely met.
