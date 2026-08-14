@@ -1,0 +1,11 @@
+[Unit]
+Description=Queue DSH Plugin Store refresh every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:25,55:00
+AccuracySec=1s
+Persistent=true
+Unit=dsh-plugins-store-dispatch.service
+
+[Install]
+WantedBy=timers.target

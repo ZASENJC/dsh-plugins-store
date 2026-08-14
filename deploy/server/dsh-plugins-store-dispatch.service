@@ -1,0 +1,26 @@
+[Unit]
+Description=Queue DSH Plugin Store refresh on GitHub Actions
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/flock -n /run/lock/dsh-plugins-store-dispatch.lock /usr/local/sbin/dsh-plugins-store-dispatch
+LoadCredential=github-token:/etc/dsh-plugins-store/github-token
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/run/lock

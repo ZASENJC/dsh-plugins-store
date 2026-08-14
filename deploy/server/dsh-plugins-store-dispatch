@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+readonly API_URL="https://api.github.com/repos/ZASENJC/dsh-plugins-store/actions/workflows/sync-catalog.yml/dispatches"
+readonly CREDENTIAL_PATH="${CREDENTIALS_DIRECTORY:-}/github-token"
+
+if [[ ! -r "${CREDENTIAL_PATH}" ]]; then
+  echo "GitHub dispatch credential is unavailable" >&2
+  exit 78
+fi
+
+github_token="$(<"${CREDENTIAL_PATH}")"
+if [[ -z "${github_token}" ]]; then
+  echo "GitHub dispatch credential is empty" >&2
+  exit 78
+fi
+
+response_code="$({
+  /usr/bin/curl --config - --write-out '%{http_code}' <<EOF
+silent
+show-error
+request = "POST"
+url = "${API_URL}"
+header = "Accept: application/vnd.github+json"
+header = "Authorization: Bearer ${github_token}"
+header = "X-GitHub-Api-Version: 2022-11-28"
+data = "{\"ref\":\"main\"}"
+output = "/dev/null"
+connect-timeout = 15
+max-time = 30
+retry = 2
+retry-delay = 5
+EOF
+})"
+unset github_token
+
+if [[ "${response_code}" != "204" ]]; then
+  echo "GitHub workflow dispatch failed with HTTP ${response_code}" >&2
+  exit 69
+fi
+
+echo "Queued DSH Plugin Store refresh"

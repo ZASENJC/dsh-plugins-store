@@ -1,8 +1,6 @@
 name: Sync catalog
 
 on:
-  schedule:
-    - cron: '25,55 * * * *'
   workflow_dispatch:
 
 permissions:
