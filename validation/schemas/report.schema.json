@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dsh.aitreez.com/schemas/validation-report-v1.json",
+  "title": "DSH Plugin Validation Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportId",
+    "mode",
+    "validationKind",
+    "executionType",
+    "repository",
+    "target",
+    "startedAt",
+    "completedAt",
+    "currentStatus",
+    "events",
+    "structureChecks",
+    "failure",
+    "artifacts"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "reportId": { "type": "string", "minLength": 1 },
+    "mode": { "enum": ["shadow", "enforce"] },
+    "validationKind": {
+      "enum": [
+        "structure",
+        "linux-headless",
+        "dsh-web",
+        "command-smoke",
+        "channel-mock",
+        "skill-static",
+        "collection",
+        "native",
+        "non-plugin"
+      ]
+    },
+    "executionType": {
+      "enum": ["host-tool", "web", "command", "channel-mcp", "native", "skill", "collection", "non-plugin"]
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fullName", "url", "sourceSha", "sourcePushedAt"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "fullName": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "url": { "type": "string", "format": "uri" },
+        "sourceSha": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" },
+        "sourcePushedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dshVersion", "platform", "nodeVersion", "validatorVersion"],
+      "properties": {
+        "dshVersion": { "type": "string", "minLength": 1 },
+        "platform": { "type": "string", "minLength": 1 },
+        "nodeVersion": { "type": "string", "minLength": 1 },
+        "validatorVersion": { "type": "string", "minLength": 1 }
+      }
+    },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" },
+    "currentStatus": { "$ref": "#/$defs/status" },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/event" }
+    },
+    "structureChecks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/structureCheck" }
+    },
+    "failure": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/failure" }
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    }
+  },
+  "$defs": {
+    "status": {
+      "enum": [
+        "discovered",
+        "recognized",
+        "unrecognized",
+        "structure_passed",
+        "structure_failed",
+        "queued",
+        "running",
+        "inconclusive",
+        "install_passed",
+        "install_failed",
+        "runtime_passed",
+        "runtime_failed",
+        "smoke_passed",
+        "smoke_failed",
+        "verified",
+        "failed",
+        "expired"
+      ]
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "stage", "status", "at"],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "stage": { "enum": ["discovery", "classification", "structure", "sandbox", "installation", "runtime", "smoke", "final"] },
+        "status": { "$ref": "#/$defs/status" },
+        "at": { "type": "string", "format": "date-time" },
+        "code": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "attribution": { "enum": ["plugin", "compatibility", "infrastructure", "policy", "inconclusive"] },
+        "fingerprint": { "type": "string", "minLength": 1 }
+      }
+    },
+    "structureCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "status", "severity", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["passed", "failed", "warning", "quarantined", "not-run"] },
+        "severity": { "enum": ["required", "advisory", "security"] },
+        "message": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "tool": { "type": "string", "minLength": 1 }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attribution", "code", "fingerprint", "reason", "reproducibility"],
+      "properties": {
+        "attribution": { "enum": ["plugin", "compatibility", "infrastructure", "policy", "inconclusive"] },
+        "code": { "type": "string", "minLength": 1 },
+        "fingerprint": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "reproducibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["attempts", "matchingFingerprints"],
+          "properties": {
+            "attempts": { "type": "integer", "minimum": 1 },
+            "matchingFingerprints": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "url"],
+      "properties": {
+        "kind": { "enum": ["report", "sanitized-log", "playwright-trace", "scanner-result"] },
+        "url": { "type": "string", "format": "uri-reference" },
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+      }
+    }
+  }
+}
