@@ -47,6 +47,7 @@ describe('P2 restricted Linux sandbox command plan', () => {
     for (const step of plan.steps.filter(({ phase }) => phase === 'execution')) {
       expect(step.network).toBe('none')
       expect(step.command.args).toEqual(expect.arrayContaining([
+        '--platform=linux/amd64',
         '--read-only',
         '--cap-drop=ALL',
         '--security-opt=no-new-privileges',
