@@ -82,6 +82,7 @@ jobs:
           npm run --silent validate:select -- \
             --catalog validation-input/catalog.json \
             --baseline validation/baseline.json \
+            --previous-feed validation-input/previous-validation.json \
             --output validation-input/selection.json \
             --shard-count 20 \
             "${previous_args[@]}" > validation-input/selection-summary.json

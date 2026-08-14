@@ -1,4 +1,5 @@
 import { parseValidationReport, type ValidationReport } from '../../src/lib/validation-report'
+import type { ValidationRecord } from '../../src/lib/validation'
 
 const ELIGIBLE_PROJECT_TYPES = new Set(['plugin', 'skill', 'collection', 'channel'])
 const TERMINAL_STATUSES = new Set([
@@ -155,6 +156,52 @@ function sameTarget(left: ValidationStateTarget, right: ValidationStateTarget): 
     && left.baselineDigest === right.baselineDigest
 }
 
+function completedRecord(record: ValidationRecord): boolean {
+  return record.sourceSha !== null && (
+    record.structure.status === 'failed'
+    || record.structure.status === 'inconclusive'
+    || (record.structure.status === 'passed'
+      && ['passed', 'failed', 'inconclusive', 'skipped'].includes(record.sandbox.status))
+  )
+}
+
+export function reconcileValidationState(
+  rawCatalog: unknown,
+  rawPrevious: ValidationState | null,
+  records: ReadonlyMap<number, ValidationRecord>,
+  target: ValidationStateTarget,
+  now: string,
+): ValidationState | null {
+  const catalog = parseCatalog(rawCatalog)
+  const parsedTarget = parseTarget(target)
+  const previous = rawPrevious === null ? null : parseValidationState(rawPrevious)
+  if (previous === null || !sameTarget(previous.target, parsedTarget)) return previous
+  if (!isDate(now)) throw new Error('Validation reconciliation time is invalid')
+
+  const eligible = catalog.repositories.filter(({ projectType }) => ELIGIBLE_PROJECT_TYPES.has(projectType))
+  const eligibleIds = new Set(eligible.map(({ repositoryId }) => repositoryId))
+  const entries = new Map(previous.entries
+    .filter(({ repositoryId }) => eligibleIds.has(repositoryId))
+    .map(({ repositoryId, pushedAt }) => [repositoryId, pushedAt]))
+  for (const repository of eligible) {
+    const record = records.get(repository.repositoryId)
+    if (!record
+      || !completedRecord(record)
+      || record.sourcePushedAt !== repository.pushedAt
+      || record.dshVersion !== parsedTarget.dshVersion
+      || record.platform !== parsedTarget.platform
+      || record.validatorVersion !== parsedTarget.validatorVersion) continue
+    entries.set(repository.repositoryId, repository.pushedAt)
+  }
+  return parseValidationState({
+    schemaVersion: 1,
+    generatedAt: now,
+    catalogGeneratedAt: catalog.generatedAt,
+    target: parsedTarget,
+    entries: [...entries].map(([repositoryId, pushedAt]) => ({ repositoryId, pushedAt })),
+  })
+}
+
 export function selectValidationDelta(
   rawCatalog: unknown,
   rawPrevious: ValidationState | null,
@@ -191,7 +238,7 @@ function reportTime(report: ValidationReport): number {
   return Date.parse(report.completedAt ?? report.startedAt)
 }
 
-function conclusiveReport(reports: ValidationReport[], repositoryId: number, target: ValidationStateTarget): ValidationReport | null {
+function terminalReport(reports: ValidationReport[], repositoryId: number, target: ValidationStateTarget): ValidationReport | null {
   const candidates = reports.map(parseValidationReport).filter((report) => (
     report.repository.id === repositoryId
     && report.target.dshVersion === target.dshVersion
@@ -199,11 +246,7 @@ function conclusiveReport(reports: ValidationReport[], repositoryId: number, tar
     && report.target.validatorVersion === target.validatorVersion
     && TERMINAL_STATUSES.has(report.currentStatus)
   )).sort((left, right) => reportTime(right) - reportTime(left) || right.events.length - left.events.length)
-  const report = candidates[0]
-  if (!report
-    || report.failure?.attribution === 'infrastructure'
-    || report.events.at(-1)?.attribution === 'infrastructure') return null
-  return report
+  return candidates[0] ?? null
 }
 
 export function buildValidationState(
@@ -230,7 +273,7 @@ export function buildValidationState(
   for (const repositoryId of selection.repositoryIds) {
     const repository = eligible.get(repositoryId)
     if (!repository) throw new Error(`Validation selection repository ${repositoryId} is not eligible`)
-    const report = conclusiveReport(rawReports, repositoryId, selection.target)
+    const report = terminalReport(rawReports, repositoryId, selection.target)
     if (report && report.repository.sourcePushedAt === repository.pushedAt) {
       entries.set(repositoryId, repository.pushedAt)
     }

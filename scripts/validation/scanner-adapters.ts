@@ -89,7 +89,11 @@ export function buildScannerCommands(
     {
       tool: 'osv',
       file: 'docker',
-      args: [...dockerPrefix(sourceDir), SCANNER_IMAGES.osv, 'scan', 'source', '--format=json', '--recursive', '/workspace'],
+      args: [
+        ...dockerPrefix(sourceDir),
+        SCANNER_IMAGES.osv,
+        'scan', 'source', '--format=json', '--recursive', '--allow-no-lockfiles', '/workspace',
+      ],
       outputPath: join(outputRoot, 'osv.json'),
     },
     {
@@ -181,6 +185,13 @@ function parseJson(output: string): unknown {
   return output.trim() === '' ? [] : JSON.parse(output)
 }
 
+function structuredOutputFromError(error: unknown): string | null {
+  const record = asRecord(error)
+  return typeof record?.stdout === 'string' && record.stdout.trim() !== ''
+    ? record.stdout
+    : null
+}
+
 export async function runScannerCommands(
   sourceDirectory: string,
   {
@@ -198,14 +209,22 @@ export async function runScannerCommands(
     gitleaks: { status: 'unavailable', secrets: [] },
   }
   for (const command of commands) {
+    let parsed: unknown
     try {
-      const parsed = parseJson(await executor(command.file, command.args))
-      if (command.tool === 'trivy') result.trivy = parseTrivyReport(parsed)
-      else if (command.tool === 'osv') result.osv = parseOsvReport(parsed)
-      else result.gitleaks = parseGitleaksReport(parsed)
-    } catch {
+      parsed = parseJson(await executor(command.file, command.args))
+    } catch (error) {
+      const output = structuredOutputFromError(error)
+      if (output === null) continue
+      try {
+        parsed = parseJson(output)
+      } catch {
+        continue
+      }
       // Unavailable is an infrastructure result; never turn it into a plugin failure.
     }
+    if (command.tool === 'trivy') result.trivy = parseTrivyReport(parsed)
+    else if (command.tool === 'osv') result.osv = parseOsvReport(parsed)
+    else result.gitleaks = parseGitleaksReport(parsed)
   }
   return result
 }

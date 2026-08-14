@@ -4,7 +4,13 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { parseBaseline } from './baseline'
-import { parseValidationState, selectValidationDelta, type ValidationState } from './validation-state'
+import { parseValidationFeed } from '../../src/lib/validation'
+import {
+  parseValidationState,
+  reconcileValidationState,
+  selectValidationDelta,
+  type ValidationState,
+} from './validation-state'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 
@@ -28,20 +34,39 @@ export async function runValidationSelectCli(args = process.argv.slice(2)): Prom
   const baselinePath = resolve(valueAfter(args, '--baseline') ?? join(root, 'validation/baseline.json'))
   const outputPath = resolve(valueAfter(args, '--output') ?? join(root, 'validation/selection.json'))
   const shardCount = Number(valueAfter(args, '--shard-count') ?? '20')
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8'))
   const baselineSource = await readFile(baselinePath, 'utf8')
   const baseline = parseBaseline(JSON.parse(baselineSource))
-  const previous = await readPrevious(valueAfter(args, '--previous'))
+  const previousPath = valueAfter(args, '--previous')
+  const target = {
+    dshVersion: baseline.dshVersion,
+    platform: baseline.platform,
+    validatorVersion: baseline.validatorVersion,
+    baselineDigest: createHash('sha256').update(baselineSource).digest('hex'),
+  }
+  const now = new Date().toISOString()
+  let previous = await readPrevious(previousPath)
+  const previousFeedPath = valueAfter(args, '--previous-feed')
+  if (previousFeedPath) {
+    previous = reconcileValidationState(
+      catalog,
+      previous,
+      parseValidationFeed(JSON.parse(await readFile(resolve(previousFeedPath), 'utf8'))),
+      target,
+      now,
+    )
+    if (previous !== null && previousPath) {
+      const resolvedPreviousPath = resolve(previousPath)
+      await mkdir(dirname(resolvedPreviousPath), { recursive: true })
+      await writeFile(resolvedPreviousPath, `${JSON.stringify(previous, null, 2)}\n`, 'utf8')
+    }
+  }
   const selection = selectValidationDelta(
-    JSON.parse(await readFile(catalogPath, 'utf8')),
+    catalog,
     previous,
-    {
-      dshVersion: baseline.dshVersion,
-      platform: baseline.platform,
-      validatorVersion: baseline.validatorVersion,
-      baselineDigest: createHash('sha256').update(baselineSource).digest('hex'),
-    },
+    target,
     shardCount,
-    new Date().toISOString(),
+    now,
   )
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(selection, null, 2)}\n`, 'utf8')
