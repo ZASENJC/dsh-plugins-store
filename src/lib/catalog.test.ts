@@ -113,7 +113,7 @@ describe('catalog data', () => {
     })
   })
 
-  it('matches awesome mirrors by exact repository name and keeps them first in every sort mode', () => {
+  it('matches awesome mirrors by exact repository name', () => {
     const popular = {
       ...githubRepository,
       id: 1,
@@ -142,64 +142,148 @@ describe('catalog data', () => {
       awesomeListed: true,
     })
     expect(catalog.repositories[1].awesomeListed).toBe(false)
-    expect(sortCatalogEntries(catalog.repositories, 'updated')[0].awesomeListed).toBe(true)
-    expect(sortCatalogEntries(catalog.repositories, 'name')[0].awesomeListed).toBe(true)
-
-    const ordinaryCatalog = buildCatalog([
-      { ...popular, name: 'zulu-plugin', full_name: 'owner/zulu-plugin' },
-      {
-        ...awesomeMirror,
-        name: 'alpha-plugin',
-        full_name: 'owner/alpha-plugin',
-        pushed_at: '2026-08-15T00:00:00Z',
-      },
-    ])
-    expect(sortCatalogEntries(ordinaryCatalog.repositories, 'updated')[0].name).toBe('alpha-plugin')
-    expect(sortCatalogEntries(ordinaryCatalog.repositories, 'name')[0].name).toBe('alpha-plugin')
   })
 
-  it('shares priority between awesome and verified projects, then prefers verified projects on equal stars', () => {
-    const ordinary = {
+  it('interleaves two priority projects with one high-star discovery project', () => {
+    const ordinaryPopular = {
       ...githubRepository,
       id: 21,
-      name: 'ordinary-plugin',
-      full_name: 'owner/ordinary-plugin',
+      name: 'ordinary-popular',
+      full_name: 'owner/ordinary-popular',
       stargazers_count: 10_000,
     }
-    const awesome = {
+    const ordinaryNext = {
       ...githubRepository,
       id: 22,
-      name: 'awesome-plugin',
-      full_name: 'owner/awesome-plugin',
+      name: 'ordinary-next',
+      full_name: 'owner/ordinary-next',
+      stargazers_count: 9_000,
+    }
+    const awesomeHigh = {
+      ...githubRepository,
+      id: 23,
+      name: 'awesome-high',
+      full_name: 'owner/awesome-high',
       stargazers_count: 100,
     }
     const verifiedTie = {
       ...githubRepository,
-      id: 23,
+      id: 24,
       name: 'verified-tie',
       full_name: 'owner/verified-tie',
       stargazers_count: 100,
     }
-    const verifiedPopular = {
+    const awesomeNext = {
       ...githubRepository,
-      id: 24,
-      name: 'verified-popular',
-      full_name: 'owner/verified-popular',
-      stargazers_count: 200,
+      id: 25,
+      name: 'awesome-next',
+      full_name: 'owner/awesome-next',
+      stargazers_count: 90,
+    }
+    const verifiedLast = {
+      ...githubRepository,
+      id: 26,
+      name: 'verified-last',
+      full_name: 'owner/verified-last',
+      stargazers_count: 80,
     }
     const catalog = buildCatalog(
-      [ordinary, awesome, verifiedTie, verifiedPopular],
+      [ordinaryPopular, ordinaryNext, awesomeHigh, verifiedTie, awesomeNext, verifiedLast],
       '2026-08-14T00:00:00.000Z',
-      4,
-      new Set(['awesome-plugin']),
-      new Set(['owner/verified-tie', 'owner/verified-popular']),
+      6,
+      new Set(['awesome-high', 'awesome-next']),
+      new Set(['owner/verified-tie', 'owner/verified-last']),
     )
 
     expect(catalog.repositories.map(({ fullName }) => fullName)).toEqual([
-      'owner/verified-popular',
       'owner/verified-tie',
-      'owner/awesome-plugin',
-      'owner/ordinary-plugin',
+      'owner/awesome-high',
+      'owner/ordinary-popular',
+      'owner/awesome-next',
+      'owner/verified-last',
+      'owner/ordinary-next',
+    ])
+    expect(sortCatalogEntries(catalog.repositories, 'recommended').map(({ fullName }) => fullName)).toEqual([
+      'owner/verified-tie',
+      'owner/awesome-high',
+      'owner/ordinary-popular',
+      'owner/awesome-next',
+      'owner/verified-last',
+      'owner/ordinary-next',
+    ])
+  })
+
+  it('uses the selected global sort before status tie-breakers', () => {
+    const ordinaryPopular = {
+      ...githubRepository,
+      id: 31,
+      name: 'zulu-popular',
+      full_name: 'owner/zulu-popular',
+      stargazers_count: 10_000,
+      pushed_at: '2026-08-15T00:00:00Z',
+    }
+    const awesomeOlder = {
+      ...githubRepository,
+      id: 32,
+      name: 'middle-awesome',
+      full_name: 'owner/middle-awesome',
+      stargazers_count: 1,
+      pushed_at: '2025-01-01T00:00:00Z',
+    }
+    const ordinaryAlpha = {
+      ...githubRepository,
+      id: 33,
+      name: 'alpha-ordinary',
+      full_name: 'owner/alpha-ordinary',
+      stargazers_count: 2,
+      pushed_at: '2026-08-14T00:00:00Z',
+    }
+    const catalog = buildCatalog(
+      [ordinaryPopular, awesomeOlder, ordinaryAlpha],
+      '2026-08-14T00:00:00.000Z',
+      3,
+      new Set(['middle-awesome']),
+    )
+
+    expect(sortCatalogEntries(catalog.repositories, 'stars')[0].fullName).toBe('owner/zulu-popular')
+    expect(sortCatalogEntries(catalog.repositories, 'updated')[0].fullName).toBe('owner/zulu-popular')
+    expect(sortCatalogEntries(catalog.repositories, 'name')[0].fullName).toBe('owner/alpha-ordinary')
+  })
+
+  it('prefers priority and then verified projects only when global sort values are equal', () => {
+    const ordinaryTie = {
+      ...githubRepository,
+      id: 41,
+      name: 'ordinary-tie',
+      full_name: 'owner-c/ordinary-tie',
+      stargazers_count: 100,
+    }
+    const awesomeTie = {
+      ...githubRepository,
+      id: 42,
+      name: 'awesome-tie',
+      full_name: 'owner-b/awesome-tie',
+      stargazers_count: 100,
+    }
+    const verifiedTie = {
+      ...githubRepository,
+      id: 43,
+      name: 'verified-tie',
+      full_name: 'owner-a/verified-tie',
+      stargazers_count: 100,
+    }
+    const catalog = buildCatalog(
+      [ordinaryTie, awesomeTie, verifiedTie],
+      '2026-08-14T00:00:00.000Z',
+      3,
+      new Set(['awesome-tie']),
+      new Set(['owner-a/verified-tie']),
+    )
+
+    expect(sortCatalogEntries(catalog.repositories, 'stars').map(({ fullName }) => fullName)).toEqual([
+      'owner-a/verified-tie',
+      'owner-b/awesome-tie',
+      'owner-c/ordinary-tie',
     ])
   })
 
