@@ -26,6 +26,7 @@ describe('pinned scanner adapters', () => {
     }
     expect(commands[0].args).toContain('aquasec/trivy:0.74.0')
     expect(commands[0].args).toContain('--memory=1g')
+    expect(commands[0].args).toContain('--tmpfs=/tmp:rw,noexec,nosuid,size=512m')
     expect(commands[0].args).toContain('--cache-dir=/tmp/trivy-cache')
     expect(commands[0].args).toEqual(expect.arrayContaining([
       expect.stringMatching(/^type=bind,src=.+,dst=\/tmp\/trivy-cache$/),
