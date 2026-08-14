@@ -77,8 +77,9 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - Published records automatically become `expired` when the current DSH version, platform, or validator version changes; a contract test keeps that target synchronized with `validation/baseline.json`.
 - Website and embedded plugin-store install commands append `#<sourceSha>` only when the promoted current validation record is verified.
 - Current promotion observation is blocked at 0/20 retained report sets and 0/20 repeatable targets. The earlier calculator live run remains noted as P2 execution evidence, but its report is not present in the current local promotion input. `src/data/validation.json` therefore remains unchanged and empty.
-- Final checks: 37 test files and 181 tests pass; coverage is 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript and the 1835-page Astro build pass; the rebuilt embedded plugin passes 41 focused tests.
+- Final checks: 37 test files and 182 tests pass; coverage is 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript and the 1835-page Astro build pass; the rebuilt embedded plugin passes 41 focused tests.
 - P0-P4 contain no external Issue creation path. P5 remains deferred.
 - Next activation step: retain two fresh sandbox reports for every baseline target, review the observed mismatch rate, then run the explicit P4 publish command. Do not begin P5 as part of that activation.
 - Follow-up review started: verify that duplicate delivery of an otherwise valid report is deduplicated without being counted as an evidence-binding mismatch. This changes only promotion metrics, not eligibility requirements or publication state.
 - Follow-up GREEN: promotion now counts binding mismatches before deduplicating valid observations; 4 focused promotion tests pass, including duplicate delivery and stale-binding coverage.
+- Follow-up final check: full coverage and TypeScript pass, `git diff --check origin/main..HEAD` is clean, and the read-only P4 observation remains blocked at 0/20 with `published: false`.
