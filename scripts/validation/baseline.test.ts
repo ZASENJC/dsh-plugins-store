@@ -88,4 +88,20 @@ describe('P2 Linux headless/tool baseline', () => {
       }).targets[0].expectedFinalStatuses).toEqual(expectedFinalStatuses)
     }
   })
+
+  it('records the observed fixed-SHA outcomes for known negative and inconclusive canaries', async () => {
+    const baseline = parseBaseline(JSON.parse(await readFile('validation/baseline.json', 'utf8')))
+    const expected = new Map<number, string[]>([
+      [1324174801, ['failed']],
+      [1327532651, ['failed']],
+      [1323134652, ['inconclusive']],
+      [1329755053, ['failed']],
+      [1333107949, ['inconclusive']],
+    ])
+
+    for (const [repositoryId, statuses] of expected) {
+      expect(baseline.targets.find((target) => target.repositoryId === repositoryId)?.expectedFinalStatuses)
+        .toEqual(statuses)
+    }
+  })
 })
