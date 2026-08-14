@@ -17,6 +17,15 @@ on:
         description: Maximum repositories per shard, 0 means all
         required: true
         default: '5'
+      run_baseline:
+        description: Run the pinned P2 Linux baseline
+        type: boolean
+        required: true
+        default: false
+      baseline_limit:
+        description: Maximum baseline targets, 0 means all 20
+        required: true
+        default: '1'
 
 permissions:
   contents: read
@@ -60,5 +69,32 @@ jobs:
         with:
           name: plugin-validation-shadow-${{ matrix.shard }}
           path: validation/reports/shard-${{ matrix.shard }}/
+          if-no-files-found: warn
+          retention-days: 30
+
+  baseline:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_baseline == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run pinned Linux baseline
+        run: >-
+          npm run validate:baseline --
+          --output validation/reports/baseline
+          --limit "${{ inputs.baseline_limit }}"
+      - name: Upload sanitized baseline reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-validation-baseline
+          path: validation/reports/baseline/
           if-no-files-found: warn
           retention-days: 30

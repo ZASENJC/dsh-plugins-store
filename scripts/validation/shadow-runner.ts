@@ -35,7 +35,7 @@ export interface ShadowRunSummary {
   }>
 }
 
-async function writeReportAtomically(outputDir: string, report: ValidationReport): Promise<string> {
+export async function writeReportAtomically(outputDir: string, report: ValidationReport): Promise<string> {
   const repositoryDir = join(outputDir, String(report.repository.id))
   const reportPath = join(repositoryDir, `${report.repository.sourceSha}.json`)
   const temporaryPath = join(repositoryDir, `.${report.repository.sourceSha}.${randomUUID()}.tmp`)

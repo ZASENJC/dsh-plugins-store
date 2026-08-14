@@ -60,7 +60,7 @@ function plan() {
 
 describe('P2 sandbox execution report', () => {
   it('records each successful ladder stage and always destroys sandbox resources', async () => {
-    const executor = vi.fn(async () => ({ exitCode: 0, timedOut: false, stdout: '', stderr: '' }))
+    const executor = vi.fn(async (_command, _id: string) => ({ exitCode: 0, timedOut: false, stdout: '', stderr: '' }))
 
     const result = await executeLinuxSandboxPlan(structureReport(), plan(), {
       executor,
