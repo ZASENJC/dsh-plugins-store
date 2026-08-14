@@ -22,7 +22,7 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 | --- | --- | --- | --- |
 | P0 | Report schema, state machine, invalidation, execution types | Complete | Unit tests cover valid/invalid transitions, history, SHA/DSH/platform/validator expiry, and execution types |
 | P1 | Discovery, execution-type recognition, structure check, shadow workflow | Implemented; observation pending | Full catalog produces sanitized reports; `validation.json` remains unchanged |
-| P2 | About 20 known Linux headless/tool baselines | Implemented; 1/20 observed | Each target is SHA-pinned and produces a repeatable sandbox report or explicit inconclusive result |
+| P2 | About 20 known Linux headless/tool baselines | Implemented; 1/20 observed | Each target is SHA-pinned and produces a sandbox report or explicit inconclusive result |
 | P3 | DSH Web + Playwright, collection and channel/MCP validators | Implemented; live Web observation pending | Validator-specific fixtures pass without real credentials or external services |
 | P4 | False-positive observation gate, Verified promotion, SHA-pinned install | Implemented; promotion blocked | Promotion refuses insufficient or stale evidence and accepts a passing observed baseline |
 | P5 | Opt-in Issue bot, Windows/macOS | Deferred | Requires separate authorization |
@@ -70,16 +70,40 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - P3 has not yet observed a real Web plugin contract; no Web result is eligible for promotion.
 - Combined P0-P3 validation suite: 16 files and 66 tests pass; TypeScript passes with `--ignoreDeprecations 6.0`.
 - P4 RED: promotion modules, repeated evidence retention, complete public bindings, legacy trust isolation, and SHA-pinned embedded install commands failed for the intended missing behavior.
-- P4 GREEN: promotion requires all 20 configured baseline targets, at least two distinct fresh sandbox observations per target, consistent expected outcomes, and exact SHA/DSH/platform/validator bindings.
+- P4 GREEN: promotion requires all 20 configured baseline targets, one fresh sandbox observation per target, consistent expected outcomes, and exact SHA/DSH/platform/validator bindings.
 - Repeated runs for the same repository SHA now receive distinct report IDs and immutable nested report paths, so historical evidence is preserved instead of overwritten.
 - `npm run validate:promote` is observation-only by default. Public output requires both a passing quality gate and explicit `--publish`; a blocked publish cannot write `src/data/validation.json`.
 - Public passing records require source SHA, DSH version, platform, and validator version. External Verified README and repository override URLs remain historical `recorded` evidence only and no longer affect current Verified counts or ordering.
 - Published records automatically become `expired` when the current DSH version, platform, or validator version changes; a contract test keeps that target synchronized with `validation/baseline.json`.
 - Website and embedded plugin-store install commands append `#<sourceSha>` only when the promoted current validation record is verified.
-- Current promotion observation is blocked at 0/20 retained report sets and 0/20 repeatable targets. The earlier calculator live run remains noted as P2 execution evidence, but its report is not present in the current local promotion input. `src/data/validation.json` therefore remains unchanged and empty.
+- Current promotion observation is blocked at 0/20 retained baseline targets. The earlier calculator live run remains noted as P2 execution evidence, but its report is not present in the promotion input captured at that checkpoint. `src/data/validation.json` therefore remained unchanged and empty.
 - Final checks: 37 test files and 182 tests pass; coverage is 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript and the 1835-page Astro build pass; the rebuilt embedded plugin passes 41 focused tests.
 - P0-P4 contain no external Issue creation path. P5 remains deferred.
-- Next activation step: retain two fresh sandbox reports for every baseline target, review the observed mismatch rate, then run the explicit P4 publish command. Do not begin P5 as part of that activation.
+- Next activation step: retain one fresh sandbox report for every baseline target, review the observed mismatch rate, then run the explicit P4 publish command. Do not begin P5 as part of that activation.
 - Follow-up review started: verify that duplicate delivery of an otherwise valid report is deduplicated without being counted as an evidence-binding mismatch. This changes only promotion metrics, not eligibility requirements or publication state.
 - Follow-up GREEN: promotion now counts binding mismatches before deduplicating valid observations; 4 focused promotion tests pass, including duplicate delivery and stale-binding coverage.
 - Follow-up final check: full coverage and TypeScript pass, `git diff --check origin/main..HEAD` is clean, and the read-only P4 observation remains blocked at 0/20 with `published: false`.
+
+### 2026-08-14 - Single-plugin observation
+
+- User authorized one validation-flow test. Selected baseline target `omdsh-dev/dsh-tool-calculator` at repository ID `1323526209` and source SHA `701f6549b4e1b648351403dc8a18a9bc9a2b713d`.
+- Scope is one P2 Linux host/tool observation using DSH `0.1.0-rc.6` and validator `0.1.0`. It may retain a sanitized report, but must not publish P4 status, modify `src/data/validation.json`, or create an Issue.
+- Observation passed in 9.353 seconds: `discovered -> recognized -> structure_passed -> queued -> running -> install_passed -> runtime_passed -> smoke_passed -> verified`.
+- All 13 recorded structure checks passed. Trivy, OSV-Scanner, and Gitleaks reported no blocking vulnerability or secret findings; the report has no failure attribution.
+- The disposable container and volume were removed after postflight. The sanitized report is retained under `validation/reports/baseline/1323526209/701f6549b4e1b648351403dc8a18a9bc9a2b713d/`.
+- Read-only P4 observation now sees 1/20 targets. Promotion remains blocked with `published: false`; `src/data/validation.json` is unchanged and no Issue was created.
+
+### 2026-08-14 - Manual P1 shadow observation
+
+- User authorized one manual P1 operation test. Selected the first stable catalog entry, `SepineTam/mcp-for-stata` at repository ID `956330003`, and isolated output under `validation/reports/manual-p1/`.
+- Scope is discovery, execution-type recognition, pinned repository snapshot, non-executing structure checks, Trivy/OSV/Gitleaks scanning, and sanitized shadow report retention. It must not run third-party build/plugin code, publish validation state, or create an Issue.
+- The P1 operation completed with `discovered: 1`, `reportsWritten: 1`, no snapshot load failure, and no public-state mutation. The report recognized `channel-mcp` and pinned source SHA `e5b25dc90058001c942fb7ef851637c9f5728486`.
+- The result is `inconclusive` and not queueable: OSV-Scanner was unavailable, so attribution is `infrastructure / SCANNER_UNAVAILABLE`. The Python MCP repository also has no Node `package.json` or Node entrypoint; current structure rules record those failures but must not turn the scanner outage into a plugin failure.
+- No plugin/build code or sandbox validator ran. The sanitized report is retained under `validation/reports/manual-p1/956330003/e5b25dc90058001c942fb7ef851637c9f5728486/`; `src/data/validation.json` remains unchanged and no Issue was created.
+
+### 2026-08-14 - P4 single-observation policy
+
+- User changed P4 promotion from at least two fresh observations per target to one. Preserve full baseline coverage, exact repository/SHA/DSH/platform/validator bindings, expected outcomes, and conflicting-outcome rejection.
+- Current catalog snapshot contains 826 entries: 381 plugins, 45 skills, 20 channels, 3 collections, 26 applications, 25 directories, 14 infrastructure projects, and 312 unknown entries. The validation-eligible display types total 449; only 20 host/tool targets currently have a pinned live-sandbox baseline.
+- RED intent: one fresh verified report for every configured baseline target must pass promotion and produce public records, with no repeat-observation block reason or metric.
+- GREEN: removed the repeat-observation block reason and metric. One fresh report for each of all 20 baseline targets passes promotion and produces 20 public records; exact bindings, full coverage, conflicting outcomes, and unexpected outcomes remain enforced. Seven focused promotion and CLI tests pass.

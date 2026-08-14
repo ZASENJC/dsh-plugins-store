@@ -3,12 +3,10 @@ import type { ValidationFeed, ValidationRecord } from '../../src/lib/validation'
 import type { BaselineTarget, ValidationBaseline } from './baseline'
 
 export const MINIMUM_BASELINE_TARGETS = 20
-export const REQUIRED_FRESH_OBSERVATIONS = 2
 
 export type PromotionBlockReason =
   | 'BASELINE_TARGET_COUNT_INSUFFICIENT'
   | 'BASELINE_COVERAGE_INSUFFICIENT'
-  | 'REPEAT_OBSERVATION_INSUFFICIENT'
   | 'EVIDENCE_BINDING_MISMATCH'
   | 'BASELINE_OUTCOME_INCONSISTENT'
   | 'BASELINE_OUTCOME_UNEXPECTED'
@@ -19,7 +17,6 @@ export interface PromotionAssessment {
   metrics: {
     configuredTargets: number
     observedTargets: number
-    repeatableTargets: number
     inconsistentTargets: number
     unexpectedReports: number
     mismatchedReports: number
@@ -67,7 +64,6 @@ export function assessPromotionGate(
 ): PromotionAssessment {
   const reports = rawReports.map(parseValidationReport)
   let observedTargets = 0
-  let repeatableTargets = 0
   let inconsistentTargets = 0
   let unexpectedReports = 0
   let mismatchedReports = 0
@@ -84,7 +80,6 @@ export function assessPromotionGate(
     mismatchedReports += repositoryReports.length - exactBindingReports.length
     exactObservedReports += exact.length
     if (exact.length > 0) observedTargets += 1
-    if (exact.length >= REQUIRED_FRESH_OBSERVATIONS) repeatableTargets += 1
 
     const outcomes = new Set(exact.map(({ currentStatus }) => currentStatus))
     if (outcomes.size > 1) inconsistentTargets += 1
@@ -98,7 +93,6 @@ export function assessPromotionGate(
   const reasons: PromotionBlockReason[] = []
   if (baseline.targets.length < MINIMUM_BASELINE_TARGETS) reasons.push('BASELINE_TARGET_COUNT_INSUFFICIENT')
   if (observedTargets < baseline.targets.length) reasons.push('BASELINE_COVERAGE_INSUFFICIENT')
-  if (repeatableTargets < baseline.targets.length) reasons.push('REPEAT_OBSERVATION_INSUFFICIENT')
   if (mismatchedReports > 0) reasons.push('EVIDENCE_BINDING_MISMATCH')
   if (inconsistentTargets > 0) reasons.push('BASELINE_OUTCOME_INCONSISTENT')
   if (unexpectedReports > 0) reasons.push('BASELINE_OUTCOME_UNEXPECTED')
@@ -109,7 +103,6 @@ export function assessPromotionGate(
     metrics: {
       configuredTargets: baseline.targets.length,
       observedTargets,
-      repeatableTargets,
       inconsistentTargets,
       unexpectedReports,
       mismatchedReports,
@@ -176,8 +169,7 @@ export function buildPublicValidationFeed(
   const records: ValidationRecord[] = []
   for (const group of groups.values()) {
     const fresh = uniqueFreshReports(group)
-    if (fresh.length < REQUIRED_FRESH_OBSERVATIONS
-      || fresh.some(({ currentStatus }) => currentStatus !== 'verified')) continue
+    if (fresh.some(({ currentStatus }) => currentStatus !== 'verified')) continue
     const latest = fresh.sort((left, right) => (
       Date.parse(right.completedAt ?? right.startedAt) - Date.parse(left.completedAt ?? left.startedAt)
     ))[0]
