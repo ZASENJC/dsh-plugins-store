@@ -26,7 +26,7 @@ describe('fixed-SHA archive acquisition', () => {
     expect(command.args).toContain('type=bind,src=/tmp/source,dst=/output')
   })
 
-  it('downloads only the numeric repository and exact 40-character SHA endpoint', async () => {
+  it('downloads the exact public repository and 40-character SHA without spending REST quota', async () => {
     const sha = 'c'.repeat(40)
     const fetchImpl = vi.fn(async () => new Response(new Uint8Array([1, 2, 3]), {
       status: 200,
@@ -36,6 +36,7 @@ describe('fixed-SHA archive acquisition', () => {
 
     await downloadPinnedArchive({
       repositoryId: 42,
+      repositoryFullName: 'owner/example-plugin',
       sourceSha: sha,
       destinationPath: '/tmp/repository.tar.gz',
       fetchImpl,
@@ -43,7 +44,7 @@ describe('fixed-SHA archive acquisition', () => {
     })
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      `https://api.github.com/repositories/42/tarball/${sha}`,
+      `https://codeload.github.com/owner/example-plugin/tar.gz/${sha}`,
       expect.objectContaining({ redirect: 'follow' }),
     )
     expect(writeArchive).toHaveBeenCalledWith('/tmp/repository.tar.gz', expect.any(Uint8Array))
@@ -62,10 +63,24 @@ describe('fixed-SHA archive acquisition', () => {
 
     await expect(downloadPinnedArchive({
       repositoryId: 42,
+      repositoryFullName: 'owner/example-plugin',
       sourceSha: 'main',
       destinationPath: '/tmp/repository.tar.gz',
       fetchImpl,
     })).rejects.toThrow('SHA')
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('rejects an unsafe repository name before making a network request', async () => {
+    const fetchImpl = vi.fn()
+
+    await expect(downloadPinnedArchive({
+      repositoryId: 42,
+      repositoryFullName: '../example-plugin',
+      sourceSha: 'c'.repeat(40),
+      destinationPath: '/tmp/repository.tar.gz',
+      fetchImpl,
+    })).rejects.toThrow('name')
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 })

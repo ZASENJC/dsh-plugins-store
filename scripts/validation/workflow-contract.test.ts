@@ -33,6 +33,7 @@ describe('decoupled incremental validation workflows', () => {
     expect(workflow).toContain('fromJSON(needs.prepare.outputs.shards)')
     expect(workflow).toContain("needs.prepare.outputs.first_run == 'true'")
     expect(workflow).toContain('result.reportsWritten !== result.discovered')
+    expect(workflow).toContain('tee /tmp/shadow-summary.json')
     expect(workflow).toContain('npm run validate:promote --')
     expect(workflow).toContain('--gate-reports')
     expect(workflow).toContain('--previous-feed')
