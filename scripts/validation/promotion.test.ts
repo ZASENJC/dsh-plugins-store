@@ -134,7 +134,7 @@ describe('P4 promotion quality gate', () => {
 
     const feed = buildPublicValidationFeed(baseline, reports, '2026-08-14T14:00:00.000Z')
     expect(feed.records).toHaveLength(20)
-    expect(feed.records[0]).toMatchObject({
+    expect(feed.records.find(({ repositoryId }) => repositoryId === baseline.targets[0].repositoryId)).toMatchObject({
       sourceSha: baseline.targets[0].sourceSha,
       dshVersion: baseline.dshVersion,
       platform: baseline.platform,

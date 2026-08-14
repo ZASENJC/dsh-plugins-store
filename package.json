@@ -13,6 +13,7 @@
     "sync": "tsx scripts/sync-github.ts",
     "validate:shadow": "tsx scripts/validation/shadow-cli.ts",
     "validate:baseline": "tsx scripts/validation/baseline-cli.ts",
+    "validate:promote": "tsx scripts/validation/promotion-cli.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

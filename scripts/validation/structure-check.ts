@@ -200,7 +200,7 @@ function createReport({
   const failureFingerprint = failure ? fingerprint(repository.id, repository.sourceSha, failure.code) : null
   return parseValidationReport({
     schemaVersion: 1,
-    reportId: `${repository.id}-${repository.sourceSha.slice(0, 12)}-${target.platform}-dsh-${target.dshVersion}`,
+    reportId: `${repository.id}-${repository.sourceSha.slice(0, 12)}-${target.platform}-dsh-${target.dshVersion}-${Date.parse(target.now)}`,
     mode: 'shadow',
     validationKind: validationKindFor(executionType),
     executionType,
@@ -254,7 +254,7 @@ function createUnrecognizedReport(
   const repository = snapshot.repository
   return parseValidationReport({
     schemaVersion: 1,
-    reportId: `${repository.id}-${repository.sourceSha.slice(0, 12)}-${target.platform}-dsh-${target.dshVersion}`,
+    reportId: `${repository.id}-${repository.sourceSha.slice(0, 12)}-${target.platform}-dsh-${target.dshVersion}-${Date.parse(target.now)}`,
     mode: 'shadow',
     validationKind: 'structure',
     executionType: null,
