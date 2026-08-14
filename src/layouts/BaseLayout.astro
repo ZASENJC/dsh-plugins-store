@@ -32,7 +32,7 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
       cloudflareAnalyticsConfig && (
         <script
           is:inline
-          defer
+          type="module"
           src="https://static.cloudflareinsights.com/beacon.min.js"
           data-cf-beacon={cloudflareAnalyticsConfig}
         ></script>
