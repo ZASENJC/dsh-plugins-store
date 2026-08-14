@@ -25,6 +25,14 @@
 
 [访问 DSH-plugin store](https://dsh.aitreez.com/)
 
+## 项目截图
+
+![DSH插件商店首页](<https://img.qunq.de/file/1786712025014_FireShot Capture 027 - DSH插件商店（DSH-plugin store） - [dsh.aitreez.com].jpeg>)
+
+![dsh-TUI 项目详情](<https://img.qunq.de/file/1786712021455_FireShot Capture 029 - dsh-TUI · DSH插件商店 - [dsh.aitreez.com].png>)
+
+![coding-agent 标签页面](<https://img.qunq.de/file/1786712029405_FireShot Capture 028 - coding-agent 标签 · DSH插件商店 - [dsh.aitreez.com].jpeg>)
+
 ## 功能
 
 - 自动收录公开的 `dsh-plugin` Topic 仓库
