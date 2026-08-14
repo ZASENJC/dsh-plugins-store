@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -35,10 +35,11 @@ export interface ShadowRunSummary {
   }>
 }
 
-async function writeReportAtomically(outputDir: string, report: ValidationReport): Promise<string> {
-  const repositoryDir = join(outputDir, String(report.repository.id))
-  const reportPath = join(repositoryDir, `${report.repository.sourceSha}.json`)
-  const temporaryPath = join(repositoryDir, `.${report.repository.sourceSha}.${randomUUID()}.tmp`)
+export async function writeReportAtomically(outputDir: string, report: ValidationReport): Promise<string> {
+  const repositoryDir = join(outputDir, String(report.repository.id), report.repository.sourceSha)
+  const reportKey = createHash('sha256').update(report.reportId).digest('hex')
+  const reportPath = join(repositoryDir, `${reportKey}.json`)
+  const temporaryPath = join(repositoryDir, `.${reportKey}.${randomUUID()}.tmp`)
   const serialized = `${JSON.stringify(report, null, 2)}\n`
   await mkdir(repositoryDir, { recursive: true })
   try {

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dsh.aitreez.com/schemas/validation-baseline-v1.json",
+  "title": "DSH plugin validation baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAt", "dshVersion", "platform", "validatorVersion", "targets"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "dshVersion": { "type": "string", "minLength": 1 },
+    "platform": { "const": "linux-x64" },
+    "validatorVersion": { "type": "string", "minLength": 1 },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repositoryId", "fullName", "sourceSha", "executionType", "smokeMode", "expectedFinalStatuses"],
+        "properties": {
+          "repositoryId": { "type": "integer", "minimum": 1 },
+          "fullName": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+          "sourceSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+          "executionType": { "const": "host-tool" },
+          "smokeMode": { "enum": ["loader", "tool-registration"] },
+          "expectedFinalStatuses": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "enum": ["verified", "inconclusive"] }
+          }
+        }
+      }
+    }
+  }
+}

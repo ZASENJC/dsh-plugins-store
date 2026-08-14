@@ -48,7 +48,11 @@ const INSTALLABLE_TYPES = new Set(['plugin', 'skill', 'collection', 'channel'])
 
 export function buildInstallCommand(repository) {
   if (!INSTALLABLE_TYPES.has(repository.projectType)) return null
-  return `dsh plugin --profile web add github:${repository.fullName}`
+  const sourceSha = repository.validation?.overall === 'verified'
+    && /^[a-f0-9]{40}$/i.test(repository.validation.sourceSha ?? '')
+    ? `#${repository.validation.sourceSha}`
+    : ''
+  return `dsh plugin --profile web add github:${repository.fullName}${sourceSha}`
 }
 
 function normalizedSearchText(repository) {

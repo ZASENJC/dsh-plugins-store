@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { discoverCatalogRepositories, selectRepositoryShard } from './shadow-cli'
+import {
+  discoverCatalogRepositories,
+  parseShadowCliOptions,
+  selectRepositoryShard,
+} from './shadow-cli'
 
 const catalog = {
   schemaVersion: 1,
@@ -47,5 +51,15 @@ describe('catalog discovery and stable sharding', () => {
     expect(() => selectRepositoryShard(repositories, 20, 20)).toThrow('shard')
     expect(() => selectRepositoryShard(repositories, -1, 20)).toThrow('shard')
     expect(() => selectRepositoryShard(repositories, 0, 0)).toThrow('shard')
+  })
+
+  it('applies an incremental selection without changing stable catalog shard coordinates', () => {
+    const repositories = discoverCatalogRepositories(catalog)
+    const selected = new Set([2, 22, 23])
+
+    expect(selectRepositoryShard(repositories, 1, 20, selected).map(({ repositoryId }) => repositoryId))
+      .toEqual([2, 22])
+    expect(parseShadowCliOptions(['--selection', 'selection.json']).selectionPath)
+      .toContain('selection.json')
   })
 })

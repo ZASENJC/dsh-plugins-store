@@ -71,10 +71,12 @@ export async function loadGitHubSnapshot(
   {
     fetchImpl = fetch,
     token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+    sourceSha,
     scans,
   }: {
     fetchImpl?: typeof fetch
     token?: string
+    sourceSha?: string
     scans: ScannerResults
   },
 ): Promise<RepositoryStructureSnapshot> {
@@ -83,14 +85,20 @@ export async function loadGitHubSnapshot(
   if (metadata.id !== repositoryId) {
     throw new Error(`GitHub numeric ID mismatch: expected ${repositoryId}, received ${metadata.id}`)
   }
-  const defaultBranch = metadata.default_branch
-  if (!defaultBranch) throw new Error(`GitHub repository ${repositoryId} has no default branch`)
+  const requestedRef = sourceSha ?? metadata.default_branch
+  if (!requestedRef) throw new Error(`GitHub repository ${repositoryId} has no default branch`)
+  if (sourceSha !== undefined && !/^[a-f0-9]{40}$/i.test(sourceSha)) {
+    throw new Error(`GitHub repository ${repositoryId} baseline source SHA is invalid`)
+  }
   const commit = await fetchJson<GitHubCommitResponse>(
     fetchImpl,
-    `/repositories/${repositoryId}/commits/${encodeURIComponent(defaultBranch)}`,
+    `/repositories/${repositoryId}/commits/${encodeURIComponent(requestedRef)}`,
     token,
   )
   if (!/^[a-f0-9]{40}$/i.test(commit.sha)) throw new Error(`GitHub repository ${repositoryId} returned an invalid source SHA`)
+  if (sourceSha !== undefined && commit.sha.toLowerCase() !== sourceSha.toLowerCase()) {
+    throw new Error(`GitHub repository ${repositoryId} baseline source SHA did not resolve exactly`)
+  }
   const tree = await fetchJson<GitHubTreeResponse>(
     fetchImpl,
     `/repositories/${repositoryId}/git/trees/${commit.sha}?recursive=1`,

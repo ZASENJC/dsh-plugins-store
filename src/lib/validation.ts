@@ -1,5 +1,11 @@
 import type { ProjectType } from './classification'
 
+export const CURRENT_VALIDATION_TARGET = Object.freeze({
+  dshVersion: '0.1.0-rc.6',
+  platform: 'linux-x64',
+  validatorVersion: '0.1.0',
+} as const)
+
 export const VALIDATION_STAGE_DEFINITIONS = Object.freeze([
   { id: 'discovery', label: '商店发现' },
   { id: 'identification', label: '归类识别' },
@@ -42,6 +48,7 @@ export interface ValidationRecord {
   updatedAt: string
   dshVersion?: string
   platform?: string
+  validatorVersion?: string
   structure: ValidationStageEvidence
   sandbox: ValidationStageEvidence
 }
@@ -63,6 +70,7 @@ export interface ValidationStatus {
   sourceSha: string | null
   dshVersion: string | null
   platform: string | null
+  validatorVersion: string | null
   reportUrl: string | null
   issueUrl: string | null
   reason: string | null
@@ -149,6 +157,12 @@ export function parseValidationFeed(value: unknown): Map<number, ValidationRecor
     if (!['pending', 'skipped'].includes(sandbox.status) && structure.status !== 'passed') {
       throw new Error(`验证记录 ${repositoryId} 未通过结构检查，不能写入实机验证结果`)
     }
+    if (sandbox.status === 'passed' && (raw.sourceSha === null
+      || typeof raw.dshVersion !== 'string' || raw.dshVersion.length === 0
+      || typeof raw.platform !== 'string' || raw.platform.length === 0
+      || typeof raw.validatorVersion !== 'string' || raw.validatorVersion.length === 0)) {
+      throw new Error(`验证记录 ${repositoryId} 缺少完整验证绑定`)
+    }
 
     records.set(repositoryId, {
       repositoryId,
@@ -157,6 +171,7 @@ export function parseValidationFeed(value: unknown): Map<number, ValidationRecor
       updatedAt: raw.updatedAt,
       ...(typeof raw.dshVersion === 'string' ? { dshVersion: raw.dshVersion } : {}),
       ...(typeof raw.platform === 'string' ? { platform: raw.platform } : {}),
+      ...(typeof raw.validatorVersion === 'string' ? { validatorVersion: raw.validatorVersion } : {}),
       structure,
       sandbox,
     })
@@ -215,6 +230,11 @@ export function buildValidationStatus({
     level = record.structure.status === 'passed' ? 3 : 2
     if (record.sandbox.status === 'passed') level = 4
     if (overall === 'verified' && record.sourcePushedAt !== repositoryPushedAt) overall = 'expired'
+    if (overall === 'verified' && (
+      record.dshVersion !== CURRENT_VALIDATION_TARGET.dshVersion
+      || record.platform !== CURRENT_VALIDATION_TARGET.platform
+      || record.validatorVersion !== CURRENT_VALIDATION_TARGET.validatorVersion
+    )) overall = 'expired'
   } else if (legacyVerificationUrl) {
     overall = 'recorded'
     level = 4
@@ -239,6 +259,7 @@ export function buildValidationStatus({
     sourceSha: record?.sourceSha ?? null,
     dshVersion: record?.dshVersion ?? null,
     platform: record?.platform ?? null,
+    validatorVersion: record?.validatorVersion ?? null,
     reportUrl: getEvidence(record, 'reportUrl') ?? legacyVerificationUrl,
     issueUrl: getEvidence(record, 'issueUrl'),
     reason: getEvidence(record, 'reason'),

@@ -32,6 +32,8 @@ describe('pinned scanner adapters', () => {
       expect.stringMatching(/^type=bind,src=.+,dst=\/tmp\/trivy-cache$/),
     ]))
     expect(commands[1].args).toContain('ghcr.io/google/osv-scanner:v2.5.0')
+    const osvImageIndex = commands[1].args.indexOf('ghcr.io/google/osv-scanner:v2.5.0')
+    expect(commands[1].args.slice(osvImageIndex + 1, osvImageIndex + 3)).toEqual(['scan', 'source'])
     expect(commands[2].args).toContain('ghcr.io/gitleaks/gitleaks:v8.30.1')
   })
 

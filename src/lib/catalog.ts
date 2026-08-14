@@ -130,7 +130,7 @@ export function createCatalogEntry(
     record: validationRecord,
     legacyVerificationUrl: verificationUrl,
   })
-  const verified = validation.verified || verificationUrl !== null
+  const verified = validation.verified
 
   return {
     id: `github:${repository.id}`,
@@ -244,7 +244,7 @@ export function hydrateCatalogValidation(
       record: validationRecords.get(entry.repositoryId),
       legacyVerificationUrl: entry.verificationUrl,
     })
-    const verified = validation.verified || entry.verificationUrl !== null
+    const verified = validation.verified
     return {
       ...entry,
       verified,

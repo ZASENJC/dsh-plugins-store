@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  CURRENT_VALIDATION_TARGET,
   buildValidationStatus,
   parseValidationFeed,
 } from './validation'
@@ -76,6 +77,7 @@ describe('validation ladder', () => {
       updatedAt: '2026-08-14T09:00:00Z',
       dshVersion: '0.1.0-rc.6',
       platform: 'linux-x64',
+      validatorVersion: '0.1.0',
       structure: { status: 'passed' as const, checkedAt: '2026-08-14T08:40:00Z' },
       sandbox: {
         status: 'passed' as const,
@@ -90,6 +92,7 @@ describe('validation ladder', () => {
       level: 4,
       verified: true,
       sourceSha: 'b'.repeat(40),
+      validatorVersion: '0.1.0',
       reportUrl: 'https://reports.example/101.json',
     })
     expect(buildValidationStatus({
@@ -99,6 +102,28 @@ describe('validation ladder', () => {
     })).toMatchObject({
       overall: 'expired',
       label: '需重新验证',
+      verified: false,
+    })
+  })
+
+  it.each([
+    ['dshVersion', '0.1.0-rc.7'],
+    ['platform', 'linux-arm64'],
+    ['validatorVersion', '0.2.0'],
+  ])('expires a published result when current %s changes', (field, value) => {
+    const record = {
+      repositoryId: 101,
+      sourceSha: 'b'.repeat(40),
+      sourcePushedAt: baseInput.repositoryPushedAt,
+      updatedAt: '2026-08-14T09:00:00Z',
+      ...CURRENT_VALIDATION_TARGET,
+      [field]: value,
+      structure: { status: 'passed' as const },
+      sandbox: { status: 'passed' as const },
+    }
+
+    expect(buildValidationStatus({ ...baseInput, record })).toMatchObject({
+      overall: 'expired',
       verified: false,
     })
   })
@@ -139,5 +164,20 @@ describe('validation ladder', () => {
         sandbox: { status: 'passed' },
       }],
     })).toThrow('结构检查')
+  })
+
+  it('rejects a passing public record without complete SHA, DSH, platform, and validator bindings', () => {
+    expect(() => parseValidationFeed({
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T08:30:00Z',
+      records: [{
+        repositoryId: 101,
+        sourceSha: 'a'.repeat(40),
+        sourcePushedAt: baseInput.repositoryPushedAt,
+        updatedAt: '2026-08-14T08:30:00Z',
+        structure: { status: 'passed' },
+        sandbox: { status: 'passed' },
+      }],
+    })).toThrow('完整验证绑定')
   })
 })

@@ -4,7 +4,8 @@ import { join } from 'node:path'
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { runShadowBatch, type ShadowCatalogRepository } from './shadow-runner'
+import { parseValidationReport, type ValidationReport } from '../../src/lib/validation-report'
+import { runShadowBatch, writeReportAtomically, type ShadowCatalogRepository } from './shadow-runner'
 import type { RepositoryStructureSnapshot } from './structure-check'
 
 const target = {
@@ -90,10 +91,57 @@ describe('P1 shadow runner', () => {
     })
     expect(issueWriter).not.toHaveBeenCalled()
     expect(await readFile(validationPath, 'utf8')).toBe(originalValidation)
-    expect((await readdir(join(outputDir, '1')))[0]).toBe(`${'a'.repeat(40)}.json`)
-    const unknownReport = JSON.parse(await readFile(join(outputDir, '2', `${'b'.repeat(40)}.json`), 'utf8'))
+    const reportFile = (await readdir(join(outputDir, '2', 'b'.repeat(40))))[0]
+    const unknownReport = JSON.parse(await readFile(join(outputDir, '2', 'b'.repeat(40), reportFile), 'utf8'))
     expect(unknownReport).toMatchObject({ mode: 'shadow', currentStatus: 'unrecognized' })
     expect(snapshotLoader).toHaveBeenCalledTimes(2)
+  })
+
+  it('retains repeated fresh runs for the same SHA as separate immutable evidence', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dsh-shadow-history-'))
+    const base = parseValidationReport({
+      schemaVersion: 1,
+      reportId: 'fixture-run-1',
+      mode: 'shadow',
+      validationKind: 'structure',
+      executionType: null,
+      repository: {
+        id: 9,
+        fullName: 'fixture/history',
+        url: 'https://github.com/fixture/history',
+        sourceSha: 'c'.repeat(40),
+        sourcePushedAt: '2026-08-14T08:00:00Z',
+      },
+      target: {
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        nodeVersion: '22.22.0',
+        validatorVersion: '0.1.0',
+      },
+      startedAt: '2026-08-14T09:00:00Z',
+      completedAt: '2026-08-14T09:00:00Z',
+      currentStatus: 'unrecognized',
+      events: [
+        { sequence: 1, stage: 'discovery', status: 'discovered', at: '2026-08-14T09:00:00Z' },
+        { sequence: 2, stage: 'classification', status: 'unrecognized', at: '2026-08-14T09:00:00Z' },
+      ],
+      structureChecks: [],
+      failure: null,
+      artifacts: [],
+    })
+    const second: ValidationReport = {
+      ...base,
+      reportId: 'fixture-run-2',
+      startedAt: '2026-08-14T10:00:00Z',
+      completedAt: '2026-08-14T10:00:00Z',
+      events: base.events.map((event) => ({ ...event, at: '2026-08-14T10:00:00Z' })),
+    }
+
+    const firstPath = await writeReportAtomically(root, base)
+    const secondPath = await writeReportAtomically(root, second)
+
+    expect(firstPath).not.toBe(secondPath)
+    expect(await readdir(join(root, '9', 'c'.repeat(40)))).toHaveLength(2)
   })
 
   it('continues the shard after a snapshot infrastructure failure and sanitizes the summary', async () => {

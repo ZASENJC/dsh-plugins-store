@@ -121,4 +121,42 @@ describe('GitHub fixed-SHA snapshot loader', () => {
       },
     })).rejects.toThrow('truncated')
   })
+
+  it('loads an explicitly pinned baseline SHA instead of silently following the default branch', async () => {
+    const sourceSha = 'd'.repeat(40)
+    const requestedUrls: string[] = []
+    const fetchImpl = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      requestedUrls.push(url)
+      if (url.endsWith('/repositories/42')) return jsonResponse({
+        id: 42,
+        full_name: repository.fullName,
+        html_url: repository.url,
+        default_branch: 'main',
+        pushed_at: repository.pushedAt,
+        private: false,
+        archived: false,
+        size: 100,
+      })
+      if (url.endsWith(`/repositories/42/commits/${sourceSha}`)) return jsonResponse({ sha: sourceSha })
+      if (url.endsWith(`/repositories/42/git/trees/${sourceSha}?recursive=1`)) return jsonResponse({
+        truncated: false,
+        tree: [],
+      })
+      throw new Error(`Unexpected request: ${url}`)
+    })
+
+    const snapshot = await loadGitHubSnapshot(repository, {
+      fetchImpl,
+      sourceSha,
+      scans: {
+        trivy: { status: 'passed', vulnerabilities: [], secrets: [] },
+        osv: { status: 'passed', vulnerabilities: [] },
+        gitleaks: { status: 'passed', secrets: [] },
+      },
+    })
+
+    expect(snapshot.repository.sourceSha).toBe(sourceSha)
+    expect(requestedUrls.some((url) => url.endsWith('/commits/main'))).toBe(false)
+  })
 })
