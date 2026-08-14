@@ -1,10 +1,10 @@
 # DSH Plugin Store 插件
 
-把 [DSH插件商店](https://dsh.aitreez.com/) 作为原生页面接入 DeepSeek Harness Web：
+把 [DSH 插件市场](https://dsh.aitreez.com/) 作为原生页面接入 DeepSeek Harness Web：
 
 - 输入 `/store` 打开商店对话框
 - 点击会话标题栏的插件图标打开同一对话框
-- 通过“设置 → 插件 → 插件商店”长期浏览
+- 通过“设置 → 插件 → 插件市场”长期浏览
 - 在项目卡片点击“安装”，阅读风险提示并勾选确认后安装到 Web profile
 - 从商店网页的插件详情页跳转到本机 DSH，并继续同一套风险确认流程
 

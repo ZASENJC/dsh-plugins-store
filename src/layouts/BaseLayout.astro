@@ -1,24 +1,36 @@
 ---
-import { CodeXml } from '@lucide/astro'
 import { Github } from 'simple-icons-astro'
 
-import { getCanonicalUrl } from '../lib/seo'
+import { DEFAULT_LOCALE, dictionaries, LOCALE_STORAGE_KEY, SUPPORTED_LOCALES } from '../lib/i18n'
+import {
+  getCanonicalUrl,
+  HOME_DESCRIPTION,
+  HOME_TITLE,
+  serializeJsonLd,
+} from '../lib/seo'
 import '../styles/global.css'
 
 interface Props {
   title?: string
   description?: string
+  structuredData?: Record<string, unknown>
+  pageTitleKey?: string
+  pageTitleParams?: Record<string, string | number>
 }
 
 const {
-  title = 'DSH插件商店（DSH-plugin store）',
-  description = '自动收录和分类 GitHub dsh-plugin Topic 项目。',
+  title = HOME_TITLE,
+  description = HOME_DESCRIPTION,
+  structuredData,
+  pageTitleKey = 'site.pageTitle.home',
+  pageTitleParams = {},
 } = Astro.props
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const canonicalUrl = getCanonicalUrl(Astro.url)
 const cloudflareAnalyticsConfig = import.meta.env.PROD
   ? JSON.stringify({ token: 'cefc4fa1bb984a789124d58b900f13b8' })
   : null
+const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u003c')
 ---
 
 <!doctype html>
@@ -33,7 +45,7 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:site_name" content="DSH插件商店" />
+    <meta property="og:site_name" content="DSH 插件市场" />
     <meta property="og:locale" content="zh_CN" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
@@ -41,6 +53,9 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
     <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
     <title>{title}</title>
+    {structuredData && (
+      <script is:inline type="application/ld+json" set:html={serializeJsonLd(structuredData)}></script>
+    )}
     {
       cloudflareAnalyticsConfig && (
         <script
@@ -52,23 +67,44 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
       )
     }
   </head>
-  <body>
+  <body data-i18n-page-title={pageTitleKey} data-i18n-page-title-params={JSON.stringify(pageTitleParams)}>
     <header class="site-header">
       <div class="container site-header__inner">
-        <a class="brand" href={baseUrl} aria-label="返回 DSH 插件商店首页">
-          <span class="brand__name">DSH插件商店</span>
-          <span class="brand__en">DSH-plugin store</span>
+        <a
+          class="brand"
+          href={baseUrl}
+          aria-label="返回 DeepSeek-Harness 插件市场首页"
+          data-i18n-aria-label="site.homeAria"
+        >
+          <span class="brand__name" data-i18n="site.brand">DeepSeek-Harness 插件市场</span>
         </a>
-        <nav aria-label="主导航">
-          <a
-            class="outline-button"
-            href="https://github.com/topics/dsh-plugin"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <CodeXml size={16} stroke-width={1.6} />
-            <span>GitHub Topic</span>
-          </a>
+        <nav aria-label="主导航" data-i18n-aria-label="nav.main">
+          <div class="language-switcher" role="group" aria-label="切换语言" data-i18n-aria-label="language.label">
+            <button
+              class="language-option"
+              type="button"
+              data-locale="zh-CN"
+              aria-label="中文"
+              title="中文"
+              aria-pressed="true"
+            ><span class="language-option__glyph" aria-hidden="true">中</span></button>
+            <button
+              class="language-option"
+              type="button"
+              data-locale="en"
+              aria-label="English"
+              title="English"
+              aria-pressed="false"
+            ><span class="language-option__glyph" aria-hidden="true">A</span></button>
+            <button
+              class="language-option"
+              type="button"
+              data-locale="ja"
+              aria-label="日本語"
+              title="日本語"
+              aria-pressed="false"
+            ><span class="language-option__glyph" aria-hidden="true">あ</span></button>
+          </div>
           <a
             class="icon-button"
             href="https://github.com/ZASENJC/dsh-plugins-store"
@@ -76,6 +112,8 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
             rel="noreferrer"
             aria-label="查看项目源码"
             title="查看项目源码"
+            data-i18n-aria-label="nav.source"
+            data-i18n-title="nav.source"
           >
             <Github size={17} aria-hidden="true" />
           </a>
@@ -88,13 +126,14 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
     <footer class="site-footer">
       <div class="container site-footer__inner">
         <div class="site-footer__brand">
-          <p>DSH插件商店</p>
+          <p data-i18n="site.footerBrand">DSH 插件市场</p>
           <span aria-hidden="true">·</span>
           <a
             href="https://github.com/ZASENJC/dsh-plugins-store"
             target="_blank"
             rel="noreferrer"
-            aria-label="查看 DSH插件商店项目源码"
+            aria-label="查看 DSH 插件市场项目源码"
+            data-i18n-aria-label="footer.sourceAria"
           >
             <Github size={12} aria-hidden="true" />
             © 2026 ZASENJC · MIT
@@ -105,15 +144,150 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
               href="https://github.com/ZASENJC/dsh-plugins-store"
               target="_blank"
               rel="noreferrer"
-              aria-label="在 GitHub 为 DSH插件商店点 Star"
+              aria-label="在 GitHub 为 DSH 插件市场点 Star"
+              data-i18n-aria-label="footer.starAria"
+              data-i18n="footer.star"
             >
-              觉得有帮助？欢迎给项目点个 Star ❤️
+              觉得有帮助？欢迎给项目点个 Star
             </a>
           </span>
         </div>
-        <p>数据来自 GitHub Topic，收录不代表审核、兼容或安全背书。</p>
+        <p data-i18n="footer.source">数据来自 GitHub Topic，收录不代表审核、兼容或安全背书。</p>
       </div>
     </footer>
+    <script id="site-i18n-data" type="application/json" set:html={serializedDictionaries} is:inline></script>
+    <script is:inline define:vars={{ DEFAULT_LOCALE, LOCALE_STORAGE_KEY, SUPPORTED_LOCALES }}>
+      const dictionaries = JSON.parse(document.getElementById('site-i18n-data').textContent)
+      const languageButtons = Array.from(document.querySelectorAll('[data-locale]'))
+      let currentLocale = DEFAULT_LOCALE
+
+      const resolveLocale = (value) => {
+        const normalized = String(value ?? '').trim().toLowerCase()
+        if (normalized === 'zh-cn' || normalized.startsWith('zh-')) return 'zh-CN'
+        if (normalized === 'en' || normalized.startsWith('en-')) return 'en'
+        if (normalized === 'ja' || normalized.startsWith('ja-')) return 'ja'
+        return DEFAULT_LOCALE
+      }
+
+      const getParams = (element) => Object.fromEntries(
+        Array.from(element.attributes)
+          .filter((attribute) => attribute.name.startsWith('data-i18n-param-'))
+          .map((attribute) => [attribute.name.slice('data-i18n-param-'.length), attribute.value]),
+      )
+
+      const t = (key, params = {}) => {
+        const template = dictionaries[currentLocale]?.[key]
+          ?? dictionaries[DEFAULT_LOCALE]?.[key]
+          ?? key
+        return template.replace(/\{([a-zA-Z][\w-]*)\}/g, (match, name) => (
+          Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match
+        ))
+      }
+
+      const relativeDate = (value) => {
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return t('date.unknown')
+        const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000))
+        if (days === 0) return t('date.today')
+        if (days < 30) return t('date.daysAgo', { count: days })
+        if (days < 365) return t('date.monthsAgo', { count: Math.floor(days / 30) })
+        return t('date.yearsAgo', { count: Math.floor(days / 365) })
+      }
+
+      const absoluteDate = (value, includeTime = false) => {
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return t('date.unknown')
+        const locale = currentLocale === 'zh-CN' ? 'zh-CN' : currentLocale === 'ja' ? 'ja-JP' : 'en-US'
+        return new Intl.DateTimeFormat(locale, {
+          timeZone: 'Asia/Shanghai',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          ...(includeTime ? { hour: '2-digit', minute: '2-digit', hour12: false } : {}),
+        }).format(date)
+      }
+
+      const nodes = (root, selector) => {
+        const matches = root instanceof Element && root.matches(selector) ? [root] : []
+        return [...matches, ...root.querySelectorAll(selector)]
+      }
+
+      const translate = (root = document) => {
+        nodes(root, '[data-i18n]').forEach((element) => {
+          element.textContent = t(element.dataset.i18n, getParams(element))
+        })
+        for (const [dataAttribute, attribute] of [
+          ['data-i18n-aria-label', 'aria-label'],
+          ['data-i18n-title', 'title'],
+          ['data-i18n-placeholder', 'placeholder'],
+        ]) {
+          nodes(root, `[${dataAttribute}]`).forEach((element) => {
+            element.setAttribute(attribute, t(element.getAttribute(dataAttribute), getParams(element)))
+          })
+        }
+        nodes(root, '[data-i18n-relative-date]').forEach((element) => {
+          element.textContent = relativeDate(element.dataset.i18nRelativeDate)
+        })
+        nodes(root, '[data-i18n-date]').forEach((element) => {
+          element.textContent = absoluteDate(
+            element.dataset.i18nDate,
+            element.hasAttribute('data-i18n-date-time'),
+          )
+        })
+        nodes(root, '[data-i18n-validation-title]').forEach((element) => {
+          const status = t(`validation.status.${element.dataset.i18nValidationTitle}`)
+          element.setAttribute('title', t('card.validationTitle', { status }))
+        })
+        nodes(root, '[data-i18n-topic-list]').forEach((element) => {
+          let topics = []
+          try { topics = JSON.parse(element.dataset.i18nTopicList || '[]') } catch {}
+          element.textContent = topics.length > 0
+            ? topics.join(currentLocale === 'en' ? ', ' : '、')
+            : t('detail.noMatchedTags')
+        })
+
+        const pageTitleKey = document.body.dataset.i18nPageTitle
+        if (root === document && pageTitleKey) {
+          let pageTitleParams = {}
+          try {
+            pageTitleParams = JSON.parse(document.body.dataset.i18nPageTitleParams || '{}')
+          } catch {}
+          const pageTitle = t(pageTitleKey, pageTitleParams)
+          document.title = pageTitle
+          document.querySelector('meta[property="og:title"]')?.setAttribute('content', pageTitle)
+          document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', pageTitle)
+        }
+      }
+
+      const setLocale = (locale, persist = true) => {
+        currentLocale = SUPPORTED_LOCALES.includes(resolveLocale(locale)) ? resolveLocale(locale) : DEFAULT_LOCALE
+        document.documentElement.lang = currentLocale
+        languageButtons.forEach((button) => {
+          button.setAttribute('aria-pressed', String(button.dataset.locale === currentLocale))
+        })
+        if (persist) {
+          try { localStorage.setItem(LOCALE_STORAGE_KEY, currentLocale) } catch {}
+        }
+        translate(document)
+        document.dispatchEvent(new CustomEvent('dsh:locale-change', { detail: { locale: currentLocale } }))
+      }
+
+      window.dshI18n = {
+        get locale() { return currentLocale },
+        t,
+        translate,
+        relativeDate,
+        absoluteDate,
+        setLocale,
+      }
+
+      languageButtons.forEach((button) => {
+        button.addEventListener('click', () => setLocale(button.dataset.locale))
+      })
+      let savedLocale = DEFAULT_LOCALE
+      try { savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY) || DEFAULT_LOCALE } catch {}
+      setLocale(savedLocale, false)
+    </script>
   </body>
 </html>
 
@@ -146,19 +320,55 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
     line-height: 20px;
   }
 
-  .brand__en {
-    color: var(--mute);
-    font-family: var(--font-mono);
-    font-size: 15px;
-    line-height: 20px;
-    letter-spacing: 0;
-    text-transform: uppercase;
-  }
-
   .site-header nav {
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  .language-switcher {
+    display: grid;
+    grid-template-columns: repeat(3, 30px);
+    align-items: center;
+    height: 40px;
+    border: 1px solid var(--outline);
+    border-radius: 9999px;
+    color: var(--body);
+    overflow: hidden;
+  }
+
+  .language-option {
+    display: grid;
+    width: 30px;
+    height: 100%;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+
+  .language-option + .language-option {
+    border-left: 1px solid var(--outline);
+  }
+
+  .language-option:hover {
+    background: var(--canvas-soft);
+    color: var(--ink);
+  }
+
+  .language-option[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--canvas);
+  }
+
+  .language-option__glyph {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
   }
 
   .site-footer {
@@ -216,9 +426,21 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
   }
 
   @media (max-width: 767px) {
-    .brand__en,
-    nav .outline-button span {
-      display: none;
+    .site-header__inner {
+      gap: 8px;
+    }
+
+    .language-switcher {
+      height: 44px;
+    }
+
+    .brand__name {
+      display: block;
+      max-width: calc(100vw - 166px);
+      overflow: hidden;
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .site-footer__inner {

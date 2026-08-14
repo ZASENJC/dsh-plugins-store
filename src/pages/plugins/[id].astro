@@ -81,17 +81,25 @@ const absoluteDate = new Intl.DateTimeFormat('zh-CN', {
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 ---
 
-<BaseLayout title={`${repository.name} · DSH插件商店`} description={repository.description}>
+<BaseLayout
+  title={`${repository.name} · DSH 插件市场`}
+  description={repository.description}
+  pageTitleKey="site.pageTitle.detail"
+  pageTitleParams={{ name: repository.name }}
+>
   <section class="detail-hero">
     <div class="container">
-      <a class="back-link" href={baseUrl}><ArrowLeft size={16} stroke-width={1.6} /> 返回目录</a>
+      <a class="back-link" href={baseUrl}>
+        <ArrowLeft size={16} stroke-width={1.6} />
+        <span data-i18n="detail.back">返回目录</span>
+      </a>
 
       <div class="detail-hero__grid">
         <div class="detail-identity">
           <div class="detail-eyebrow">
             <span class="category-dot" style={`--category-color: ${category.color}`}></span>
-            <span class="mono-label">{category.label}</span>
-            <span>{getProjectTypeLabel(repository.projectType)}</span>
+            <span class="mono-label" data-i18n={`category.${repository.category}`}>{category.label}</span>
+            <span data-i18n={`projectType.${repository.projectType}`}>{getProjectTypeLabel(repository.projectType)}</span>
           </div>
           <div class="detail-title">
             <img src={repository.owner.avatarUrl} width="56" height="56" alt="" />
@@ -103,22 +111,27 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           <p class="detail-description">{repository.description}</p>
           <div class="detail-actions">
             <a class="primary-button" href={repository.url} target="_blank" rel="noreferrer">
-              <CodeXml size={17} stroke-width={1.6} /> 查看仓库
+              <CodeXml size={17} stroke-width={1.6} />
+              <span data-i18n="detail.viewRepository">查看仓库</span>
               <ArrowUpRight size={15} stroke-width={1.6} />
             </a>
             {repository.homepage && (
               <a class="outline-button" href={repository.homepage} target="_blank" rel="noreferrer">
-                <ExternalLink size={16} stroke-width={1.6} /> 项目主页
+                <ExternalLink size={16} stroke-width={1.6} />
+                <span data-i18n="detail.homepage">项目主页</span>
               </a>
             )}
           </div>
         </div>
 
-        <dl class="detail-metrics" aria-label="仓库指标">
+        <dl class="detail-metrics" aria-label="仓库指标" data-i18n-aria-label="detail.metrics">
           <div><dt><Star size={15} stroke-width={1.6} /> Stars</dt><dd>{formatCompactNumber(repository.stars)}</dd></div>
           <div><dt><GitFork size={15} stroke-width={1.6} /> Forks</dt><dd>{formatCompactNumber(repository.forks)}</dd></div>
           <div><dt><CircleDot size={15} stroke-width={1.6} /> Issues</dt><dd>{formatCompactNumber(repository.openIssues)}</dd></div>
-          <div><dt><CalendarDays size={15} stroke-width={1.6} /> 更新</dt><dd>{formatRelativeDate(repository.pushedAt)}</dd></div>
+          <div>
+            <dt><CalendarDays size={15} stroke-width={1.6} /> <span data-i18n="detail.updated">更新</span></dt>
+            <dd data-i18n-relative-date={repository.pushedAt}>{formatRelativeDate(repository.pushedAt)}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -129,12 +142,14 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
       <div class="detail-main">
         <section class="detail-section">
           <p class="mono-label">PROJECT TOPICS</p>
-          <h2>项目标签</h2>
+          <h2 data-i18n="detail.tags">项目标签</h2>
           <div class="topic-cloud">
             {repository.topics.map((topic) => (
               <a
                 href={`${baseUrl}topics/${encodeURIComponent(topic)}`}
                 aria-label={`查看包含 ${topic} 标签的所有项目`}
+                data-i18n-aria-label="detail.tagAria"
+                data-i18n-param-topic={topic}
               >
                 {topic}
               </a>
@@ -146,9 +161,12 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           <div class="validation-heading">
             <div>
               <p class="mono-label">VALIDATION LADDER</p>
-              <h2>验证进度</h2>
+              <h2 data-i18n="detail.validationProgress">验证进度</h2>
             </div>
-            <span data-tone={repository.validation.tone}><CircleDot size={14} stroke-width={1.8} /> {repository.validation.label}</span>
+            <span data-tone={repository.validation.tone}>
+              <CircleDot size={14} stroke-width={1.8} />
+              <span data-i18n={`validation.status.${repository.validation.overall}`}>{repository.validation.label}</span>
+            </span>
           </div>
           <div class="validation-ladder">
             {VALIDATION_STAGE_DEFINITIONS.map((stage, index) => {
@@ -158,8 +176,8 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
                   <span class="validation-step__index">{String(index + 1).padStart(2, '0')}</span>
                   <span class="validation-step__mark"><i></i></span>
                   <span class="validation-step__copy">
-                    <strong>{stage.label}</strong>
-                    <small>{validationStageStatusLabels[evidence.status]}</small>
+                    <strong data-i18n={`validation.stage.${stage.id}`}>{stage.label}</strong>
+                    <small data-i18n={`validation.step.${evidence.status}`}>{validationStageStatusLabels[evidence.status]}</small>
                   </span>
                 </div>
               )
@@ -169,8 +187,13 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
             <dl class="validation-evidence">
               {repository.validation.sourceSha && <div><dt>Commit</dt><dd>{repository.validation.sourceSha.slice(0, 12)}</dd></div>}
               {repository.validation.dshVersion && <div><dt>DSH</dt><dd>{repository.validation.dshVersion}</dd></div>}
-              {repository.validation.platform && <div><dt>平台</dt><dd>{repository.validation.platform}</dd></div>}
-              {validationUpdatedAt && <div><dt>验证时间</dt><dd>{validationUpdatedAt}</dd></div>}
+              {repository.validation.platform && <div><dt data-i18n="detail.platform">平台</dt><dd>{repository.validation.platform}</dd></div>}
+              {validationUpdatedAt && (
+                <div>
+                  <dt data-i18n="detail.validationTime">验证时间</dt>
+                  <dd data-i18n-date={repository.validation.updatedAt!} data-i18n-date-time>{validationUpdatedAt}</dd>
+                </div>
+              )}
             </dl>
           )}
           {repository.validation.reason && <p class="validation-reason">{repository.validation.reason}</p>}
@@ -178,12 +201,14 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
             <div class="validation-actions">
               {repository.validation.reportUrl && (
                 <a class="outline-button" href={repository.validation.reportUrl} target="_blank" rel="noreferrer">
-                  查看验证报告 <ExternalLink size={14} stroke-width={1.6} />
+                  <span data-i18n="detail.report">查看验证报告</span>
+                  <ExternalLink size={14} stroke-width={1.6} />
                 </a>
               )}
               {repository.validation.issueUrl && (
                 <a class="outline-button" href={repository.validation.issueUrl} target="_blank" rel="noreferrer">
-                  查看相关 Issue <ExternalLink size={14} stroke-width={1.6} />
+                  <span data-i18n="detail.issue">查看相关 Issue</span>
+                  <ExternalLink size={14} stroke-width={1.6} />
                 </a>
               )}
             </div>
@@ -204,18 +229,18 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
                 <span class="readme-title"><BookOpen size={20} stroke-width={1.6} /> README</span>
               </span>
               <span class="readme-toggle">
-                <span class="readme-toggle__closed">展开</span>
-                <span class="readme-toggle__open">收起</span>
+                <span class="readme-toggle__closed" data-i18n="detail.readmeExpand">展开</span>
+                <span class="readme-toggle__open" data-i18n="detail.readmeCollapse">收起</span>
                 <ChevronDown size={18} stroke-width={1.6} />
               </span>
             </summary>
             <div class="readme-content" id="readme-content" aria-live="polite" aria-busy="false">
-              <p class="readme-state" id="readme-state">正在读取 GitHub README...</p>
+              <p class="readme-state" id="readme-state" data-i18n="detail.readmeLoading">正在读取 GitHub README...</p>
               <div class="markdown-body" id="readme-body" hidden></div>
               <div class="readme-error" id="readme-error" hidden>
-                <p id="readme-error-message">README 暂时无法读取。</p>
-                <button class="outline-button" id="retry-readme" type="button">重试</button>
-                <a class="outline-button" href={repository.url} target="_blank" rel="noreferrer">前往仓库</a>
+                <p id="readme-error-message" data-i18n="detail.readmeFailed">README 暂时无法读取。</p>
+                <button class="outline-button" id="retry-readme" type="button" data-i18n="detail.retry">重试</button>
+                <a class="outline-button" href={repository.url} target="_blank" rel="noreferrer" data-i18n="detail.goRepository">前往仓库</a>
               </div>
             </div>
           </details>
@@ -223,32 +248,51 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
         <section class="detail-section classification-section">
           <p class="mono-label">CLASSIFICATION EVIDENCE</p>
-          <h2>分类依据</h2>
+          <h2 data-i18n="detail.classification">分类依据</h2>
           <div class="classification-grid">
-            <div><span>项目类型</span><strong>{getProjectTypeLabel(repository.projectType)}</strong></div>
-            <div><span>功能分类</span><strong>{category.label}</strong></div>
             <div>
-              <span>规则置信度</span>
-              <strong>{repository.classificationConfidence === 'high' ? '高' : repository.classificationConfidence === 'medium' ? '中' : '低'}</strong>
+              <span data-i18n="detail.projectType">项目类型</span>
+              <strong data-i18n={`projectType.${repository.projectType}`}>{getProjectTypeLabel(repository.projectType)}</strong>
+            </div>
+            <div>
+              <span data-i18n="detail.category">功能分类</span>
+              <strong data-i18n={`category.${repository.category}`}>{category.label}</strong>
+            </div>
+            <div>
+              <span data-i18n="detail.confidence">规则置信度</span>
+              <strong data-i18n={`detail.confidence.${repository.classificationConfidence}`}>
+                {repository.classificationConfidence === 'high' ? '高' : repository.classificationConfidence === 'medium' ? '中' : '低'}
+              </strong>
             </div>
           </div>
           <p class="classification-note">
-            系统优先读取 GitHub Topics，再与站内分类词典和词根规则比对。当前命中：
-            {repository.matchedTopics.length > 0 ? repository.matchedTopics.join('、') : '无有效分类标签'}。
+            <span data-i18n="detail.classificationPrefix">系统优先读取 GitHub Topics，再与站内分类词典和词根规则比对。当前命中：</span>
+            <span data-i18n-topic-list={JSON.stringify(repository.matchedTopics)}>
+              {repository.matchedTopics.length > 0 ? repository.matchedTopics.join('、') : '无有效分类标签'}
+            </span>。
           </p>
         </section>
 
         {showInstallReference && (
           <section class="detail-section install-section">
             <div class="install-heading">
-              <div><p class="mono-label">INSTALL REFERENCE</p><h2>安装参考</h2></div>
+              <div><p class="mono-label">INSTALL REFERENCE</p><h2 data-i18n="detail.installReference">安装参考</h2></div>
               <span data-tone={repository.validation.tone}>
-                <CircleAlert size={15} stroke-width={1.6} /> {repository.validation.label}
+                <CircleAlert size={15} stroke-width={1.6} />
+                <span data-i18n={`validation.status.${repository.validation.overall}`}>{repository.validation.label}</span>
               </span>
             </div>
             <div class="command-row">
               <code id="install-command">{installCommand}</code>
-              <button class="icon-button" id="copy-command" type="button" aria-label="复制安装参考" title="复制安装参考">
+              <button
+                class="icon-button"
+                id="copy-command"
+                type="button"
+                aria-label="复制安装参考"
+                title="复制安装参考"
+                data-i18n-aria-label="detail.copyInstall"
+                data-i18n-title="detail.copyInstall"
+              >
                 <Copy class="copy-icon" size={16} stroke-width={1.6} />
                 <Check class="check-icon" size={16} stroke-width={1.6} />
               </button>
@@ -260,47 +304,61 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`在本机 DSH 中安装 ${repository.fullName}`}
+                data-i18n-aria-label="detail.installLocalAria"
+                data-i18n-param-name={repository.fullName}
               >
                 <Download size={17} stroke-width={1.6} />
-                在 DSH 中安装
+                <span data-i18n="detail.installLocal">在 DSH 中安装</span>
                 <ArrowUpRight size={15} stroke-width={1.6} />
               </a>
             </div>
             <p>
-              {repository.validation.verified
-                ? '该命令已固定到通过当前验证的 commit；验证仍不等同安全审计或官方背书。'
-                : '该命令指向仓库当前默认分支；尚无绑定当前 commit 的完整验证结果。'}
+              <span data-i18n={repository.validation.verified ? 'detail.installVerifiedNote' : 'detail.installUnverifiedNote'}>
+                {repository.validation.verified
+                  ? '该命令已固定到通过当前验证的 commit；验证仍不等同安全审计或官方背书。'
+                  : '该命令指向仓库当前默认分支；尚无绑定当前 commit 的完整验证结果。'}
+              </span>
             </p>
           </section>
         )}
       </div>
 
-      <aside class="repository-facts" aria-label="仓库信息">
+      <aside class="repository-facts" aria-label="仓库信息" data-i18n-aria-label="detail.facts">
         <p class="mono-label">REPOSITORY FACTS</p>
         <dl>
-          <div><dt>主要语言</dt><dd>{repository.language ?? '未知'}</dd></div>
-          <div><dt>许可证</dt><dd><Scale size={14} stroke-width={1.6} /> {repository.license ?? '未声明'}</dd></div>
-          <div><dt>最后推送</dt><dd>{absoluteDate}</dd></div>
-          <div><dt>归档状态</dt><dd>{repository.archived ? '已归档' : '活跃'}</dd></div>
-          <div><dt>数据来源</dt><dd>GitHub Topic</dd></div>
+          <div><dt data-i18n="detail.language">主要语言</dt><dd>{repository.language ?? <span data-i18n="common.unknown">未知</span>}</dd></div>
           <div>
-            <dt>验证状态</dt>
+            <dt data-i18n="detail.license">许可证</dt>
+            <dd><Scale size={14} stroke-width={1.6} /> {repository.license ?? <span data-i18n="common.undeclared">未声明</span>}</dd>
+          </div>
+          <div><dt data-i18n="detail.lastPush">最后推送</dt><dd data-i18n-date={repository.pushedAt}>{absoluteDate}</dd></div>
+          <div>
+            <dt data-i18n="detail.archive">归档状态</dt>
+            <dd data-i18n={repository.archived ? 'detail.archived' : 'detail.active'}>{repository.archived ? '已归档' : '活跃'}</dd>
+          </div>
+          <div><dt data-i18n="detail.source">数据来源</dt><dd>GitHub Topic</dd></div>
+          <div>
+            <dt data-i18n="detail.validation">验证状态</dt>
             <dd class:list={{ 'status-warning': !repository.validation.verified, 'status-verified': repository.validation.verified }}>
               {repository.validation.reportUrl
                 ? (
                   <a href={repository.validation.reportUrl} target="_blank" rel="noreferrer">
-                    {repository.validation.label} <ExternalLink size={12} stroke-width={1.6} />
+                    <span data-i18n={`validation.status.${repository.validation.overall}`}>{repository.validation.label}</span>
+                    <ExternalLink size={12} stroke-width={1.6} />
                   </a>
                 )
-                : repository.validation.label}
+                : <span data-i18n={`validation.status.${repository.validation.overall}`}>{repository.validation.label}</span>}
             </dd>
           </div>
           <div>
             <dt>awesome-dsh-plugins</dt>
-            <dd class:list={{ 'status-listed': repository.awesomeListed }}>{repository.awesomeListed ? '已收录' : '未收录'}</dd>
+            <dd
+              class:list={{ 'status-listed': repository.awesomeListed }}
+              data-i18n={repository.awesomeListed ? 'detail.listed' : 'detail.notListed'}
+            >{repository.awesomeListed ? '已收录' : '未收录'}</dd>
           </div>
         </dl>
-        <p class="facts-note">只有绑定当前 commit 的完整实机结果显示为“已验证”；其他标识仅代表对应步骤的记录。</p>
+        <p class="facts-note" data-i18n="detail.factsNote">只有绑定当前 commit 的完整实机结果显示为“已验证”；其他标识仅代表对应步骤的记录。</p>
       </aside>
     </div>
   </section>
@@ -309,8 +367,8 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     <section class="related-section">
       <div class="container">
         <div class="related-heading">
-          <div><p class="mono-label">MORE IN CATEGORY</p><h2>同类项目</h2></div>
-          <a class="outline-button" href={`${baseUrl}?category=${repository.category}`}>浏览分类</a>
+          <div><p class="mono-label">MORE IN CATEGORY</p><h2 data-i18n="detail.related">同类项目</h2></div>
+          <a class="outline-button" href={`${baseUrl}?category=${repository.category}`} data-i18n="detail.browseCategory">浏览分类</a>
         </div>
         <div class="related-grid">
           {related.map((item) => <ProjectCard repository={item} />)}
@@ -322,6 +380,10 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   <script>
     import { resolveReadmeReference } from '../../lib/readme'
 
+    const t = (key: string, params: Record<string, string | number> = {}) => (
+      window.dshI18n?.t(key, params) ?? key
+    )
+
     const copyButton = document.getElementById('copy-command')
     const installCommandElement = document.getElementById('install-command')
     if (copyButton && installCommandElement) {
@@ -329,10 +391,12 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         const command = installCommandElement.textContent ?? ''
         await navigator.clipboard.writeText(command)
         copyButton.classList.add('is-copied')
-        copyButton.setAttribute('aria-label', '已复制')
+        copyButton.setAttribute('aria-label', t('detail.copied'))
+        copyButton.setAttribute('title', t('detail.copied'))
         window.setTimeout(() => {
           copyButton.classList.remove('is-copied')
-          copyButton.setAttribute('aria-label', '复制安装参考')
+          copyButton.setAttribute('aria-label', t('detail.copyInstall'))
+          copyButton.setAttribute('title', t('detail.copyInstall'))
         }, 1600)
       })
     }
@@ -347,10 +411,15 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     let readmeLoaded = false
     let readmeLoading = false
 
-    const showReadmeError = (message: string) => {
+    const setLocalizedText = (element: HTMLElement, key: string) => {
+      element.dataset.i18n = key
+      element.textContent = t(key)
+    }
+
+    const showReadmeError = (messageKey: string) => {
       readmeState.hidden = true
       readmeBody.hidden = true
-      readmeErrorMessage.textContent = message
+      setLocalizedText(readmeErrorMessage, messageKey)
       readmeError.hidden = false
     }
 
@@ -359,7 +428,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
       readmeLoading = true
       readmeContent.setAttribute('aria-busy', 'true')
       readmeState.hidden = false
-      readmeState.textContent = '正在读取 GitHub README...'
+      setLocalizedText(readmeState, 'detail.readmeLoading')
       readmeBody.hidden = true
       readmeError.hidden = true
 
@@ -368,19 +437,19 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           headers: { Accept: 'application/vnd.github.html+json' },
         })
         if (response.status === 404 || response.status === 409) {
-          readmeState.textContent = '该仓库暂未提供可读取的 README。'
+          setLocalizedText(readmeState, 'detail.readmeMissing')
           readmeLoaded = true
           return
         }
         if (response.status === 403 || response.status === 429) {
-          throw new Error('GitHub API 访问频率已达上限，请稍后重试。')
+          throw new Error('detail.readmeRateLimit')
         }
-        if (!response.ok) throw new Error('GitHub README 暂时无法读取，请稍后重试。')
+        if (!response.ok) throw new Error('detail.readmeFailed')
 
         const documentFragment = new DOMParser().parseFromString(await response.text(), 'text/html')
         const wrapper = documentFragment.querySelector('#readme')
         const article = wrapper?.querySelector('article.markdown-body')
-        if (!wrapper || !article) throw new Error('GitHub README response did not contain an article')
+        if (!wrapper || !article) throw new Error('detail.readmeMalformed')
 
         const location = {
           fullName: readmeDisclosure.dataset.fullName!,
@@ -406,7 +475,10 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         readmeBody.hidden = false
         readmeLoaded = true
       } catch (error) {
-        showReadmeError(error instanceof Error ? error.message : 'GitHub README 暂时无法读取，请稍后重试。')
+        const messageKey = error instanceof Error && error.message.startsWith('detail.')
+          ? error.message
+          : 'detail.readmeFailed'
+        showReadmeError(messageKey)
       } finally {
         readmeLoading = false
         readmeContent.setAttribute('aria-busy', 'false')

@@ -1,10 +1,10 @@
 export const NS = 'plugin-store'
 
 export const zh = {
-  'header.open': '打开插件商店',
-  'header.title': 'DSH 插件商店',
-  'dialog.close': '关闭插件商店',
-  'settings.tab': '插件商店',
+  'header.open': '打开插件市场',
+  'header.title': 'DSH 插件市场',
+  'dialog.close': '关闭插件市场',
+  'settings.tab': '插件市场',
   'store.search': '搜索名称、作者、描述或标签',
   'store.category': '分类',
   'store.sort': '排序',
@@ -52,7 +52,7 @@ export const zh = {
   'store.installSuccess': '安装完成。请重启 DSH Web 使插件生效。',
   'store.installFailed': '安装失败',
   'store.done': '知道了',
-  'store.openDetails': '打开商店详情',
+  'store.openDetails': '打开市场详情',
   'store.loadMore': '加载更多',
   'store.stars': '{count} Star',
 }

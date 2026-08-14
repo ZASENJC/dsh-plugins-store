@@ -7,6 +7,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import { sortCatalogEntries, type Catalog } from '../lib/catalog'
 import { catalogData } from '../lib/catalog-data'
 import { CATEGORIES, PROJECT_TYPES } from '../lib/classification'
+import { buildHomepageStructuredData } from '../lib/seo'
 import { VALIDATION_STATUS_DEFINITIONS } from '../lib/validation'
 
 const catalog = catalogData as Catalog
@@ -26,22 +27,25 @@ const serializedValidationStatuses = JSON.stringify(VALIDATION_STATUS_DEFINITION
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const storeInstallCommand = 'dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store'
 const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugin-store#一键安装'
+const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched)
 ---
 
-<BaseLayout>
+<BaseLayout structuredData={homepageStructuredData}>
   <section class="store-install-strip" aria-labelledby="store-install-title">
     <div class="container store-install-strip__inner">
       <div class="store-install-label">
         <Terminal size={16} stroke-width={1.6} />
-        <span id="store-install-title">安装商店插件</span>
+        <span id="store-install-title" data-i18n="home.installMarket">安装市场插件</span>
       </div>
       <div class="store-install-command">
         <code id="store-install-command" title={storeInstallCommand}>{storeInstallCommand}</code>
         <button
           id="copy-store-install"
           type="button"
-          aria-label="复制商店插件安装命令"
-          title="复制商店插件安装命令"
+          aria-label="复制市场插件安装命令"
+          title="复制市场插件安装命令"
+          data-i18n-aria-label="home.copyMarketInstall"
+          data-i18n-title="home.copyMarketInstall"
         >
           <Copy class="copy-icon" size={16} stroke-width={1.6} />
           <Check class="check-icon" size={16} stroke-width={1.6} />
@@ -53,7 +57,7 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
         target="_blank"
         rel="noreferrer"
       >
-        <span>一键安装</span>
+        <span data-i18n="home.installNow">一键安装</span>
         <ArrowUpRight size={15} stroke-width={1.6} />
       </a>
       <span id="store-install-status" class="visually-hidden" aria-live="polite"></span>
@@ -70,43 +74,56 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
     <div class="container catalog-head__inner">
       <div class="catalog-head__title">
         <p class="mono-label">DSH-PLUGIN STORE / LIVE CATALOG</p>
-        <h1>DSH插件商店</h1>
-        <p>自动读取 GitHub 项目标签，为 DSH 生态建立可检索的项目目录。</p>
+        <h1 data-i18n="home.heroTitle">DSH 插件市场</h1>
+        <p>
+          <span data-i18n="home.heroLine1">每 30 分钟自动同步并验证 GitHub 社区项目。</span>
+          <span data-i18n="home.heroLine2">为 DSH 生态维护一个持续更新、可检索的插件目录。</span>
+        </p>
       </div>
 
-      <dl class="catalog-stats" aria-label="目录统计">
+      <dl class="catalog-stats" aria-label="目录统计" data-i18n-aria-label="home.stats">
         <div>
-          <dt>已收录</dt>
+          <dt data-i18n="home.listed">已收录</dt>
           <dd>{catalog.stats.fetched}</dd>
         </div>
         <div>
-          <dt>功能分类</dt>
+          <dt data-i18n="home.categories">功能分类</dt>
           <dd>{CATEGORIES.length}</dd>
         </div>
         <div>
-          <dt>更新时间</dt>
-          <dd>{generatedDate}</dd>
+          <dt data-i18n="home.updated">更新时间</dt>
+          <dd data-i18n-date={catalog.generatedAt} data-i18n-date-time>{generatedDate}</dd>
         </div>
       </dl>
     </div>
   </section>
 
-  <section class="catalog-tools" aria-label="目录筛选">
+  <section class="catalog-tools" aria-label="目录筛选" data-i18n-aria-label="home.filters">
     <div class="container">
       <div class="search-row">
         <label class="search-field">
-          <span class="visually-hidden">搜索项目</span>
+          <span class="visually-hidden" data-i18n="home.search">搜索项目</span>
           <Search size={19} stroke-width={1.6} />
-          <input id="catalog-search" type="search" placeholder="搜索名称、作者、描述或标签" autocomplete="off" />
+          <input
+            id="catalog-search"
+            type="search"
+            placeholder="搜索名称、作者、描述或标签"
+            data-i18n-placeholder="home.searchPlaceholder"
+            autocomplete="off"
+          />
         </label>
 
         <label class="select-field">
           <SlidersHorizontal size={16} stroke-width={1.6} />
           <span class="select-value" id="type-filter-value">全部类型</span>
-          <select id="type-filter" aria-label="项目类型">
-            <option value="all">全部类型</option>
+          <select id="type-filter" aria-label="项目类型" data-i18n-aria-label="home.projectType">
+            <option value="all" data-i18n="home.allTypes">全部类型</option>
             {PROJECT_TYPES.map((type) => (
-              <option value={type.id}>{type.label} · {catalog.stats.projectTypes[type.id] ?? 0}</option>
+              <option
+                value={type.id}
+                data-i18n-option={`projectType.${type.id}`}
+                data-count={catalog.stats.projectTypes[type.id] ?? 0}
+              >{type.label} · {catalog.stats.projectTypes[type.id] ?? 0}</option>
             ))}
           </select>
           <ChevronDown size={15} stroke-width={1.6} />
@@ -114,10 +131,14 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
 
         <label class="select-field">
           <span class="select-value" id="validation-filter-value">全部验证状态</span>
-          <select id="validation-filter" aria-label="验证状态">
-            <option value="all">全部验证状态</option>
+          <select id="validation-filter" aria-label="验证状态" data-i18n-aria-label="home.validation">
+            <option value="all" data-i18n="home.allValidation">全部验证状态</option>
             {VALIDATION_STATUS_DEFINITIONS.map((status) => (
-              <option value={status.id}>{status.label} · {catalog.stats.validationStatuses[status.id] ?? 0}</option>
+              <option
+                value={status.id}
+                data-i18n-option={`validation.status.${status.id}`}
+                data-count={catalog.stats.validationStatuses[status.id] ?? 0}
+              >{status.label} · {catalog.stats.validationStatuses[status.id] ?? 0}</option>
             ))}
           </select>
           <ChevronDown size={15} stroke-width={1.6} />
@@ -125,29 +146,29 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
 
         <label class="select-field">
           <span class="select-value" id="sort-filter-value">综合推荐</span>
-          <select id="sort-filter" aria-label="排序方式">
-            <option value="recommended">综合推荐</option>
-            <option value="stars">最多 Star</option>
-            <option value="updated">最近更新</option>
-            <option value="name">名称排序</option>
+          <select id="sort-filter" aria-label="排序方式" data-i18n-aria-label="home.sort">
+            <option value="recommended" data-i18n="sort.recommended">综合推荐</option>
+            <option value="stars" data-i18n="sort.stars">最多 Star</option>
+            <option value="updated" data-i18n="sort.updated">最近更新</option>
+            <option value="name" data-i18n="sort.name">名称排序</option>
           </select>
           <ChevronDown size={15} stroke-width={1.6} />
         </label>
       </div>
 
-      <div class="category-row" id="category-filter" aria-label="功能分类">
+      <div class="category-row" id="category-filter" aria-label="功能分类" data-i18n-aria-label="home.category">
         <button class="category-filter is-active" type="button" data-category="all">
-          全部 <span>{catalog.stats.fetched}</span>
+          <span data-i18n="home.all">全部</span> <span>{catalog.stats.fetched}</span>
         </button>
         <button class="category-filter category-filter--verified" type="button" data-category="verified">
           <i></i>
-          当前已验证
+          <span data-i18n="home.currentVerified">当前已验证</span>
           <span>{catalog.stats.validationStatuses.verified ?? 0}</span>
         </button>
         {CATEGORIES.map((category) => (
           <button class="category-filter" type="button" data-category={category.id}>
             <i style={`--category-color: ${category.color}`}></i>
-            {category.label}
+            <span data-i18n={`category.${category.id}`}>{category.label}</span>
             <span>{catalog.stats.categories[category.id] ?? 0}</span>
           </button>
         ))}
@@ -158,8 +179,8 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
   <section class="catalog-results">
     <div class="container">
       <div class="results-head">
-        <p><span id="result-count">{catalog.stats.fetched}</span> 个项目</p>
-        <p><i></i> 标识随目录同步刷新</p>
+        <p id="result-count">{catalog.stats.fetched} 个项目</p>
+        <p><i></i> <span data-i18n="home.synced">标识随目录同步刷新</span></p>
       </div>
 
       <div class="project-grid" id="project-grid">
@@ -168,14 +189,14 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
 
       <div class="empty-state" id="empty-state" hidden>
         <p class="mono-label">NO MATCHES</p>
-        <h2>没有找到匹配项目</h2>
-        <p>当前筛选条件下没有结果。</p>
-        <button class="outline-button" id="clear-filters" type="button">清除筛选</button>
+        <h2 data-i18n="home.emptyTitle">没有找到匹配项目</h2>
+        <p data-i18n="home.emptyBody">当前筛选条件下没有结果。</p>
+        <button class="outline-button" id="clear-filters" type="button" data-i18n="home.clearFilters">清除筛选</button>
       </div>
 
       <div class="load-row">
         <button class="outline-button" id="load-more" type="button">
-          加载更多
+          <span data-i18n="home.loadMore">加载更多</span>
           <span id="remaining-count">{Math.max(0, catalog.stats.fetched - initialRepositories.length)}</span>
         </button>
       </div>
@@ -191,6 +212,8 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
   <script>
     import { getHeroMotion } from '../lib/hero-motion'
 
+    const translate = (key: string) => window.dshI18n?.t(key) ?? key
+
     const storeInstallCommand = document.getElementById('store-install-command')
     const copyStoreInstall = document.getElementById('copy-store-install')
     const storeInstallStatus = document.getElementById('store-install-status')
@@ -199,13 +222,15 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
       copyStoreInstall.addEventListener('click', async () => {
         await navigator.clipboard.writeText(storeInstallCommand.textContent ?? '')
         copyStoreInstall.classList.add('is-copied')
-        copyStoreInstall.setAttribute('aria-label', '安装命令已复制')
-        copyStoreInstall.setAttribute('title', '安装命令已复制')
-        storeInstallStatus.textContent = '安装命令已复制'
+        const copiedLabel = translate('home.installCopied')
+        copyStoreInstall.setAttribute('aria-label', copiedLabel)
+        copyStoreInstall.setAttribute('title', copiedLabel)
+        storeInstallStatus.textContent = copiedLabel
         window.setTimeout(() => {
           copyStoreInstall.classList.remove('is-copied')
-          copyStoreInstall.setAttribute('aria-label', '复制商店插件安装命令')
-          copyStoreInstall.setAttribute('title', '复制商店插件安装命令')
+          const copyLabel = translate('home.copyMarketInstall')
+          copyStoreInstall.setAttribute('aria-label', copyLabel)
+          copyStoreInstall.setAttribute('title', copyLabel)
           storeInstallStatus.textContent = ''
         }, 1600)
       })
@@ -271,6 +296,8 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
     let selectedCategory = requestedCategory === 'verified' || categoryById.has(requestedCategory) ? requestedCategory : 'all'
     let visibleCount = pageSize
 
+    const t = (key, params = {}, fallback = key) => window.dshI18n?.t(key, params) ?? fallback
+
     const compactNumber = (value) => {
       if (value < 1000) return String(value)
       if (value < 1000000) return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k`
@@ -278,6 +305,7 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
     }
 
     const relativeDate = (value) => {
+      if (window.dshI18n) return window.dshI18n.relativeDate(value)
       const date = new Date(value)
       if (Number.isNaN(date.getTime())) return '未知'
       const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000))
@@ -312,14 +340,22 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
       card.dataset.stars = String(repository.stars)
       card.dataset.updated = repository.pushedAt
       card.querySelector('[data-field="category-dot"]').style.setProperty('--category-color', category.color)
-      setText(card, '[data-field="category"]', category.label)
-      setText(card, '[data-field="project-type"]', projectType.label)
-      setText(card, '[data-field="validation-label"]', repository.validation.label)
+      const categoryLabel = card.querySelector('[data-field="category"]')
+      categoryLabel.dataset.i18n = `category.${repository.category}`
+      setText(card, '[data-field="category"]', t(categoryLabel.dataset.i18n, {}, category.label))
+      const projectTypeLabel = card.querySelector('[data-field="project-type"]')
+      projectTypeLabel.dataset.i18n = `projectType.${repository.projectType}`
+      setText(card, '[data-field="project-type"]', t(projectTypeLabel.dataset.i18n, {}, projectType.label))
+      const validationLabel = card.querySelector('[data-field="validation-label"]')
+      validationLabel.dataset.i18n = `validation.status.${repository.validation.overall}`
+      setText(card, '[data-field="validation-label"]', t(validationLabel.dataset.i18n, {}, repository.validation.label))
       setText(card, '[data-field="owner"]', repository.owner.login)
       setText(card, '[data-field="description"]', repository.description)
       setText(card, '[data-field="stars"]', compactNumber(repository.stars))
       setText(card, '[data-field="forks"]', compactNumber(repository.forks))
       setText(card, '[data-field="issues"]', compactNumber(repository.openIssues))
+      const updated = card.querySelector('[data-field="updated"]')
+      updated.dataset.i18nRelativeDate = repository.pushedAt
       setText(card, '[data-field="updated"]', relativeDate(repository.pushedAt))
 
       const avatar = card.querySelector('[data-field="avatar"]')
@@ -330,11 +366,16 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
       detailLink.textContent = repository.name
       const openLink = card.querySelector('[data-field="open-link"]')
       openLink.href = detailUrl
-      openLink.setAttribute('aria-label', `查看 ${repository.name} 详情`)
+      openLink.dataset.i18nAriaLabel = 'card.openDetails'
+      openLink.dataset.i18nParamName = repository.name
+      openLink.setAttribute('aria-label', t('card.openDetails', { name: repository.name }, `查看 ${repository.name} 详情`))
 
       const validation = card.querySelector('[data-field="validation"]')
       validation.dataset.tone = repository.validation.tone
-      validation.title = `验证状态：${repository.validation.label}`
+      validation.dataset.i18nValidationTitle = repository.validation.overall
+      validation.title = t('card.validationTitle', {
+        status: t(`validation.status.${repository.validation.overall}`, {}, repository.validation.label),
+      }, `验证状态：${repository.validation.label}`)
       validation.querySelectorAll('[data-validation-step]').forEach((step) => {
         step.dataset.status = repository.validation.stages[step.dataset.validationStep].status
       })
@@ -346,6 +387,7 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
         item.textContent = topic
         return item
       }))
+      window.dshI18n?.translate(card)
       return card
     }
 
@@ -429,7 +471,7 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
       const filtered = getFilteredRepositories()
       const visible = filtered.slice(0, visibleCount)
       grid.replaceChildren(...visible.map(createCard))
-      resultCount.textContent = String(filtered.length)
+      resultCount.textContent = t('home.projectCount', { count: filtered.length }, `${filtered.length} 个项目`)
       emptyState.hidden = filtered.length !== 0
       grid.hidden = filtered.length === 0
       const remaining = Math.max(0, filtered.length - visible.length)
@@ -444,6 +486,18 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
 
     const syncSelectValue = (select, target) => {
       target.textContent = select.selectedOptions[0]?.textContent ?? ''
+    }
+
+    const localizeFilterOptions = () => {
+      typeFilter.querySelectorAll('[data-i18n-option]').forEach((option) => {
+        option.textContent = `${t(option.dataset.i18nOption)} · ${option.dataset.count}`
+      })
+      validationFilter.querySelectorAll('[data-i18n-option]').forEach((option) => {
+        option.textContent = `${t(option.dataset.i18nOption)} · ${option.dataset.count}`
+      })
+      syncSelectValue(typeFilter, typeFilterValue)
+      syncSelectValue(validationFilter, validationFilterValue)
+      syncSelectValue(sortFilter, sortFilterValue)
     }
 
     validationFilter.value = validationStatusIds.has(requestedValidation) ? requestedValidation : 'all'
@@ -500,6 +554,10 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
         searchInput.blur()
         resetAndRender()
       }
+    })
+    document.addEventListener('dsh:locale-change', () => {
+      localizeFilterOptions()
+      render()
     })
     if (selectedCategory !== 'all' || validationFilter.value !== 'all') {
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
@@ -674,6 +732,10 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
     line-height: 28px;
   }
 
+  .catalog-head__title > p:last-child span {
+    display: block;
+  }
+
   .catalog-stats {
     display: grid;
     grid-template-columns: 0.8fr 0.8fr 1.4fr;
@@ -704,6 +766,7 @@ const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/
     font-family: var(--font-mono);
     font-size: 18px;
     line-height: 24px;
+    white-space: nowrap;
   }
 
   .catalog-tools {
