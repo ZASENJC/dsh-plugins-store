@@ -22,7 +22,7 @@ export function getStaticPaths() {
       topic,
       repositories: sortCatalogEntries(
         catalog.repositories.filter((repository) => repository.topics.includes(topic)),
-        'stars',
+        'recommended',
       ),
     },
   }))

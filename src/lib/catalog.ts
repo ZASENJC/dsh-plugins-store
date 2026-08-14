@@ -96,7 +96,7 @@ export interface Catalog {
   repositories: CatalogEntry[]
 }
 
-export type CatalogSort = 'stars' | 'updated' | 'name'
+export type CatalogSort = 'recommended' | 'stars' | 'updated' | 'name'
 
 export function createCatalogEntry(
   repository: GitHubRepository,
@@ -179,7 +179,7 @@ export function buildCatalog(
       normalizedAwesomeNames,
       normalizedVerifiedNames,
     )),
-    'stars',
+    'recommended',
   )
   const categoryCounts: Partial<Record<Category, number>> = {}
   const typeCounts: Partial<Record<ProjectType, number>> = {}
@@ -209,23 +209,57 @@ export function buildCatalog(
 }
 
 export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort): CatalogEntry[] {
-  return [...entries].sort((left, right) => {
+  const compareStatus = (left: CatalogEntry, right: CatalogEntry) => {
     const featuredPriority = Number(right.awesomeListed || right.verified)
       - Number(left.awesomeListed || left.verified)
-    if (featuredPriority !== 0) return featuredPriority
     const verifiedPriority = Number(right.verified) - Number(left.verified)
+    return featuredPriority || verifiedPriority
+  }
+  const compareStars = (left: CatalogEntry, right: CatalogEntry) => (
+    right.stars - left.stars
+    || compareStatus(left, right)
+    || left.fullName.localeCompare(right.fullName)
+  )
+
+  if (sort === 'recommended') {
+    const priority = entries
+      .filter((entry) => entry.awesomeListed || entry.verified)
+      .sort(compareStars)
+    const discovery = entries
+      .filter((entry) => !entry.awesomeListed && !entry.verified)
+      .sort(compareStars)
+    const mixed: CatalogEntry[] = []
+    let priorityIndex = 0
+    let discoveryIndex = 0
+
+    while (priorityIndex < priority.length || discoveryIndex < discovery.length) {
+      for (let slot = 0; slot < 2 && priorityIndex < priority.length; slot += 1) {
+        mixed.push(priority[priorityIndex])
+        priorityIndex += 1
+      }
+      if (discoveryIndex < discovery.length) {
+        mixed.push(discovery[discoveryIndex])
+        discoveryIndex += 1
+      }
+    }
+
+    return mixed
+  }
+
+  return [...entries].sort((left, right) => {
+    const statusPriority = compareStatus(left, right)
     if (sort === 'updated') {
       return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
-        || verifiedPriority
+        || statusPriority
         || left.fullName.localeCompare(right.fullName)
     }
     if (sort === 'name') {
       return left.name.localeCompare(right.name)
-        || verifiedPriority
+        || statusPriority
         || left.fullName.localeCompare(right.fullName)
     }
     return right.stars - left.stars
-      || verifiedPriority
+      || statusPriority
       || left.fullName.localeCompare(right.fullName)
   })
 }

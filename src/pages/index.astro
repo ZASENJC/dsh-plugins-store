@@ -3,12 +3,12 @@ import { ChevronDown, Search, SlidersHorizontal } from '@lucide/astro'
 
 import ProjectCard from '../components/ProjectCard.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
-import type { Catalog } from '../lib/catalog'
+import { sortCatalogEntries, type Catalog } from '../lib/catalog'
 import { CATEGORIES, PROJECT_TYPES } from '../lib/classification'
 import catalogData from '../data/catalog.json'
 
 const catalog = catalogData as Catalog
-const initialRepositories = catalog.repositories.slice(0, 24)
+const initialRepositories = sortCatalogEntries(catalog.repositories, 'recommended').slice(0, 24)
 const generatedDate = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   month: '2-digit',
@@ -71,8 +71,9 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         </label>
 
         <label class="select-field">
-          <span class="select-value" id="sort-filter-value">最多 Star</span>
+          <span class="select-value" id="sort-filter-value">综合推荐</span>
           <select id="sort-filter" aria-label="排序方式">
+            <option value="recommended">综合推荐</option>
             <option value="stars">最多 Star</option>
             <option value="updated">最近更新</option>
             <option value="name">名称排序</option>
@@ -244,24 +245,58 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           && (selectedType === 'all' || repository.projectType === selectedType)
       })
 
-      return filtered.sort((left, right) => {
+      const compareStatus = (left, right) => {
         const featuredPriority = Number(right.awesomeListed || right.verified)
           - Number(left.awesomeListed || left.verified)
-        if (featuredPriority !== 0) return featuredPriority
         const verifiedPriority = Number(right.verified) - Number(left.verified)
+        return featuredPriority || verifiedPriority
+      }
+      const compareStars = (left, right) => (
+        right.stars - left.stars
+        || compareStatus(left, right)
+        || left.fullName.localeCompare(right.fullName)
+      )
+
+      if (sortFilter.value === 'recommended') {
+        const priority = filtered
+          .filter((repository) => repository.awesomeListed || repository.verified)
+          .sort(compareStars)
+        const discovery = filtered
+          .filter((repository) => !repository.awesomeListed && !repository.verified)
+          .sort(compareStars)
+        const mixed = []
+        let priorityIndex = 0
+        let discoveryIndex = 0
+
+        while (priorityIndex < priority.length || discoveryIndex < discovery.length) {
+          for (let slot = 0; slot < 2 && priorityIndex < priority.length; slot += 1) {
+            mixed.push(priority[priorityIndex])
+            priorityIndex += 1
+          }
+          if (discoveryIndex < discovery.length) {
+            mixed.push(discovery[discoveryIndex])
+            discoveryIndex += 1
+          }
+        }
+
+        return mixed
+      }
+
+      return filtered.sort((left, right) => {
+        const statusPriority = compareStatus(left, right)
         if (sortFilter.value === 'updated') {
           return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
-            || verifiedPriority
-            || left.name.localeCompare(right.name)
+            || statusPriority
+            || left.fullName.localeCompare(right.fullName)
         }
         if (sortFilter.value === 'name') {
           return left.name.localeCompare(right.name)
-            || verifiedPriority
+            || statusPriority
             || left.fullName.localeCompare(right.fullName)
         }
         return right.stars - left.stars
-          || verifiedPriority
-          || left.name.localeCompare(right.name)
+          || statusPriority
+          || left.fullName.localeCompare(right.fullName)
       })
     }
 
@@ -311,7 +346,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     clearFilters.addEventListener('click', () => {
       searchInput.value = ''
       typeFilter.value = 'all'
-      sortFilter.value = 'stars'
+      sortFilter.value = 'recommended'
       syncSelectValue(typeFilter, typeFilterValue)
       syncSelectValue(sortFilter, sortFilterValue)
       selectedCategory = 'all'

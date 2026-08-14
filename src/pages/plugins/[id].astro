@@ -43,7 +43,7 @@ const installCommand = `dsh plugin --profile web add github:${repository.fullNam
 const related = sortCatalogEntries(
   (catalogData as Catalog).repositories
     .filter((item) => item.repositoryId !== repository.repositoryId && item.category === repository.category),
-  'stars',
+  'recommended',
 ).slice(0, 3)
 const readmeApiUrl = getReadmeApiUrl(repository.fullName)
 const absoluteDate = new Intl.DateTimeFormat('zh-CN', {
