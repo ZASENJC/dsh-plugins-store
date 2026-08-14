@@ -29,6 +29,19 @@ describe('awesome-dsh-plugins catalog matching', () => {
       'research-me',
     ])
   })
+
+  it('ignores invalid, non-GitHub, and non-repository links in accepted rows', () => {
+    const html = `
+      <table><tbody>
+        <tr><td><a href="not a url">Invalid</a></td><td>插件</td><td>兼容</td></tr>
+        <tr><td><a href="https://example.com/Owner/Plugin">External</a></td><td>插件</td><td>关注</td></tr>
+        <tr><td><a href="https://github.com/Owner/Plugin/issues">Issue</a></td><td>插件</td><td>需适配</td></tr>
+        <tr><td>No link</td><td>插件</td><td>待调研</td></tr>
+      </tbody></table>
+    `
+
+    expect([...extractAwesomeRepositoryNames(html)]).toEqual([])
+  })
 })
 
 describe('GitHub README rendering', () => {
@@ -63,5 +76,28 @@ describe('GitHub README rendering', () => {
       fullName: 'Owner/Plugin',
       defaultBranch: 'main',
     })).toBe('')
+  })
+
+  it('keeps external media and resolves GitHub-root and query-bearing references', () => {
+    const rendered = prepareReadmeHtml(`
+      <div id="readme">
+        <article class="markdown-body">
+          <a href="/Owner/Plugin/issues">Issues</a>
+          <a href="guide.md?plain=1#usage">Guide</a>
+          <a href="?plain=1">Current document</a>
+          <img src="/assets/github.png" alt="GitHub asset">
+          <img src="https://example.com/logo.png" alt="External asset">
+        </article>
+      </div>
+    `, {
+      fullName: 'Owner/Plugin',
+      defaultBranch: 'main',
+    })
+
+    expect(rendered).toContain('href="https://github.com/Owner/Plugin/issues"')
+    expect(rendered).toContain('href="https://github.com/Owner/Plugin/blob/main/guide.md?plain=1#usage"')
+    expect(rendered).toContain('href="?plain=1"')
+    expect(rendered).toContain('src="https://github.com/assets/github.png"')
+    expect(rendered).toContain('src="https://example.com/logo.png"')
   })
 })

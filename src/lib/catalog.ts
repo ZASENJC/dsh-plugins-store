@@ -30,6 +30,7 @@ export interface GitHubRepository {
   archived: boolean
   license: { spdx_id: string | null } | null
   topics: string[]
+  default_branch?: string
 }
 
 export interface CatalogEntry {
@@ -62,6 +63,7 @@ export interface CatalogEntry {
   categories: Category[]
   matchedTopics: string[]
   classificationConfidence: Confidence
+  awesomeListed: boolean
   status: {
     discovery: 'topic-listed'
     verification: 'not-verified'
@@ -85,7 +87,12 @@ export interface Catalog {
   repositories: CatalogEntry[]
 }
 
-export function createCatalogEntry(repository: GitHubRepository): CatalogEntry {
+export type CatalogSort = 'stars' | 'updated' | 'name'
+
+export function createCatalogEntry(
+  repository: GitHubRepository,
+  awesomeRepositoryNames: ReadonlySet<string> = new Set(),
+): CatalogEntry {
   const classification = classifyRepository({
     fullName: repository.full_name,
     name: repository.name,
@@ -123,6 +130,7 @@ export function createCatalogEntry(repository: GitHubRepository): CatalogEntry {
     categories: classification.categories,
     matchedTopics: classification.matchedTopics,
     classificationConfidence: classification.confidence,
+    awesomeListed: awesomeRepositoryNames.has(repository.name.toLowerCase()),
     status: {
       discovery: 'topic-listed',
       verification: 'not-verified',
@@ -134,15 +142,20 @@ export function buildCatalog(
   repositories: GitHubRepository[],
   generatedAt = new Date().toISOString(),
   reportedByGitHub = repositories.length,
+  awesomeRepositoryNames: ReadonlySet<string> = new Set(),
 ): Catalog {
   const uniqueRepositories = new Map<number, GitHubRepository>()
   for (const repository of repositories) {
     if (!uniqueRepositories.has(repository.id)) uniqueRepositories.set(repository.id, repository)
   }
 
-  const entries = [...uniqueRepositories.values()]
-    .map(createCatalogEntry)
-    .sort((left, right) => right.stars - left.stars || left.fullName.localeCompare(right.fullName))
+  const normalizedAwesomeNames = new Set(
+    [...awesomeRepositoryNames].map((name) => name.toLowerCase()),
+  )
+  const entries = sortCatalogEntries(
+    [...uniqueRepositories.values()].map((repository) => createCatalogEntry(repository, normalizedAwesomeNames)),
+    'stars',
+  )
   const categoryCounts: Partial<Record<Category, number>> = {}
   const typeCounts: Partial<Record<ProjectType, number>> = {}
 
@@ -167,6 +180,19 @@ export function buildCatalog(
     },
     repositories: entries,
   }
+}
+
+export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort): CatalogEntry[] {
+  return [...entries].sort((left, right) => {
+    const awesomePriority = Number(right.awesomeListed) - Number(left.awesomeListed)
+    if (awesomePriority !== 0) return awesomePriority
+    if (sort === 'updated') {
+      return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
+        || left.fullName.localeCompare(right.fullName)
+    }
+    if (sort === 'name') return left.name.localeCompare(right.name) || left.fullName.localeCompare(right.fullName)
+    return right.stars - left.stars || left.fullName.localeCompare(right.fullName)
+  })
 }
 
 export function formatCompactNumber(value: number): string {

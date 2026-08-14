@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     coverage: {
       provider: 'v8',
-      include: ['src/lib/classification.ts', 'src/lib/catalog.ts'],
+      include: ['src/lib/classification.ts', 'src/lib/catalog.ts', 'src/lib/github-content.ts'],
       thresholds: {
         branches: 80,
         functions: 80,

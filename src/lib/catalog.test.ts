@@ -91,6 +91,18 @@ describe('catalog data', () => {
     expect(catalog.repositories[1].awesomeListed).toBe(false)
     expect(sortCatalogEntries(catalog.repositories, 'updated')[0].awesomeListed).toBe(true)
     expect(sortCatalogEntries(catalog.repositories, 'name')[0].awesomeListed).toBe(true)
+
+    const ordinaryCatalog = buildCatalog([
+      { ...popular, name: 'zulu-plugin', full_name: 'owner/zulu-plugin' },
+      {
+        ...awesomeMirror,
+        name: 'alpha-plugin',
+        full_name: 'owner/alpha-plugin',
+        pushed_at: '2026-08-15T00:00:00Z',
+      },
+    ])
+    expect(sortCatalogEntries(ordinaryCatalog.repositories, 'updated')[0].name).toBe('alpha-plugin')
+    expect(sortCatalogEntries(ordinaryCatalog.repositories, 'name')[0].name).toBe('alpha-plugin')
   })
 
   it('formats user-facing metadata without depending on the browser locale', () => {
