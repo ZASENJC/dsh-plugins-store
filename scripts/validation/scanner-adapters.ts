@@ -49,11 +49,11 @@ function strings(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
-function dockerPrefix(sourceDir: string): string[] {
+function dockerPrefix(sourceDir: string, temporarySize = '128m'): string[] {
   return [
     'run', '--rm', '--read-only', '--cap-drop=ALL',
     '--security-opt=no-new-privileges', '--pids-limit=128', '--memory=1g', '--cpus=1',
-    '--user=65532:65532', '--tmpfs=/tmp:rw,noexec,nosuid,size=128m',
+    '--user=65532:65532', `--tmpfs=/tmp:rw,noexec,nosuid,size=${temporarySize}`,
     '--mount', `type=bind,src=${sourceDir},dst=/workspace,readonly`,
   ]
 }
@@ -62,24 +62,23 @@ export function buildScannerCommands(sourceDirectory: string): ScannerCommand[] 
   const sourceDir = resolve(sourceDirectory)
   const runId = createHash('sha256').update(sourceDir).digest('hex').slice(0, 16)
   const outputRoot = join(tmpdir(), 'dsh-validation-scans', runId)
-  const prefix = dockerPrefix(sourceDir)
   return [
     {
       tool: 'trivy',
       file: 'docker',
-      args: [...prefix, SCANNER_IMAGES.trivy, 'fs', '--quiet', '--format=json', '--scanners=vuln,secret', '/workspace'],
+      args: [...dockerPrefix(sourceDir, '512m'), SCANNER_IMAGES.trivy, 'fs', '--quiet', '--format=json', '--scanners=vuln,secret', '/workspace'],
       outputPath: join(outputRoot, 'trivy.json'),
     },
     {
       tool: 'osv',
       file: 'docker',
-      args: [...prefix, SCANNER_IMAGES.osv, 'scan', '--format=json', '--recursive', '/workspace'],
+      args: [...dockerPrefix(sourceDir), SCANNER_IMAGES.osv, 'scan', '--format=json', '--recursive', '/workspace'],
       outputPath: join(outputRoot, 'osv.json'),
     },
     {
       tool: 'gitleaks',
       file: 'docker',
-      args: [...prefix, '--network=none', SCANNER_IMAGES.gitleaks, 'dir', '/workspace', '--no-banner', '--report-format=json', '--report-path=/dev/stdout', '--exit-code=0'],
+      args: [...dockerPrefix(sourceDir), '--network=none', SCANNER_IMAGES.gitleaks, 'dir', '/workspace', '--no-banner', '--report-format=json', '--report-path=/dev/stdout', '--exit-code=0'],
       outputPath: join(outputRoot, 'gitleaks.json'),
     },
   ]
