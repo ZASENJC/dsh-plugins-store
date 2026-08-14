@@ -6,7 +6,7 @@ export interface BaselineTarget {
   sourceSha: string
   executionType: Extract<ExecutionType, 'host-tool'>
   smokeMode: 'loader' | 'tool-registration'
-  expectedFinalStatuses: Array<Extract<ValidationStatus, 'verified' | 'inconclusive'>>
+  expectedFinalStatuses: Array<Extract<ValidationStatus, 'verified' | 'failed' | 'inconclusive' | 'structure_failed'>>
 }
 
 export interface ValidationBaseline {
@@ -47,7 +47,9 @@ export function parseBaseline(value: unknown): ValidationBaseline {
       || !['loader', 'tool-registration'].includes(raw.smokeMode as string)
       || !Array.isArray(raw.expectedFinalStatuses)
       || raw.expectedFinalStatuses.length === 0
-      || !raw.expectedFinalStatuses.every((status) => status === 'verified' || status === 'inconclusive')) {
+      || !raw.expectedFinalStatuses.every((status) => (
+        status === 'verified' || status === 'failed' || status === 'inconclusive' || status === 'structure_failed'
+      ))) {
       throw new Error(`Baseline target ${index + 1} sourceSha or contract is invalid`)
     }
     const repositoryId = Number(raw.repositoryId)

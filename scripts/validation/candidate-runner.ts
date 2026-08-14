@@ -38,6 +38,13 @@ export function planCandidate(rawReport: ValidationReport): CandidatePlan {
   if (report.currentStatus !== 'structure_passed' || report.executionType === null) {
     return { disposition: 'skip', validator: 'none', code: 'STRUCTURE_NOT_PASSED' }
   }
+  if (report.structureChecks.some(({ code }) => code === 'EXTERNAL_CREDENTIALS_REQUIRED')) {
+    return {
+      disposition: 'inconclusive',
+      validator: 'linux-headless',
+      code: 'EXTERNAL_CREDENTIALS_REQUIRED',
+    }
+  }
 
   const route = routeValidator(report.executionType)
   if (report.executionType === 'host-tool' || report.executionType === 'command') {

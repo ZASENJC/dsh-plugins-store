@@ -24,7 +24,7 @@ export interface PromotionAssessment {
   }
 }
 
-const TERMINAL_OBSERVATIONS = new Set(['verified', 'failed', 'inconclusive'])
+const TERMINAL_OBSERVATIONS = new Set(['verified', 'failed', 'inconclusive', 'structure_failed'])
 
 function isTerminalObservation(report: ValidationReport): boolean {
   return TERMINAL_OBSERVATIONS.has(report.currentStatus)

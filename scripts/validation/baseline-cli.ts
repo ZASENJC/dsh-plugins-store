@@ -8,6 +8,7 @@ import { promisify } from 'node:util'
 import type { ValidationReport } from '../../src/lib/validation-report'
 import { downloadPinnedArchive, extractPinnedArchive } from './archive-downloader'
 import { parseBaseline, type BaselineTarget } from './baseline'
+import { runCandidateBatch } from './candidate-runner'
 import { discoverCatalogRepositories } from './shadow-cli'
 import { loadGitHubSnapshot } from './github-snapshot'
 import { buildLinuxSandboxPlan } from './linux-sandbox'
@@ -139,13 +140,18 @@ export async function runBaselineCli(args = process.argv.slice(2)): Promise<void
       })
       let report = structure.report
       if (structure.decision === 'passed' && structure.report.executionType === target.executionType) {
-        const plan = buildLinuxSandboxPlan(target, {
-          runId: `run-${Date.now().toString(36)}`,
-          sourceDirectory,
-          dshVersion: baseline.dshVersion,
-          validatorVersion: baseline.validatorVersion,
+        const batch = await runCandidateBatch([report], {
+          executeQueued: async (candidateReport) => {
+            const plan = buildLinuxSandboxPlan(target, {
+              runId: `run-${Date.now().toString(36)}`,
+              sourceDirectory,
+              dshVersion: baseline.dshVersion,
+              validatorVersion: baseline.validatorVersion,
+            })
+            return (await executeLinuxSandboxPlan(candidateReport, plan)).report
+          },
         })
-        report = (await executeLinuxSandboxPlan(report, plan)).report
+        report = batch.reports[0]
       }
       const reportPath = await writeReportAtomically(options.outputDir, report)
       observations.push({ repositoryId: target.repositoryId, ...evaluateBaselineOutcome(target, report), reportPath })

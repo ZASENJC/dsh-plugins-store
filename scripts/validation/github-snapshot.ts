@@ -58,7 +58,7 @@ async function fetchJson<T>(
 }
 
 function isStructuralContentPath(path: string): boolean {
-  return /(^|\/)(package\.json|pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?|SKILL\.md|LICENSE(?:\..*)?|COPYING(?:\..*)?|cordis\.patch\.ya?ml|dsh\.bundle\.ya?ml|\.gitmodules|\.gitattributes)$/i.test(path)
+  return /(^|\/)(package\.json|pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?|SKILL\.md|LICENSE(?:\..*)?|COPYING(?:\..*)?|cordis\.patch\.ya?ml|dsh\.bundle\.ya?ml|\.gitmodules|\.gitattributes|\.npmrc)$/i.test(path)
 }
 
 function decodeBlob(blob: GitHubBlobResponse, path: string): string {

@@ -28,7 +28,7 @@
             "type": "array",
             "minItems": 1,
             "uniqueItems": true,
-            "items": { "enum": ["verified", "inconclusive"] }
+            "items": { "enum": ["verified", "failed", "inconclusive", "structure_failed"] }
           }
         }
       }

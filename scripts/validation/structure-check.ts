@@ -125,12 +125,20 @@ function getNestedString(value: unknown, ...keys: string[]): string | null {
   return typeof current === 'string' && current.length > 0 ? current : null
 }
 
-function collectEntrypoints(value: unknown, result = new Set<string>()): Set<string> {
-  if (typeof value === 'string' && value.startsWith('./')) result.add(value)
-  else if (Array.isArray(value)) value.forEach((item) => collectEntrypoints(item, result))
+function collectEntrypoints(value: unknown, result = new Set<string>(), allowBare = false): Set<string> {
+  if (typeof value === 'string' && (value.startsWith('./') || allowBare)) result.add(value)
+  else if (Array.isArray(value)) value.forEach((item) => collectEntrypoints(item, result, allowBare))
   else if (asRecord(value)) Object.values(value as Record<string, unknown>)
-    .forEach((item) => collectEntrypoints(item, result))
+    .forEach((item) => collectEntrypoints(item, result, allowBare))
   return result
+}
+
+function externalCredentialPath(files: RepositoryStructureSnapshot['files']): string | undefined {
+  return Object.entries(files).find(([path, content]) => (
+    /(^|\/)\.npmrc$/i.test(path)
+    && typeof content === 'string'
+    && /npm\.pkg\.github\.com|_authToken\s*=|\$\{(?:NODE_AUTH_TOKEN|NPM_TOKEN|GITHUB_TOKEN)\}/i.test(content)
+  ))?.[0]
 }
 
 function fingerprint(repositoryId: number, sourceSha: string, code: string): string {
@@ -376,9 +384,9 @@ export function runStructureCheck(
     const scripts = asRecord(manifest.scripts) ?? {}
     const hasBuild = typeof scripts.build === 'string' || typeof scripts.prepare === 'string' || typeof scripts.prepack === 'string'
     const entrypoints = new Set<string>()
-    collectEntrypoints(manifest.main, entrypoints)
+    collectEntrypoints(manifest.main, entrypoints, true)
     collectEntrypoints(manifest.exports, entrypoints)
-    collectEntrypoints(manifest.bin, entrypoints)
+    collectEntrypoints(manifest.bin, entrypoints, true)
     const relevantEntrypoints = [...entrypoints].filter((path) => !/(?:package\.json|cordis\.patch\.yml)$/.test(path))
     const missingEntrypoints = relevantEntrypoints.filter((path) => !hasOwnPath(snapshot.files, path))
     if (relevantEntrypoints.length === 0) {
@@ -415,6 +423,18 @@ export function runStructureCheck(
       )
     }
   }
+
+  const credentialPath = externalCredentialPath(snapshot.files)
+  check(
+    checks,
+    credentialPath ? 'EXTERNAL_CREDENTIALS_REQUIRED' : 'EXTERNAL_CREDENTIALS_NOT_REQUIRED',
+    credentialPath ? 'warning' : 'passed',
+    'advisory',
+    credentialPath
+      ? 'An external package registry requires credentials that are unavailable in the sandbox.'
+      : 'No external package registry credential requirement was detected.',
+    credentialPath,
+  )
 
   const lockfile = Object.keys(snapshot.files).find((path) => /(^|\/)(pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?)$/.test(path))
   check(
@@ -505,7 +525,9 @@ export function runStructureCheck(
 
   return {
     decision,
-    queueSandbox: decision === 'passed' && !['native', 'skill', 'non-plugin'].includes(executionType),
+    queueSandbox: decision === 'passed'
+      && credentialPath === undefined
+      && !['native', 'skill', 'non-plugin'].includes(executionType),
     publicReason,
     report: createReport({ snapshot, target, executionType, checks, failure }),
   }
