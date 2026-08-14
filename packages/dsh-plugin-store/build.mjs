@@ -15,6 +15,7 @@ await build({
   format: 'esm',
   platform: 'node',
   target: 'node22',
+  external: ['@deepseek-ai/dsh-native-command'],
   minify: true,
 })
 

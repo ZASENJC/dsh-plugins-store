@@ -14,6 +14,7 @@ export default defineConfig({
         'packages/dsh-plugin-store/src/catalog.js',
         'packages/dsh-plugin-store/src/controller.js',
         'packages/dsh-plugin-store/src/index.js',
+        'packages/dsh-plugin-store/src/installer.js',
       ],
       thresholds: {
         branches: 80,
