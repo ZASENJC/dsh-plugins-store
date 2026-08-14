@@ -1,5 +1,11 @@
 import type { ProjectType } from './classification'
 
+export const CURRENT_VALIDATION_TARGET = Object.freeze({
+  dshVersion: '0.1.0-rc.6',
+  platform: 'linux-x64',
+  validatorVersion: '0.1.0',
+} as const)
+
 export const VALIDATION_STAGE_DEFINITIONS = Object.freeze([
   { id: 'discovery', label: '商店发现' },
   { id: 'identification', label: '归类识别' },
@@ -224,6 +230,11 @@ export function buildValidationStatus({
     level = record.structure.status === 'passed' ? 3 : 2
     if (record.sandbox.status === 'passed') level = 4
     if (overall === 'verified' && record.sourcePushedAt !== repositoryPushedAt) overall = 'expired'
+    if (overall === 'verified' && (
+      record.dshVersion !== CURRENT_VALIDATION_TARGET.dshVersion
+      || record.platform !== CURRENT_VALIDATION_TARGET.platform
+      || record.validatorVersion !== CURRENT_VALIDATION_TARGET.validatorVersion
+    )) overall = 'expired'
   } else if (legacyVerificationUrl) {
     overall = 'recorded'
     level = 4
