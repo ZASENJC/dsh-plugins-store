@@ -69,11 +69,11 @@ describe('catalog data', () => {
       new Set(['owner/verified-plugin']),
     )
 
-    expect(catalog.stats.verified).toBe(1)
+    expect(catalog.stats.verified).toBe(0)
     expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 11)).toMatchObject({
-      verified: true,
+      verified: false,
       verificationUrl: 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95',
-      status: { discovery: 'topic-listed', verification: 'verified' },
+      status: { discovery: 'topic-listed', verification: 'not-verified' },
       validation: {
         overall: 'recorded',
         label: '已有验证记录',
@@ -87,7 +87,7 @@ describe('catalog data', () => {
     })
   })
 
-  it('keeps the explicitly verified dsh-TUI repository without attributing it to the external directory', () => {
+  it('keeps the dsh-TUI reference as historical evidence without granting current verification', () => {
     const repository = {
       ...githubRepository,
       id: 1333111893,
@@ -99,9 +99,10 @@ describe('catalog data', () => {
     const entry = buildCatalog([repository]).repositories[0]
 
     expect(entry).toMatchObject({
-      verified: true,
+      verified: false,
       verificationUrl: 'https://github.com/ccch1mneyyy/dsh-TUI',
-      status: { discovery: 'topic-listed', verification: 'verified' },
+      status: { discovery: 'topic-listed', verification: 'not-verified' },
+      validation: { overall: 'recorded', verified: false },
     })
   })
 
@@ -125,6 +126,9 @@ describe('catalog data', () => {
       sourceSha: 'd'.repeat(40),
       sourcePushedAt: githubRepository.pushed_at,
       updatedAt: '2026-08-14T09:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.0',
       structure: { status: 'passed' as const },
       sandbox: { status: 'passed' as const, reportUrl: 'https://reports.example/current.json' },
     }]])
@@ -230,7 +234,31 @@ describe('catalog data', () => {
       '2026-08-14T00:00:00.000Z',
       6,
       new Set(['awesome-high', 'awesome-next']),
-      new Set(['owner/verified-tie', 'owner/verified-last']),
+      new Set(),
+      new Map([
+        [24, {
+          repositoryId: 24,
+          sourceSha: 'd'.repeat(40),
+          sourcePushedAt: verifiedTie.pushed_at,
+          updatedAt: '2026-08-14T01:00:00Z',
+          dshVersion: '0.1.0-rc.6',
+          platform: 'linux-x64',
+          validatorVersion: '0.1.0',
+          structure: { status: 'passed' as const },
+          sandbox: { status: 'passed' as const },
+        }],
+        [26, {
+          repositoryId: 26,
+          sourceSha: 'e'.repeat(40),
+          sourcePushedAt: verifiedLast.pushed_at,
+          updatedAt: '2026-08-14T01:00:00Z',
+          dshVersion: '0.1.0-rc.6',
+          platform: 'linux-x64',
+          validatorVersion: '0.1.0',
+          structure: { status: 'passed' as const },
+          sandbox: { status: 'passed' as const },
+        }],
+      ]),
     )
 
     expect(catalog.repositories.map(({ fullName }) => fullName)).toEqual([
@@ -315,7 +343,18 @@ describe('catalog data', () => {
       '2026-08-14T00:00:00.000Z',
       3,
       new Set(['awesome-tie']),
-      new Set(['owner-a/verified-tie']),
+      new Set(),
+      new Map([[43, {
+        repositoryId: 43,
+        sourceSha: 'f'.repeat(40),
+        sourcePushedAt: verifiedTie.pushed_at,
+        updatedAt: '2026-08-14T01:00:00Z',
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        validatorVersion: '0.1.0',
+        structure: { status: 'passed' as const },
+        sandbox: { status: 'passed' as const },
+      }]]),
     )
 
     expect(sortCatalogEntries(catalog.repositories, 'stars').map(({ fullName }) => fullName)).toEqual([

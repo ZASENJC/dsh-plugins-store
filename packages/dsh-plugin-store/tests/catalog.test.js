@@ -19,7 +19,7 @@ const repositories = [
     stars: 20,
     pushedAt: '2026-08-14T00:00:00Z',
     verified: true,
-    validation: { overall: 'verified', label: '已验证' },
+    validation: { overall: 'verified', label: '已验证', sourceSha: 'a'.repeat(40) },
   },
   {
     repositoryId: 2,
@@ -107,7 +107,7 @@ describe('plugin catalog filtering', () => {
 
   it('only offers the existing reference command for install-shaped project types', () => {
     expect(buildInstallCommand(repositories[0])).toBe(
-      'dsh plugin --profile web add github:owner/verified-ui',
+      `dsh plugin --profile web add github:owner/verified-ui#${'a'.repeat(40)}`,
     )
     expect(buildInstallCommand(repositories[1])).toBe(
       'dsh plugin --profile web add github:owner/search-skill',
