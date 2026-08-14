@@ -49,6 +49,14 @@ describe('fixed-SHA archive acquisition', () => {
     expect(writeArchive).toHaveBeenCalledWith('/tmp/repository.tar.gz', expect.any(Uint8Array))
   })
 
+  it('rejects a root identity for archive extraction', () => {
+    expect(() => buildArchiveExtractionCommand(
+      '/tmp/repository.tar.gz',
+      '/tmp/source',
+      { uid: 0, gid: 0 },
+    )).toThrow('non-root')
+  })
+
   it('rejects invalid SHA input before making a network request', async () => {
     const fetchImpl = vi.fn()
 

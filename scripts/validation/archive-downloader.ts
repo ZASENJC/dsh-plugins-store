@@ -13,10 +13,29 @@ export interface ArchiveExtractionCommand {
   args: string[]
 }
 
+export interface ArchiveExtractionIdentity {
+  uid: number
+  gid: number
+}
+
+function currentExtractionIdentity(): ArchiveExtractionIdentity {
+  const uid = process.getuid?.()
+  const gid = process.getgid?.()
+  return Number.isSafeInteger(uid) && Number(uid) > 0
+    && Number.isSafeInteger(gid) && Number(gid) >= 0
+    ? { uid: Number(uid), gid: Number(gid) }
+    : { uid: 65532, gid: 65532 }
+}
+
 export function buildArchiveExtractionCommand(
   archivePath: string,
   outputDirectory: string,
+  identity = currentExtractionIdentity(),
 ): ArchiveExtractionCommand {
+  if (!Number.isSafeInteger(identity.uid) || identity.uid <= 0
+    || !Number.isSafeInteger(identity.gid) || identity.gid < 0) {
+    throw new Error('Archive extraction requires a non-root identity')
+  }
   const archive = resolve(archivePath)
   const output = resolve(outputDirectory)
   return {
@@ -24,7 +43,7 @@ export function buildArchiveExtractionCommand(
     args: [
       'run', '--rm', '--network=none', '--read-only', '--cap-drop=ALL',
       '--security-opt=no-new-privileges', '--pids-limit=64', '--memory=256m', '--cpus=1',
-      '--user=65532:65532', '--tmpfs=/tmp:rw,noexec,nosuid,size=32m',
+      `--user=${identity.uid}:${identity.gid}`, '--tmpfs=/tmp:rw,noexec,nosuid,size=32m',
       '--mount', `type=bind,src=${archive},dst=/archive/repository.tar.gz,readonly`,
       '--mount', `type=bind,src=${output},dst=/output`,
       EXTRACTION_IMAGE,
