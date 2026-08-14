@@ -52,8 +52,11 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain('function StoreView')
     expect(source).toContain('function StoreModal')
     expect(source).toContain('function StoreSettingsTab')
+    expect(source).toContain('function InstallRiskModal')
     expect(source.match(/<StoreView/g)).toHaveLength(2)
     expect(source).toContain('buildInstallCommand')
+    expect(source).toContain("fetch('/api/dsh-plugin-store/install'")
+    expect(source).toContain("t('store.riskAcknowledge')")
     expect(source).not.toMatch(/child_process|execFile|spawn\(/)
   })
 
@@ -62,5 +65,7 @@ describe('installable DSH plugin package', () => {
 
     expect(source).toContain(".dps-store[data-mode='settings'] .dps-filter-bar")
     expect(source).toContain(".dps-store[data-mode='settings'] .dps-filter-search")
+    expect(source).toContain('overflow-wrap: anywhere')
+    expect(source).toContain('flex: 1 1 auto')
   })
 })
