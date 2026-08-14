@@ -33,6 +33,7 @@ const githubRepository = {
   archived: false,
   license: { spdx_id: 'AGPL-3.0' },
   topics: ['bot', 'bridge', 'deepseek-harness', 'dsh-plugin', 'feishu', 'lark'],
+  default_branch: 'main',
 }
 
 describe('catalog data', () => {
@@ -42,9 +43,41 @@ describe('catalog data', () => {
     expect(entry.id).toBe('github:1333496313')
     expect(entry.slug).toBe('1333496313')
     expect(entry.owner.avatarUrl).toContain('avatars.githubusercontent.com')
+    expect(entry.defaultBranch).toBe('main')
     expect(entry.projectType).toBe('channel')
     expect(entry.category).toBe('communication')
     expect(entry.status).toEqual({ discovery: 'topic-listed', verification: 'not-verified' })
+  })
+
+  it('matches verified plugins by exact full repository name without accepting same-name forks', () => {
+    const verified = {
+      ...githubRepository,
+      id: 11,
+      full_name: 'Owner/Verified-Plugin',
+      name: 'Verified-Plugin',
+    }
+    const sameNameFork = {
+      ...verified,
+      id: 12,
+      full_name: 'Other/Verified-Plugin',
+    }
+    const catalog = buildCatalog(
+      [verified, sameNameFork],
+      '2026-08-14T00:00:00.000Z',
+      2,
+      new Set(),
+      new Set(['owner/verified-plugin']),
+    )
+
+    expect(catalog.stats.verified).toBe(1)
+    expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 11)).toMatchObject({
+      verified: true,
+      status: { discovery: 'topic-listed', verification: 'verified' },
+    })
+    expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 12)).toMatchObject({
+      verified: false,
+      status: { discovery: 'topic-listed', verification: 'not-verified' },
+    })
   })
 
   it('builds deterministic counts and removes duplicate repository ids', () => {
