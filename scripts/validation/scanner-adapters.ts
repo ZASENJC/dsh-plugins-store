@@ -66,7 +66,7 @@ export function buildScannerCommands(sourceDirectory: string): ScannerCommand[] 
     {
       tool: 'trivy',
       file: 'docker',
-      args: [...dockerPrefix(sourceDir, '512m'), SCANNER_IMAGES.trivy, 'fs', '--quiet', '--format=json', '--scanners=vuln,secret', '/workspace'],
+      args: [...dockerPrefix(sourceDir, '512m'), SCANNER_IMAGES.trivy, 'fs', '--quiet', '--cache-dir=/tmp/trivy-cache', '--format=json', '--scanners=vuln,secret', '/workspace'],
       outputPath: join(outputRoot, 'trivy.json'),
     },
     {
