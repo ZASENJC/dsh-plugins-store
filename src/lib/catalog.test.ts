@@ -7,6 +7,7 @@ import {
   formatRelativeDate,
   getCatalogDefinitions,
   getEmptyCatalog,
+  sortCatalogEntries,
 } from './catalog'
 
 const githubRepository = {
@@ -57,6 +58,39 @@ describe('catalog data', () => {
       categories: { communication: 1 },
       projectTypes: { channel: 1 },
     })
+  })
+
+  it('matches awesome mirrors by exact repository name and keeps them first in every sort mode', () => {
+    const popular = {
+      ...githubRepository,
+      id: 1,
+      name: 'popular-plugin',
+      full_name: 'owner/popular-plugin',
+      stargazers_count: 10_000,
+      pushed_at: '2026-08-14T00:00:00Z',
+    }
+    const awesomeMirror = {
+      ...githubRepository,
+      id: 2,
+      name: 'DSH-Live-Stats',
+      full_name: 'original-owner/DSH-Live-Stats',
+      stargazers_count: 1,
+      pushed_at: '2025-01-01T00:00:00Z',
+    }
+    const catalog = buildCatalog(
+      [popular, awesomeMirror],
+      '2026-08-14T00:00:00.000Z',
+      2,
+      new Set(['dsh-live-stats']),
+    )
+
+    expect(catalog.repositories[0]).toMatchObject({
+      fullName: 'original-owner/DSH-Live-Stats',
+      awesomeListed: true,
+    })
+    expect(catalog.repositories[1].awesomeListed).toBe(false)
+    expect(sortCatalogEntries(catalog.repositories, 'updated')[0].awesomeListed).toBe(true)
+    expect(sortCatalogEntries(catalog.repositories, 'name')[0].awesomeListed).toBe(true)
   })
 
   it('formats user-facing metadata without depending on the browser locale', () => {
