@@ -117,6 +117,17 @@ describe('P4 promotion quality gate', () => {
     })
   })
 
+  it('deduplicates repeated delivery without reporting a binding mismatch', () => {
+    const reports = reportsForAll()
+    reports.push(reports[0])
+
+    expect(assessPromotionGate(baseline, reports)).toMatchObject({
+      eligible: true,
+      reasons: [],
+      metrics: { mismatchedReports: 0 },
+    })
+  })
+
   it('promotes only repeatable current verified bindings after the baseline gate passes', () => {
     const reports = reportsForAll()
     const assessment = assessPromotionGate(baseline, reports)

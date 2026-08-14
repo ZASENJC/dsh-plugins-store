@@ -80,3 +80,4 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - Final checks: 37 test files and 181 tests pass; coverage is 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript and the 1835-page Astro build pass; the rebuilt embedded plugin passes 41 focused tests.
 - P0-P4 contain no external Issue creation path. P5 remains deferred.
 - Next activation step: retain two fresh sandbox reports for every baseline target, review the observed mismatch rate, then run the explicit P4 publish command. Do not begin P5 as part of that activation.
+- Follow-up review started: verify that duplicate delivery of an otherwise valid report is deduplicated without being counted as an evidence-binding mismatch. This changes only promotion metrics, not eligibility requirements or publication state.
