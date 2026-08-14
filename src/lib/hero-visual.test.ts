@@ -30,12 +30,15 @@ describe('homepage DeepSeek grid mark', () => {
     const gridMark = readFileSync(gridMarkPath, 'utf8')
     expect(gridMark).toContain('data-grid-size="80"')
     expect(gridMark).toContain('shape-rendering="crispEdges"')
-    expect(gridMark).toContain('data-motion-group')
+    expect(gridMark).toContain('deepseek-grid-gradient')
+    expect(gridMark).toContain('h.84v.84h-.84z')
   })
 
-  it('animates complete pixel groups only while a fine pointer hovers the hero', () => {
-    expect(homepageSource).toContain('.catalog-head:hover .catalog-head__pixel-group')
-    expect(homepageSource).toContain('@keyframes pixel-roll')
-    expect(homepageSource).toContain('(prefers-reduced-motion: no-preference)')
+  it('uses a restrained cursor-localized response instead of rotating pixel fragments', () => {
+    expect(homepageSource).toContain('radial-gradient(circle at var(--hero-light-x) var(--hero-light-y)')
+    expect(homepageSource).toContain('catalog-head__art-focus')
+    expect(homepageSource).toContain('(pointer: fine)')
+    expect(homepageSource).toContain('(prefers-reduced-motion: reduce)')
+    expect(homepageSource).not.toContain('@keyframes pixel-roll')
   })
 })
