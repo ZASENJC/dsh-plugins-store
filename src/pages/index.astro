@@ -245,11 +245,23 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
       })
 
       return filtered.sort((left, right) => {
-        const awesomePriority = Number(right.awesomeListed) - Number(left.awesomeListed)
-        if (awesomePriority !== 0) return awesomePriority
-        if (sortFilter.value === 'updated') return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
-        if (sortFilter.value === 'name') return left.name.localeCompare(right.name)
-        return right.stars - left.stars || left.name.localeCompare(right.name)
+        const featuredPriority = Number(right.awesomeListed || right.verified)
+          - Number(left.awesomeListed || left.verified)
+        if (featuredPriority !== 0) return featuredPriority
+        const verifiedPriority = Number(right.verified) - Number(left.verified)
+        if (sortFilter.value === 'updated') {
+          return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
+            || verifiedPriority
+            || left.name.localeCompare(right.name)
+        }
+        if (sortFilter.value === 'name') {
+          return left.name.localeCompare(right.name)
+            || verifiedPriority
+            || left.fullName.localeCompare(right.fullName)
+        }
+        return right.stars - left.stars
+          || verifiedPriority
+          || left.name.localeCompare(right.name)
       })
     }
 

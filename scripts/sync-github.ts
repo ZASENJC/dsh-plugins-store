@@ -2,7 +2,11 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { buildCatalog, type GitHubRepository } from '../src/lib/catalog'
+import {
+  buildCatalog,
+  VERIFIED_REPOSITORY_OVERRIDES,
+  type GitHubRepository,
+} from '../src/lib/catalog'
 import {
   extractAwesomeRepositoryNames,
   extractVerifiedRepositoryNames,
@@ -14,6 +18,7 @@ const AWESOME_REPOSITORY = 'AdamPlatin123/awesome-dsh-plugins'
 const VERIFY_REPOSITORY = 'qing3a/dsh-plugin-verify'
 const PAGE_SIZE = 100
 const MAX_SEARCH_RESULTS = 1_000
+const MAX_SEARCH_PASSES = 3
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputPath = resolve(root, 'src/data/catalog.json')
 
@@ -57,18 +62,37 @@ async function fetchPage(page: number): Promise<SearchResponse> {
   return response.json() as Promise<SearchResponse>
 }
 
-async function sync() {
-  const firstPage = await fetchPage(1)
-  const availableCount = Math.min(firstPage.total_count, MAX_SEARCH_RESULTS)
-  const pageCount = Math.ceil(availableCount / PAGE_SIZE)
-  const pages: GitHubRepository[][] = [firstPage.items]
+async function fetchRepositories() {
+  const repositories = new Map<number, GitHubRepository>()
+  let reportedByGitHub = 0
+  let availableCount = 0
 
-  for (let page = 2; page <= pageCount; page += 1) {
-    const response = await fetchPage(page)
-    pages.push(response.items)
+  for (let attempt = 1; attempt <= MAX_SEARCH_PASSES; attempt += 1) {
+    const firstPage = await fetchPage(1)
+    reportedByGitHub = Math.max(reportedByGitHub, firstPage.total_count)
+    availableCount = Math.min(reportedByGitHub, MAX_SEARCH_RESULTS)
+    const pageCount = Math.ceil(availableCount / PAGE_SIZE)
+    let incompleteResults = firstPage.incomplete_results
+
+    for (const repository of firstPage.items) repositories.set(repository.id, repository)
+    for (let page = 2; page <= pageCount; page += 1) {
+      const response = await fetchPage(page)
+      incompleteResults ||= response.incomplete_results
+      for (const repository of response.items) repositories.set(repository.id, repository)
+    }
+
+    if (!incompleteResults && repositories.size >= availableCount) {
+      return { repositories: [...repositories.values()], reportedByGitHub }
+    }
+
+    console.warn(`GitHub Search 第 ${attempt} 轮仅取得 ${repositories.size}/${availableCount} 个唯一仓库，正在合并重试`)
   }
 
-  const repositories = [...new Map(pages.flat().map((repository) => [repository.id, repository])).values()]
+  throw new Error(`GitHub Search 连续 ${MAX_SEARCH_PASSES} 轮仍不完整：${repositories.size}/${availableCount}，保留现有目录`)
+}
+
+async function sync() {
+  const { repositories, reportedByGitHub } = await fetchRepositories()
   const [awesomeResponse, verifyResponse] = await Promise.all([
     fetchRenderedReadme(AWESOME_REPOSITORY),
     fetchRenderedReadme(VERIFY_REPOSITORY),
@@ -84,19 +108,19 @@ async function sync() {
   const catalog = buildCatalog(
     repositories,
     generatedAt,
-    firstPage.total_count,
+    reportedByGitHub,
     awesomeRepositoryNames,
     verifiedRepositoryNames,
   )
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
 
-  const warning = firstPage.total_count > MAX_SEARCH_RESULTS
+  const warning = reportedByGitHub > MAX_SEARCH_RESULTS
     ? `；警告：GitHub Search 上限为 ${MAX_SEARCH_RESULTS}，需要启用分段查询`
     : ''
   console.log(`Awesome 有效收录 ${awesomeRepositoryNames.size} 个仓库名；商店匹配 ${catalog.repositories.filter((repository) => repository.awesomeListed).length} 个`)
-  console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；商店匹配 ${catalog.stats.verified} 个`)
-  console.log(`已同步 ${catalog.stats.fetched}/${firstPage.total_count} 个仓库到 ${outputPath}${warning}`)
+  console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
+  console.log(`已同步 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}${warning}`)
 }
 
 await sync()

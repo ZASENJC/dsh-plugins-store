@@ -7,6 +7,11 @@ import {
   type ProjectType,
 } from './classification'
 
+export const VERIFICATION_DIRECTORY_URL = 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95'
+export const VERIFIED_REPOSITORY_OVERRIDES: ReadonlyMap<string, string> = new Map([
+  ['ccch1mneyyy/dsh-tui', 'https://github.com/ccch1mneyyy/dsh-TUI'],
+])
+
 export interface GitHubRepository {
   id: number
   name: string
@@ -66,6 +71,7 @@ export interface CatalogEntry {
   defaultBranch: string
   awesomeListed: boolean
   verified: boolean
+  verificationUrl: string | null
   status: {
     discovery: 'topic-listed'
     verification: 'verified' | 'not-verified'
@@ -103,6 +109,10 @@ export function createCatalogEntry(
     description: repository.description ?? '',
     topics: repository.topics ?? [],
   })
+  const normalizedFullName = repository.full_name.toLowerCase()
+  const verificationUrl = verifiedRepositoryNames.has(normalizedFullName)
+    ? VERIFICATION_DIRECTORY_URL
+    : VERIFIED_REPOSITORY_OVERRIDES.get(normalizedFullName) ?? null
 
   return {
     id: `github:${repository.id}`,
@@ -136,10 +146,11 @@ export function createCatalogEntry(
     classificationConfidence: classification.confidence,
     defaultBranch: repository.default_branch || 'main',
     awesomeListed: awesomeRepositoryNames.has(repository.name.toLowerCase()),
-    verified: verifiedRepositoryNames.has(repository.full_name.toLowerCase()),
+    verified: verificationUrl !== null,
+    verificationUrl,
     status: {
       discovery: 'topic-listed',
-      verification: verifiedRepositoryNames.has(repository.full_name.toLowerCase()) ? 'verified' : 'not-verified',
+      verification: verificationUrl ? 'verified' : 'not-verified',
     },
   }
 }
@@ -199,14 +210,23 @@ export function buildCatalog(
 
 export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort): CatalogEntry[] {
   return [...entries].sort((left, right) => {
-    const awesomePriority = Number(right.awesomeListed) - Number(left.awesomeListed)
-    if (awesomePriority !== 0) return awesomePriority
+    const featuredPriority = Number(right.awesomeListed || right.verified)
+      - Number(left.awesomeListed || left.verified)
+    if (featuredPriority !== 0) return featuredPriority
+    const verifiedPriority = Number(right.verified) - Number(left.verified)
     if (sort === 'updated') {
       return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
+        || verifiedPriority
         || left.fullName.localeCompare(right.fullName)
     }
-    if (sort === 'name') return left.name.localeCompare(right.name) || left.fullName.localeCompare(right.fullName)
-    return right.stars - left.stars || left.fullName.localeCompare(right.fullName)
+    if (sort === 'name') {
+      return left.name.localeCompare(right.name)
+        || verifiedPriority
+        || left.fullName.localeCompare(right.fullName)
+    }
+    return right.stars - left.stars
+      || verifiedPriority
+      || left.fullName.localeCompare(right.fullName)
   })
 }
 

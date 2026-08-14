@@ -46,7 +46,6 @@ const related = sortCatalogEntries(
   'stars',
 ).slice(0, 3)
 const readmeApiUrl = getReadmeApiUrl(repository.fullName)
-const verifyDirectoryUrl = 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95'
 const absoluteDate = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   year: 'numeric',
@@ -194,9 +193,9 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           <div>
             <dt>验证状态</dt>
             <dd class:list={{ 'status-warning': !repository.verified, 'status-verified': repository.verified }}>
-              {repository.verified
+              {repository.verified && repository.verificationUrl
                 ? (
-                  <a href={verifyDirectoryUrl} target="_blank" rel="noreferrer">
+                  <a href={repository.verificationUrl} target="_blank" rel="noreferrer">
                     已验证 <ExternalLink size={12} stroke-width={1.6} />
                   </a>
                 )

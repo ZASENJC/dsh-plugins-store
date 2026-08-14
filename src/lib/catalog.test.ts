@@ -72,11 +72,31 @@ describe('catalog data', () => {
     expect(catalog.stats.verified).toBe(1)
     expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 11)).toMatchObject({
       verified: true,
+      verificationUrl: 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95',
       status: { discovery: 'topic-listed', verification: 'verified' },
     })
     expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 12)).toMatchObject({
       verified: false,
+      verificationUrl: null,
       status: { discovery: 'topic-listed', verification: 'not-verified' },
+    })
+  })
+
+  it('keeps the explicitly verified dsh-TUI repository without attributing it to the external directory', () => {
+    const repository = {
+      ...githubRepository,
+      id: 1333111893,
+      name: 'dsh-TUI',
+      full_name: 'ccch1mneyyy/dsh-TUI',
+      html_url: 'https://github.com/ccch1mneyyy/dsh-TUI',
+      stargazers_count: 288,
+    }
+    const entry = buildCatalog([repository]).repositories[0]
+
+    expect(entry).toMatchObject({
+      verified: true,
+      verificationUrl: 'https://github.com/ccch1mneyyy/dsh-TUI',
+      status: { discovery: 'topic-listed', verification: 'verified' },
     })
   })
 
@@ -136,6 +156,51 @@ describe('catalog data', () => {
     ])
     expect(sortCatalogEntries(ordinaryCatalog.repositories, 'updated')[0].name).toBe('alpha-plugin')
     expect(sortCatalogEntries(ordinaryCatalog.repositories, 'name')[0].name).toBe('alpha-plugin')
+  })
+
+  it('shares priority between awesome and verified projects, then prefers verified projects on equal stars', () => {
+    const ordinary = {
+      ...githubRepository,
+      id: 21,
+      name: 'ordinary-plugin',
+      full_name: 'owner/ordinary-plugin',
+      stargazers_count: 10_000,
+    }
+    const awesome = {
+      ...githubRepository,
+      id: 22,
+      name: 'awesome-plugin',
+      full_name: 'owner/awesome-plugin',
+      stargazers_count: 100,
+    }
+    const verifiedTie = {
+      ...githubRepository,
+      id: 23,
+      name: 'verified-tie',
+      full_name: 'owner/verified-tie',
+      stargazers_count: 100,
+    }
+    const verifiedPopular = {
+      ...githubRepository,
+      id: 24,
+      name: 'verified-popular',
+      full_name: 'owner/verified-popular',
+      stargazers_count: 200,
+    }
+    const catalog = buildCatalog(
+      [ordinary, awesome, verifiedTie, verifiedPopular],
+      '2026-08-14T00:00:00.000Z',
+      4,
+      new Set(['awesome-plugin']),
+      new Set(['owner/verified-tie', 'owner/verified-popular']),
+    )
+
+    expect(catalog.repositories.map(({ fullName }) => fullName)).toEqual([
+      'owner/verified-popular',
+      'owner/verified-tie',
+      'owner/awesome-plugin',
+      'owner/ordinary-plugin',
+    ])
   })
 
   it('formats user-facing metadata without depending on the browser locale', () => {
