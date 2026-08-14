@@ -77,10 +77,11 @@ export function assessPromotionGate(
     const repositoryReports = reports.filter((report) => (
       report.repository.id === target.repositoryId && isTerminalObservation(report)
     ))
-    const exact = uniqueFreshReports(repositoryReports.filter((report) => (
+    const exactBindingReports = repositoryReports.filter((report) => (
       matchesBaselineBinding(report, baseline, target)
-    )))
-    mismatchedReports += repositoryReports.length - exact.length
+    ))
+    const exact = uniqueFreshReports(exactBindingReports)
+    mismatchedReports += repositoryReports.length - exactBindingReports.length
     exactObservedReports += exact.length
     if (exact.length > 0) observedTargets += 1
     if (exact.length >= REQUIRED_FRESH_OBSERVATIONS) repeatableTargets += 1

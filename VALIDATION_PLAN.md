@@ -81,3 +81,4 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - P0-P4 contain no external Issue creation path. P5 remains deferred.
 - Next activation step: retain two fresh sandbox reports for every baseline target, review the observed mismatch rate, then run the explicit P4 publish command. Do not begin P5 as part of that activation.
 - Follow-up review started: verify that duplicate delivery of an otherwise valid report is deduplicated without being counted as an evidence-binding mismatch. This changes only promotion metrics, not eligibility requirements or publication state.
+- Follow-up GREEN: promotion now counts binding mismatches before deduplicating valid observations; 4 focused promotion tests pass, including duplicate delivery and stale-binding coverage.
