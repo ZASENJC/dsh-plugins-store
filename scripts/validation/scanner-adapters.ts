@@ -89,7 +89,7 @@ export function buildScannerCommands(
     {
       tool: 'osv',
       file: 'docker',
-      args: [...dockerPrefix(sourceDir), SCANNER_IMAGES.osv, 'scan', '--format=json', '--recursive', '/workspace'],
+      args: [...dockerPrefix(sourceDir), SCANNER_IMAGES.osv, 'scan', 'source', '--format=json', '--recursive', '/workspace'],
       outputPath: join(outputRoot, 'osv.json'),
     },
     {

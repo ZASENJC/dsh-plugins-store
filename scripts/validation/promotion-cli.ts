@@ -13,6 +13,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 export interface PromotionOptions {
   baselinePath: string
   reportsPath: string
+  gateReportsPath: string
   outputPath: string
   publish: boolean
 }
@@ -23,7 +24,7 @@ function valueAfter(args: string[], name: string): string | undefined {
 }
 
 export function parsePromotionOptions(args: string[]): PromotionOptions {
-  const valued = new Set(['--baseline', '--reports', '--output'])
+  const valued = new Set(['--baseline', '--reports', '--gate-reports', '--output'])
   const known = new Set([...valued, '--publish'])
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]
@@ -33,15 +34,17 @@ export function parsePromotionOptions(args: string[]): PromotionOptions {
       index += 1
     }
   }
+  const reportsPath = resolve(valueAfter(args, '--reports') ?? join(root, 'validation/reports'))
   return {
     baselinePath: resolve(valueAfter(args, '--baseline') ?? join(root, 'validation/baseline.json')),
-    reportsPath: resolve(valueAfter(args, '--reports') ?? join(root, 'validation/reports')),
+    reportsPath,
+    gateReportsPath: resolve(valueAfter(args, '--gate-reports') ?? reportsPath),
     outputPath: resolve(valueAfter(args, '--output') ?? join(root, 'src/data/validation.json')),
     publish: args.includes('--publish'),
   }
 }
 
-async function readReports(directory: string): Promise<ValidationReport[]> {
+export async function readReports(directory: string): Promise<ValidationReport[]> {
   const reports: ValidationReport[] = []
   let entries
   try {
@@ -88,9 +91,15 @@ export async function runPromotionCli(args = process.argv.slice(2)): Promise<voi
   const options = parsePromotionOptions(args)
   const baseline = parseBaseline(JSON.parse(await readFile(options.baselinePath, 'utf8')))
   const reports = await readReports(options.reportsPath)
-  const assessment = assessPromotionGate(baseline, reports)
+  const gateReports = options.gateReportsPath === options.reportsPath
+    ? reports
+    : await readReports(options.gateReportsPath)
+  const publicationReports = options.gateReportsPath === options.reportsPath
+    ? reports
+    : [...gateReports, ...reports]
+  const assessment = assessPromotionGate(baseline, gateReports)
   const feed = assessment.eligible
-    ? buildPublicValidationFeed(baseline, reports, new Date().toISOString())
+    ? buildPublicValidationFeed(baseline, publicationReports, new Date().toISOString(), gateReports)
     : { schemaVersion: 1 as const, generatedAt: new Date().toISOString(), records: [] }
   const result = await writePromotionOutput({
     outputPath: options.outputPath,

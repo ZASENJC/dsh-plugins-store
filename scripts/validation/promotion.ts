@@ -111,18 +111,12 @@ export function assessPromotionGate(
   }
 }
 
-function bindingKey(report: ValidationReport): string {
-  return [
-    report.repository.id,
-    report.repository.sourceSha,
-    report.target.dshVersion,
-    report.target.platform,
-    report.target.validatorVersion,
-  ].join(':')
-}
-
 function eventTime(report: ValidationReport, status: string): string | undefined {
   return report.events.find((event) => event.status === status)?.at
+}
+
+function observationTime(report: ValidationReport): number {
+  return Date.parse(report.completedAt ?? report.startedAt)
 }
 
 function publicRecord(report: ValidationReport): ValidationRecord {
@@ -151,8 +145,9 @@ export function buildPublicValidationFeed(
   baseline: ValidationBaseline,
   rawReports: ValidationReport[],
   generatedAt: string,
+  gateReports: ValidationReport[] = rawReports,
 ): ValidationFeed {
-  const assessment = assessPromotionGate(baseline, rawReports)
+  const assessment = assessPromotionGate(baseline, gateReports)
   if (!assessment.eligible) throw new Error(`P4 质量门禁未通过：${assessment.reasons.join(', ')}`)
   const reports = rawReports.map(parseValidationReport).filter((report) => (
     report.target.dshVersion === baseline.dshVersion
@@ -160,21 +155,19 @@ export function buildPublicValidationFeed(
     && report.target.validatorVersion === baseline.validatorVersion
     && isTerminalObservation(report)
   ))
-  const groups = new Map<string, ValidationReport[]>()
+  const latestByRepository = new Map<number, ValidationReport>()
   for (const report of reports) {
-    const key = bindingKey(report)
-    groups.set(key, [...(groups.get(key) ?? []), report])
+    const current = latestByRepository.get(report.repository.id)
+    if (!current
+      || observationTime(report) > observationTime(current)
+      || (observationTime(report) === observationTime(current) && report.reportId > current.reportId)) {
+      latestByRepository.set(report.repository.id, report)
+    }
   }
 
-  const records: ValidationRecord[] = []
-  for (const group of groups.values()) {
-    const fresh = uniqueFreshReports(group)
-    if (fresh.some(({ currentStatus }) => currentStatus !== 'verified')) continue
-    const latest = fresh.sort((left, right) => (
-      Date.parse(right.completedAt ?? right.startedAt) - Date.parse(left.completedAt ?? left.startedAt)
-    ))[0]
-    records.push(publicRecord(latest))
-  }
+  const records: ValidationRecord[] = [...latestByRepository.values()]
+    .filter(({ currentStatus }) => currentStatus === 'verified')
+    .map(publicRecord)
 
   return {
     schemaVersion: 1,

@@ -1,5 +1,10 @@
 import type { ValidationBinding, ValidationStatus } from '../../src/lib/validation-report'
-import type { BaselineTarget } from './baseline'
+
+export interface LinuxSandboxTarget {
+  repositoryId: number
+  sourceSha: string
+  smokeMode: 'loader' | 'tool-registration'
+}
 
 export type SandboxStepId =
   | 'create-volume'
@@ -78,7 +83,7 @@ function runArgs({
 }
 
 export function buildLinuxSandboxPlan(
-  target: BaselineTarget,
+  target: LinuxSandboxTarget,
   {
     runId,
     sourceDirectory,

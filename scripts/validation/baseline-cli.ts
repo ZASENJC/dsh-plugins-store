@@ -84,7 +84,7 @@ function parseOptions(args: string[]): BaselineCliOptions {
   }
 }
 
-async function buildValidatorImage(): Promise<void> {
+export async function buildValidatorImage(): Promise<void> {
   await execFileAsync('docker', [
     'build', '--platform=linux/amd64',
     '--tag', 'dsh-plugin-validator:0.1.0',

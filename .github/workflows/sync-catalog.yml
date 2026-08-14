@@ -1,6 +1,8 @@
 name: Sync catalog
 
 on:
+  schedule:
+    - cron: '23 2 * * *'
   workflow_dispatch:
 
 permissions:
@@ -30,6 +32,14 @@ jobs:
         run: npm run sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload immutable catalog snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-catalog-snapshot
+          path: src/data/catalog.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Test and build
         run: |
