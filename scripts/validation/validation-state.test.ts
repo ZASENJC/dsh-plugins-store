@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ValidationReport } from '../../src/lib/validation-report'
+import type { ValidationRecord } from '../../src/lib/validation'
 import {
   buildValidationState,
+  reconcileValidationState,
   selectValidationDelta,
   type ValidationSelection,
   type ValidationState,
@@ -131,7 +133,7 @@ describe('incremental validation cursor', () => {
     })
   })
 
-  it('advances conclusive entries but leaves infrastructure outcomes queued for the next hour', () => {
+  it('advances every completed entry so unchanged infrastructure outcomes do not repeat hourly', () => {
     const previous = state([{ repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt }])
     const selection: ValidationSelection = {
       schemaVersion: 1,
@@ -153,9 +155,10 @@ describe('incremental validation cursor', () => {
     expect(next.entries).toEqual([
       { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
       { repositoryId: 2, pushedAt: catalog.repositories[1].pushedAt },
+      { repositoryId: 4, pushedAt: catalog.repositories[3].pushedAt },
     ])
     expect(selectValidationDelta(catalog, next, target, 20, '2026-08-14T17:01:00.000Z').repositoryIds)
-      .toEqual([4])
+      .toEqual([])
   })
 
   it('does not carry an old cursor through a forced full revalidation', () => {
@@ -176,6 +179,47 @@ describe('incremental validation cursor', () => {
       selection,
       [report(4, 'infrastructure')],
       '2026-08-14T16:20:00.000Z',
-    ).entries).toEqual([])
+    ).entries).toEqual([{ repositoryId: 4, pushedAt: catalog.repositories[3].pushedAt }])
+  })
+
+  it('repairs an older cursor only from exact-source and exact-target published records', () => {
+    const records = new Map<number, ValidationRecord>([
+      [2, {
+        repositoryId: 2,
+        sourceSha: 'b'.repeat(40),
+        sourcePushedAt: catalog.repositories[1].pushedAt,
+        updatedAt: '2026-08-14T16:10:00.000Z',
+        dshVersion: target.dshVersion,
+        platform: target.platform,
+        validatorVersion: target.validatorVersion,
+        structure: { status: 'failed', reason: '验证基础设施暂不可用' },
+        sandbox: { status: 'skipped' },
+      }],
+      [4, {
+        repositoryId: 4,
+        sourceSha: 'c'.repeat(40),
+        sourcePushedAt: '2026-08-14T12:00:00.000Z',
+        updatedAt: '2026-08-14T16:10:00.000Z',
+        dshVersion: target.dshVersion,
+        platform: target.platform,
+        validatorVersion: target.validatorVersion,
+        structure: { status: 'passed' },
+        sandbox: { status: 'inconclusive' },
+      }],
+    ])
+
+    const repaired = reconcileValidationState(
+      catalog,
+      state([{ repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt }]),
+      records,
+      target,
+      '2026-08-14T16:20:00.000Z',
+    )
+
+    expect(repaired?.entries).toEqual([
+      { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
+      { repositoryId: 2, pushedAt: catalog.repositories[1].pushedAt },
+    ])
+    expect(reconcileValidationState(catalog, null, records, target, '2026-08-14T16:20:00.000Z')).toBeNull()
   })
 })

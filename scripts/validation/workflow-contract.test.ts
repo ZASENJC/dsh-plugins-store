@@ -25,6 +25,7 @@ describe('decoupled incremental validation workflows', () => {
     expect(workflow).toContain('validate:shadow')
     expect(workflow).toContain('validate:candidates')
     expect(workflow).toContain('--selection')
+    expect(workflow).toContain('--previous-feed validation-input/previous-validation.json')
     expect(workflow).toContain('upload-artifact')
     expect(workflow).toContain('plugin-validation-state')
     expect(workflow).toContain('contents: read')

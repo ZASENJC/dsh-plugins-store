@@ -32,6 +32,7 @@ describe('pinned scanner adapters', () => {
       expect.stringMatching(/^type=bind,src=.+,dst=\/tmp\/trivy-cache$/),
     ]))
     expect(commands[1].args).toContain('ghcr.io/google/osv-scanner:v2.5.0')
+    expect(commands[1].args).toContain('--allow-no-lockfiles')
     const osvImageIndex = commands[1].args.indexOf('ghcr.io/google/osv-scanner:v2.5.0')
     expect(commands[1].args.slice(osvImageIndex + 1, osvImageIndex + 3)).toEqual(['scan', 'source'])
     expect(commands[2].args).toContain('ghcr.io/gitleaks/gitleaks:v8.30.1')
@@ -63,5 +64,30 @@ describe('pinned scanner adapters', () => {
       gitleaks: { status: 'passed', secrets: [] },
     })
     expect(executor).toHaveBeenCalledTimes(3)
+  })
+
+  it('parses structured findings from a scanner non-zero exit instead of calling it unavailable', async () => {
+    const executor = vi.fn(async (_file: string, args: string[]) => {
+      const image = args.find((value) => value.includes(':v') || value.includes('/trivy:')) ?? ''
+      if (image.includes('osv-scanner')) {
+        throw Object.assign(new Error('scanner reported findings'), {
+          stdout: JSON.stringify({
+            results: [{ packages: [{
+              source: { path: 'package-lock.json' },
+              vulnerabilities: [{ id: 'GHSA-fixture' }],
+            }] }],
+          }),
+        })
+      }
+      if (image.includes('trivy')) return JSON.stringify({ Results: [] })
+      return '[]'
+    })
+
+    const result = await runScannerCommands('/tmp/dsh-source', { executor })
+
+    expect(result.osv).toEqual({
+      status: 'findings',
+      vulnerabilities: [{ id: 'GHSA-fixture', path: 'package-lock.json' }],
+    })
   })
 })
