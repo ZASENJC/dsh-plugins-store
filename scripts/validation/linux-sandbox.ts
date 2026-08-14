@@ -159,7 +159,7 @@ export function buildLinuxSandboxPlan(
       makeStep('copy-source', 'acquisition', 'none', ['node', '/validator/copy-source.mjs', '/source', '/validation/workspace/plugin'], sourceDirectory),
       makeStep('install-dependencies', 'acquisition', 'bridge', dependencyInstallCommand(sourceDirectory)),
       makeStep('build', 'execution', 'none', ['npm', 'run', 'build', '--if-present']),
-      makeStep('install-plugin', 'execution', 'none', ['dsh', 'plugin', '--profile', 'validation', 'add', '--ignore-scripts', 'file:/validation/workspace/plugin']),
+      makeStep('install-plugin', 'execution', 'none', ['dsh', 'plugin', '--profile', 'validation', 'add', '--ignore-scripts', '--offline', 'file:/validation/workspace/plugin']),
       makeStep('load', 'execution', 'none', ['dsh', '--profile', 'validation', '--dump-config']),
       makeStep('smoke', 'execution', 'none', ['node', '/validator/host-tool-smoke.mjs', '/validation/workspace/plugin', target.smokeMode]),
       makeStep('postflight', 'execution', 'none', ['node', '/validator/postflight.mjs', '/validation']),
