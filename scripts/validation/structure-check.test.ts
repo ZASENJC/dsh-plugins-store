@@ -68,6 +68,29 @@ describe('execution type recognition', () => {
 })
 
 describe('shadow structure check', () => {
+  it('stops unknown projects at unrecognized without manufacturing a plugin failure', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      projectType: 'unknown',
+      files: {},
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result).toMatchObject({
+      decision: 'inconclusive',
+      queueSandbox: false,
+      report: {
+        currentStatus: 'unrecognized',
+        failure: null,
+      },
+    })
+  })
+
   it('passes a pinned host/tool package without executing source code', () => {
     const result = runStructureCheck(hostToolSnapshot, {
       now: '2026-08-14T08:10:00Z',
