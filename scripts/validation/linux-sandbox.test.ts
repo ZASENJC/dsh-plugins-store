@@ -62,6 +62,10 @@ describe('P2 restricted Linux sandbox command plan', () => {
     expect(installDependencies.network).toBe('bridge')
     expect(installDependencies.command.args).toEqual(expect.arrayContaining(['npm', 'ci', '--ignore-scripts']))
 
+    const installPlugin = plan.steps.find(({ id }) => id === 'install-plugin')!
+    expect(installPlugin.network).toBe('none')
+    expect(installPlugin.command.args).toEqual(expect.arrayContaining(['add', '--ignore-scripts', '--offline']))
+
     for (const step of plan.steps.filter(({ phase }) => phase === 'execution')) {
       expect(step.network).toBe('none')
       expect(step.command.args).toEqual(expect.arrayContaining([
