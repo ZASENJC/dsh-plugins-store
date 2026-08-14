@@ -26,6 +26,7 @@ describe('pinned scanner adapters', () => {
     }
     expect(commands[0].args).toContain('aquasec/trivy:0.74.0')
     expect(commands[0].args).toContain('--tmpfs=/tmp:rw,noexec,nosuid,size=512m')
+    expect(commands[0].args).toContain('--cache-dir=/tmp/trivy-cache')
     expect(commands[1].args).toContain('ghcr.io/google/osv-scanner:v2.5.0')
     expect(commands[2].args).toContain('ghcr.io/gitleaks/gitleaks:v8.30.1')
   })
