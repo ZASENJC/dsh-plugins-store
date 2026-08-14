@@ -7,7 +7,9 @@ describe('P3 browser and mock image contract', () => {
     const dockerfile = await readFile('validation/sandbox/Dockerfile.web', 'utf8')
 
     expect(dockerfile).toContain('mcr.microsoft.com/playwright:v1.55.0-noble')
-    expect(dockerfile).toContain('@deepseek-ai/dsh@0.1.0-rc.6')
+    expect(dockerfile).toContain('npm ci --prefix /validator/toolchain --omit=dev --ignore-scripts')
+    expect(dockerfile).toContain('ENV PATH="/validator/toolchain/node_modules/.bin:${PATH}"')
+    expect(dockerfile).not.toContain('npm install --global')
     expect(dockerfile).toContain('playwright@1.55.0')
     expect(dockerfile).toContain('ws@8.18.3')
     expect(dockerfile).toMatch(/USER pwuser\s*$/m)

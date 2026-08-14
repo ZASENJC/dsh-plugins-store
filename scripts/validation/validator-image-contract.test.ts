@@ -4,11 +4,28 @@ import { describe, expect, it } from 'vitest'
 
 describe('P2 validator image contract', () => {
   it('pins the runtime toolchain and executes validation as the node user', async () => {
-    const dockerfile = await readFile('validation/sandbox/Dockerfile', 'utf8')
+    const [dockerfile, toolchainManifest, toolchainLock] = await Promise.all([
+      readFile('validation/sandbox/Dockerfile', 'utf8'),
+      readFile('validation/sandbox/toolchain/package.json', 'utf8').then(JSON.parse),
+      readFile('validation/sandbox/toolchain/package-lock.json', 'utf8').then(JSON.parse),
+    ])
 
     expect(dockerfile).toContain('FROM node:22.22.0-bookworm-slim')
-    expect(dockerfile).toContain('@deepseek-ai/dsh@0.1.0-rc.6')
-    expect(dockerfile).toContain('pnpm@11.19.0')
+    expect(dockerfile).toContain('npm ci --prefix /validator/toolchain --omit=dev --ignore-scripts')
+    expect(dockerfile).toContain('ENV PATH="/validator/toolchain/node_modules/.bin:${PATH}"')
+    expect(dockerfile).not.toContain('npm install --global')
+    expect(toolchainManifest).toMatchObject({
+      dependencies: {
+        '@deepseek-ai/dsh': '0.1.0-rc.6',
+        pnpm: '11.19.0',
+      },
+      overrides: {
+        '@aws-sdk/credential-provider-node': '3.972.79',
+      },
+    })
+    expect(toolchainLock.lockfileVersion).toBe(3)
+    expect(toolchainLock.packages[''].dependencies).toEqual(toolchainManifest.dependencies)
+    expect(toolchainLock.packages['node_modules/@aws-sdk/credential-provider-node'].version).toBe('3.972.79')
     expect(dockerfile).toMatch(/USER node\s*$/m)
     expect(dockerfile).not.toMatch(/(ENV|ARG)\s+.*(TOKEN|SECRET|KEY)/i)
   })
