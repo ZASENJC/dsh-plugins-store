@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 const packagePath = fileURLToPath(new URL('../package.json', import.meta.url))
 const clientPath = fileURLToPath(new URL('../src/client.jsx', import.meta.url))
 const componentsPath = fileURLToPath(new URL('../src/components.jsx', import.meta.url))
+const stylesPath = fileURLToPath(new URL('../src/styles.js', import.meta.url))
 
 describe('installable DSH plugin package', () => {
   it('declares both host and web client entries plus the official UI dependencies', () => {
@@ -54,5 +55,12 @@ describe('installable DSH plugin package', () => {
     expect(source.match(/<StoreView/g)).toHaveLength(2)
     expect(source).toContain('buildInstallCommand')
     expect(source).not.toMatch(/child_process|execFile|spawn\(/)
+  })
+
+  it('keeps the store inside the narrow native settings content column', () => {
+    const source = readFileSync(stylesPath, 'utf8')
+
+    expect(source).toContain(".dps-store[data-mode='settings'] .dps-filter-bar")
+    expect(source).toContain(".dps-store[data-mode='settings'] .dps-filter-search")
   })
 })
