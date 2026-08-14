@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
-const API_URL = 'https://api.github.com'
+const CODELOAD_URL = 'https://codeload.github.com'
 const MAX_ARCHIVE_BYTES = 250 * 1024 * 1024
 const EXTRACTION_IMAGE = 'alpine:3.22.1'
 
@@ -58,28 +58,31 @@ async function defaultWriteArchive(path: string, data: Uint8Array): Promise<void
 
 export async function downloadPinnedArchive({
   repositoryId,
+  repositoryFullName,
   sourceSha,
   destinationPath,
   fetchImpl = fetch,
-  token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
   writeArchive = defaultWriteArchive,
 }: {
   repositoryId: number
+  repositoryFullName: string
   sourceSha: string
   destinationPath: string
   fetchImpl?: typeof fetch
-  token?: string
   writeArchive?: (path: string, data: Uint8Array) => Promise<void>
 }): Promise<void> {
   if (!Number.isSafeInteger(repositoryId) || repositoryId <= 0) throw new Error('Repository numeric ID is invalid')
+  const nameParts = repositoryFullName.split('/')
+  if (nameParts.length !== 2
+    || nameParts.some((part) => !/^[A-Za-z0-9_.-]+$/.test(part) || part === '.' || part === '..')) {
+    throw new Error('Repository full name is invalid')
+  }
   if (!/^[a-f0-9]{40}$/i.test(sourceSha)) throw new Error('Repository source SHA is invalid')
-  const response = await fetchImpl(`${API_URL}/repositories/${repositoryId}/tarball/${sourceSha}`, {
+  const encodedName = nameParts.map(encodeURIComponent).join('/')
+  const response = await fetchImpl(`${CODELOAD_URL}/${encodedName}/tar.gz/${sourceSha}`, {
     redirect: 'follow',
     headers: {
-      Accept: 'application/vnd.github+json',
       'User-Agent': 'dsh-plugin-store-validator',
-      'X-GitHub-Api-Version': '2022-11-28',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   })
   if (!response.ok) throw new Error(`GitHub archive request failed: ${response.status}`)

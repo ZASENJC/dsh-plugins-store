@@ -19,6 +19,8 @@ export interface ShadowCatalogRepository {
   projectType: ProjectType
   topics: string[]
   defaultBranch: string
+  archived: boolean
+  sizeKb: number
 }
 
 export interface ShadowRunSummary {

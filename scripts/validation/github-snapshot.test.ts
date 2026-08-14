@@ -10,6 +10,8 @@ const repository = {
   projectType: 'plugin' as const,
   topics: ['dsh-plugin', 'tool'],
   defaultBranch: 'main',
+  archived: false,
+  sizeKb: 120,
 }
 
 function jsonResponse(value: unknown, status = 200): Response {

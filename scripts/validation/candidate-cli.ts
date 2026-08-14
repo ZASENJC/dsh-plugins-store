@@ -57,6 +57,7 @@ export async function runCandidateCli(args = process.argv.slice(2)): Promise<voi
         const sourceDirectory = join(temporaryRoot, 'source')
         await downloadPinnedArchive({
           repositoryId: report.repository.id,
+          repositoryFullName: report.repository.fullName,
           sourceSha: report.repository.sourceSha,
           destinationPath: archivePath,
         })

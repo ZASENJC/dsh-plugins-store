@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { PROJECT_TYPES, type ProjectType } from '../../src/lib/classification'
 import { downloadPinnedArchive, extractPinnedArchive } from './archive-downloader'
-import { loadGitHubSnapshot } from './github-snapshot'
+import { loadExtractedSnapshot, resolvePinnedSourceSha } from './archive-snapshot'
 import { runScannerCommands, type ScannerResults } from './scanner-adapters'
 import { runShadowBatch, type ShadowCatalogRepository } from './shadow-runner'
 import { parseValidationSelection } from './validation-state'
@@ -13,18 +13,18 @@ import { parseValidationSelection } from './validation-state'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const projectTypeIds = new Set<string>(PROJECT_TYPES.map(({ id }) => id))
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null
-}
-
 function unavailableScans(): ScannerResults {
   return {
     trivy: { status: 'unavailable', vulnerabilities: [], secrets: [] },
     osv: { status: 'unavailable', vulnerabilities: [] },
     gitleaks: { status: 'unavailable', secrets: [] },
   }
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null
 }
 
 export function discoverCatalogRepositories(value: unknown): ShadowCatalogRepository[] {
@@ -44,7 +44,10 @@ export function discoverCatalogRepositories(value: unknown): ShadowCatalogReposi
       || !projectTypeIds.has(repository.projectType)
       || !Array.isArray(repository.topics)
       || !repository.topics.every((topic) => typeof topic === 'string')
-      || typeof repository.defaultBranch !== 'string') {
+      || typeof repository.defaultBranch !== 'string'
+      || typeof repository.archived !== 'boolean'
+      || !Number.isSafeInteger(repository.size)
+      || Number(repository.size) < 0) {
       throw new Error('Catalog repository discovery record is invalid')
     }
     return {
@@ -55,6 +58,8 @@ export function discoverCatalogRepositories(value: unknown): ShadowCatalogReposi
       projectType: repository.projectType as ProjectType,
       topics: repository.topics as string[],
       defaultBranch: repository.defaultBranch,
+      archived: repository.archived,
+      sizeKb: Number(repository.size),
     }
   })
   return repositories.sort((left, right) => left.repositoryId - right.repositoryId)
@@ -131,17 +136,23 @@ export async function runShadowCli(args = process.argv.slice(2)): Promise<void> 
       platform: 'linux-x64',
     },
     snapshotLoader: async (repository) => {
-      const snapshot = await loadGitHubSnapshot(repository, { scans: unavailableScans() })
+      const sourceSha = await resolvePinnedSourceSha(repository)
       const temporaryRoot = await mkdtemp(join(tmpdir(), `dsh-validation-${repository.repositoryId}-`))
       try {
         const archivePath = join(temporaryRoot, 'repository.tar.gz')
         const sourceDirectory = join(temporaryRoot, 'source')
         await downloadPinnedArchive({
           repositoryId: repository.repositoryId,
-          sourceSha: snapshot.repository.sourceSha,
+          repositoryFullName: repository.fullName,
+          sourceSha,
           destinationPath: archivePath,
         })
         await extractPinnedArchive(archivePath, sourceDirectory)
+        const snapshot = await loadExtractedSnapshot(repository, {
+          sourceSha,
+          sourceDirectory,
+          scans: unavailableScans(),
+        })
         snapshot.scans = await runScannerCommands(sourceDirectory)
         return snapshot
       } finally {

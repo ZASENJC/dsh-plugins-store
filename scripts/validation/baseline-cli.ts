@@ -125,6 +125,7 @@ export async function runBaselineCli(args = process.argv.slice(2)): Promise<void
       const sourceDirectory = join(temporaryRoot, 'source')
       await downloadPinnedArchive({
         repositoryId: target.repositoryId,
+        repositoryFullName: repository.fullName,
         sourceSha: target.sourceSha,
         destinationPath: archivePath,
       })

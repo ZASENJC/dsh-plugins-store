@@ -195,7 +195,7 @@ jobs:
             --selection validation-input/selection.json \
             --shard-index "${{ matrix.shard }}" \
             --shard-count 20 \
-            --limit 0 > /tmp/shadow-summary.json
+            --limit 0 | tee /tmp/shadow-summary.json
           node -e "const result=require('/tmp/shadow-summary.json'); if(result.loadFailures.length || result.reportsWritten !== result.discovered){console.error('P1 shard is incomplete'); process.exit(1)}"
 
       - name: Run selected sandbox candidates serially

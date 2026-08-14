@@ -67,6 +67,8 @@ describe('P1 shadow runner', () => {
           projectType: 'plugin',
           topics: ['dsh-plugin'],
           defaultBranch: 'main',
+          archived: false,
+          sizeKb: 100,
         },
         {
           repositoryId: 2,
@@ -76,6 +78,8 @@ describe('P1 shadow runner', () => {
           projectType: 'unknown',
           topics: ['dsh-plugin'],
           defaultBranch: 'main',
+          archived: false,
+          sizeKb: 100,
         },
       ],
       outputDir,
@@ -155,6 +159,8 @@ describe('P1 shadow runner', () => {
         projectType: 'plugin' as const,
         topics: ['dsh-plugin'],
         defaultBranch: 'main',
+        archived: false,
+        sizeKb: 100,
       },
       {
         repositoryId: 2,
@@ -164,6 +170,8 @@ describe('P1 shadow runner', () => {
         projectType: 'unknown' as const,
         topics: ['dsh-plugin'],
         defaultBranch: 'main',
+        archived: false,
+        sizeKb: 100,
       },
     ]
     const snapshotLoader = vi.fn(async (repository: ShadowCatalogRepository): Promise<RepositoryStructureSnapshot> => {
