@@ -9,6 +9,7 @@ export default defineConfig({
         'src/lib/catalog.ts',
         'src/lib/github-content.ts',
         'src/lib/readme.ts',
+        'src/lib/seo.ts',
       ],
       thresholds: {
         branches: 80,
