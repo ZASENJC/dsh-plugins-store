@@ -95,4 +95,67 @@ describe('P1 shadow runner', () => {
     expect(unknownReport).toMatchObject({ mode: 'shadow', currentStatus: 'unrecognized' })
     expect(snapshotLoader).toHaveBeenCalledTimes(2)
   })
+
+  it('continues the shard after a snapshot infrastructure failure and sanitizes the summary', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dsh-shadow-failure-'))
+    const repositories = [
+      {
+        repositoryId: 1,
+        fullName: 'fixture/unavailable',
+        url: 'https://github.com/fixture/unavailable',
+        pushedAt: '2026-08-14T08:00:00Z',
+        projectType: 'plugin' as const,
+        topics: ['dsh-plugin'],
+        defaultBranch: 'main',
+      },
+      {
+        repositoryId: 2,
+        fullName: 'fixture/unknown',
+        url: 'https://github.com/fixture/unknown',
+        pushedAt: '2026-08-14T08:00:00Z',
+        projectType: 'unknown' as const,
+        topics: ['dsh-plugin'],
+        defaultBranch: 'main',
+      },
+    ]
+    const snapshotLoader = vi.fn(async (repository: typeof repositories[number]): Promise<RepositoryStructureSnapshot> => {
+      if (repository.repositoryId === 1) {
+        throw new Error('request failed token=secret /Users/private/source')
+      }
+      return {
+        repository: {
+          id: repository.repositoryId,
+          fullName: repository.fullName,
+          url: repository.url,
+          sourceSha: 'b'.repeat(40),
+          sourcePushedAt: repository.pushedAt,
+          isPrivate: false,
+          archived: false,
+          deleted: false,
+          sizeKb: 100,
+        },
+        projectType: repository.projectType,
+        topics: repository.topics,
+        files: {},
+        scans: {
+          trivy: { status: 'passed', vulnerabilities: [], secrets: [] },
+          osv: { status: 'passed', vulnerabilities: [] },
+        },
+      }
+    })
+
+    const summary = await runShadowBatch({ repositories, outputDir: root, target, snapshotLoader })
+
+    expect(summary).toMatchObject({
+      discovered: 2,
+      reportsWritten: 1,
+      loadFailures: [{
+        repositoryId: 1,
+        code: 'SNAPSHOT_LOAD_FAILED',
+        reason: '仓库快照或扫描基础设施不可用',
+      }],
+    })
+    expect(JSON.stringify(summary)).not.toMatch(/secret|\/Users\/private/)
+    expect(snapshotLoader).toHaveBeenCalledTimes(2)
+  })
 })
