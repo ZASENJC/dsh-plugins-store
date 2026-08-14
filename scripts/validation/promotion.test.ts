@@ -190,15 +190,18 @@ describe('P4 promotion quality gate', () => {
     })
     const feed = buildPublicValidationFeed(negativeBaseline, reports, '2026-08-14T14:00:00.000Z')
     expect(feed.records).toHaveLength(20)
-    expect(feed.records[0]).toMatchObject({
+    expect(feed.records.find(({ repositoryId }) => repositoryId === negativeBaseline.targets[0].repositoryId))
+      .toMatchObject({
       structure: { status: 'passed' },
       sandbox: { status: 'failed', reason: expect.stringContaining('构建失败') },
     })
-    expect(feed.records[1]).toMatchObject({
+    expect(feed.records.find(({ repositoryId }) => repositoryId === negativeBaseline.targets[1].repositoryId))
+      .toMatchObject({
       structure: { status: 'failed', reason: expect.any(String) },
       sandbox: { status: 'skipped' },
     })
-    expect(feed.records[2]).toMatchObject({
+    expect(feed.records.find(({ repositoryId }) => repositoryId === negativeBaseline.targets[2].repositoryId))
+      .toMatchObject({
       structure: { status: 'passed' },
       sandbox: {
         status: 'inconclusive',
