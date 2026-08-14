@@ -266,12 +266,34 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     const emptyState = document.getElementById('empty-state')
     const clearFilters = document.getElementById('clear-filters')
     const pageSize = 24
-    const requestedFilters = new URLSearchParams(window.location.search)
-    const requestedCategory = requestedFilters.get('category')
-    const requestedValidation = requestedFilters.get('validation')
+    const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'sort']
     const validationStatusIds = new Set(validationStatuses.map((status) => status.id))
-    let selectedCategory = requestedCategory === 'verified' || categoryById.has(requestedCategory) ? requestedCategory : 'all'
+    const sortIds = new Set(Array.from(sortFilter.options, (option) => option.value))
+    let selectedCategory = 'all'
     let visibleCount = pageSize
+
+    const getCatalogFilterParams = () => {
+      const params = new URLSearchParams()
+      const query = searchInput.value.trim()
+      if (query) params.set('q', query)
+      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+      if (typeFilter.value !== 'all') params.set('type', typeFilter.value)
+      if (validationFilter.value !== 'all') params.set('validation', validationFilter.value)
+      if (sortFilter.value !== 'recommended') params.set('sort', sortFilter.value)
+      return params
+    }
+
+    const getCatalogFilterSearch = () => {
+      const search = getCatalogFilterParams().toString()
+      return search ? `?${search}` : ''
+    }
+
+    const syncFiltersToUrl = () => {
+      const url = new URL(window.location.href)
+      catalogFilterParamNames.forEach((param) => url.searchParams.delete(param))
+      getCatalogFilterParams().forEach((value, param) => url.searchParams.set(param, value))
+      window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+    }
 
     const compactNumber = (value) => {
       if (value < 1000) return String(value)
@@ -298,7 +320,8 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       const card = sourceCard.cloneNode(true)
       const category = categoryById.get(repository.category)
       const projectType = typeById.get(repository.projectType)
-      const detailUrl = `${baseUrl}plugins/${repository.slug}`
+      const detailSearch = getCatalogFilterSearch()
+      const detailUrl = `${baseUrl}plugins/${repository.slug}${detailSearch}`
       const searchable = [
         repository.name,
         repository.fullName,
@@ -444,25 +467,51 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       render()
     }
 
+    const commitFilters = () => {
+      syncFiltersToUrl()
+      resetAndRender()
+    }
+
     const syncSelectValue = (select, target) => {
       target.textContent = select.selectedOptions[0]?.textContent ?? ''
     }
 
-    validationFilter.value = validationStatusIds.has(requestedValidation) ? requestedValidation : 'all'
-    syncSelectValue(validationFilter, validationFilterValue)
+    const restoreFiltersFromUrl = () => {
+      const filters = new URLSearchParams(window.location.search)
+      const requestedCategory = filters.get('category')
+      const requestedType = filters.get('type')
+      const requestedValidation = filters.get('validation')
+      const requestedSort = filters.get('sort')
 
-    searchInput.addEventListener('input', resetAndRender)
+      searchInput.value = filters.get('q') ?? ''
+      selectedCategory = requestedCategory === 'verified' || categoryById.has(requestedCategory)
+        ? requestedCategory
+        : 'all'
+      typeFilter.value = typeById.has(requestedType) ? requestedType : 'all'
+      validationFilter.value = validationStatusIds.has(requestedValidation) ? requestedValidation : 'all'
+      sortFilter.value = sortIds.has(requestedSort) ? requestedSort : 'recommended'
+
+      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
+        item.classList.toggle('is-active', item.dataset.category === selectedCategory)
+      })
+      syncSelectValue(typeFilter, typeFilterValue)
+      syncSelectValue(validationFilter, validationFilterValue)
+      syncSelectValue(sortFilter, sortFilterValue)
+    }
+
+
+    searchInput.addEventListener('input', commitFilters)
     typeFilter.addEventListener('change', () => {
       syncSelectValue(typeFilter, typeFilterValue)
-      resetAndRender()
+      commitFilters()
     })
     validationFilter.addEventListener('change', () => {
       syncSelectValue(validationFilter, validationFilterValue)
-      resetAndRender()
+      commitFilters()
     })
     sortFilter.addEventListener('change', () => {
       syncSelectValue(sortFilter, sortFilterValue)
-      resetAndRender()
+      commitFilters()
     })
     categoryFilter.addEventListener('click', (event) => {
       const button = event.target.closest('[data-category]')
@@ -471,7 +520,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
         item.classList.toggle('is-active', item === button)
       })
-      resetAndRender()
+      commitFilters()
     })
     loadMore.addEventListener('click', () => {
       visibleCount += pageSize
@@ -489,7 +538,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
         item.classList.toggle('is-active', item.dataset.category === 'all')
       })
-      resetAndRender()
+      commitFilters()
       searchInput.focus()
     })
     document.addEventListener('keydown', (event) => {
@@ -500,15 +549,11 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       if (event.key === 'Escape' && document.activeElement === searchInput) {
         searchInput.value = ''
         searchInput.blur()
-        resetAndRender()
+        commitFilters()
       }
     })
-    if (selectedCategory !== 'all' || validationFilter.value !== 'all') {
-      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
-        item.classList.toggle('is-active', item.dataset.category === selectedCategory)
-      })
-      resetAndRender()
-    }
+    restoreFiltersFromUrl()
+    resetAndRender()
   </script>
 </BaseLayout>
 

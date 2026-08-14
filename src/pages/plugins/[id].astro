@@ -84,7 +84,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 <BaseLayout title={`${repository.name} · DSH插件商店`} description={repository.description}>
   <section class="detail-hero">
     <div class="container">
-      <a class="back-link" href={baseUrl}><ArrowLeft size={16} stroke-width={1.6} /> 返回目录</a>
+      <a class="back-link" href={baseUrl} data-catalog-back><ArrowLeft size={16} stroke-width={1.6} /> 返回目录</a>
 
       <div class="detail-hero__grid">
         <div class="detail-identity">
@@ -321,6 +321,20 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
   <script>
     import { resolveReadmeReference } from '../../lib/readme'
+
+    const catalogBackLink = document.querySelector<HTMLAnchorElement>('[data-catalog-back]')
+    if (catalogBackLink) {
+      const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'sort']
+      const currentParams = new URLSearchParams(window.location.search)
+      const catalogFilterParams = new URLSearchParams()
+      catalogFilterParamNames.forEach((param) => {
+        const value = currentParams.get(param)
+        if (value) catalogFilterParams.set(param, value)
+      })
+      const serializedCatalogFilters = catalogFilterParams.toString()
+      const catalogFilterSearch = serializedCatalogFilters ? `?${serializedCatalogFilters}` : ''
+      catalogBackLink.href = `${catalogBackLink.href}${catalogFilterSearch}`
+    }
 
     const copyButton = document.getElementById('copy-command')
     const installCommandElement = document.getElementById('install-command')
