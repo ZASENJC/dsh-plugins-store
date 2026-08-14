@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 
 import { describe, expect, it } from 'vitest'
 
+import { CURRENT_VALIDATION_TARGET } from '../../src/lib/validation'
 import { parseBaseline } from './baseline'
 
 describe('P2 Linux headless/tool baseline', () => {
@@ -13,9 +14,7 @@ describe('P2 Linux headless/tool baseline', () => {
     expect(new Set(baseline.targets.map(({ fullName }) => fullName.toLowerCase())).size).toBe(20)
     expect(baseline).toMatchObject({
       schemaVersion: 1,
-      dshVersion: '0.1.0-rc.6',
-      platform: 'linux-x64',
-      validatorVersion: '0.1.0',
+      ...CURRENT_VALIDATION_TARGET,
     })
     for (const target of baseline.targets) {
       expect(target.sourceSha).toMatch(/^[a-f0-9]{40}$/)

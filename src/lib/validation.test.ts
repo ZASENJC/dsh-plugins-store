@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  CURRENT_VALIDATION_TARGET,
   buildValidationStatus,
   parseValidationFeed,
 } from './validation'
@@ -101,6 +102,28 @@ describe('validation ladder', () => {
     })).toMatchObject({
       overall: 'expired',
       label: '需重新验证',
+      verified: false,
+    })
+  })
+
+  it.each([
+    ['dshVersion', '0.1.0-rc.7'],
+    ['platform', 'linux-arm64'],
+    ['validatorVersion', '0.2.0'],
+  ])('expires a published result when current %s changes', (field, value) => {
+    const record = {
+      repositoryId: 101,
+      sourceSha: 'b'.repeat(40),
+      sourcePushedAt: baseInput.repositoryPushedAt,
+      updatedAt: '2026-08-14T09:00:00Z',
+      ...CURRENT_VALIDATION_TARGET,
+      [field]: value,
+      structure: { status: 'passed' as const },
+      sandbox: { status: 'passed' as const },
+    }
+
+    expect(buildValidationStatus({ ...baseInput, record })).toMatchObject({
+      overall: 'expired',
       verified: false,
     })
   })
