@@ -63,10 +63,12 @@ export interface CatalogEntry {
   categories: Category[]
   matchedTopics: string[]
   classificationConfidence: Confidence
+  defaultBranch: string
   awesomeListed: boolean
+  verified: boolean
   status: {
     discovery: 'topic-listed'
-    verification: 'not-verified'
+    verification: 'verified' | 'not-verified'
   }
 }
 
@@ -81,6 +83,7 @@ export interface Catalog {
   stats: {
     fetched: number
     reportedByGitHub: number
+    verified: number
     categories: Partial<Record<Category, number>>
     projectTypes: Partial<Record<ProjectType, number>>
   }
@@ -92,6 +95,7 @@ export type CatalogSort = 'stars' | 'updated' | 'name'
 export function createCatalogEntry(
   repository: GitHubRepository,
   awesomeRepositoryNames: ReadonlySet<string> = new Set(),
+  verifiedRepositoryNames: ReadonlySet<string> = new Set(),
 ): CatalogEntry {
   const classification = classifyRepository({
     fullName: repository.full_name,
@@ -130,10 +134,12 @@ export function createCatalogEntry(
     categories: classification.categories,
     matchedTopics: classification.matchedTopics,
     classificationConfidence: classification.confidence,
+    defaultBranch: repository.default_branch || 'main',
     awesomeListed: awesomeRepositoryNames.has(repository.name.toLowerCase()),
+    verified: verifiedRepositoryNames.has(repository.full_name.toLowerCase()),
     status: {
       discovery: 'topic-listed',
-      verification: 'not-verified',
+      verification: verifiedRepositoryNames.has(repository.full_name.toLowerCase()) ? 'verified' : 'not-verified',
     },
   }
 }
@@ -143,6 +149,7 @@ export function buildCatalog(
   generatedAt = new Date().toISOString(),
   reportedByGitHub = repositories.length,
   awesomeRepositoryNames: ReadonlySet<string> = new Set(),
+  verifiedRepositoryNames: ReadonlySet<string> = new Set(),
 ): Catalog {
   const uniqueRepositories = new Map<number, GitHubRepository>()
   for (const repository of repositories) {
@@ -152,8 +159,15 @@ export function buildCatalog(
   const normalizedAwesomeNames = new Set(
     [...awesomeRepositoryNames].map((name) => name.toLowerCase()),
   )
+  const normalizedVerifiedNames = new Set(
+    [...verifiedRepositoryNames].map((name) => name.toLowerCase()),
+  )
   const entries = sortCatalogEntries(
-    [...uniqueRepositories.values()].map((repository) => createCatalogEntry(repository, normalizedAwesomeNames)),
+    [...uniqueRepositories.values()].map((repository) => createCatalogEntry(
+      repository,
+      normalizedAwesomeNames,
+      normalizedVerifiedNames,
+    )),
     'stars',
   )
   const categoryCounts: Partial<Record<Category, number>> = {}
@@ -175,6 +189,7 @@ export function buildCatalog(
     stats: {
       fetched: entries.length,
       reportedByGitHub,
+      verified: entries.filter((entry) => entry.verified).length,
       categories: categoryCounts,
       projectTypes: typeCounts,
     },

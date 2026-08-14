@@ -7,6 +7,7 @@ import pLimit from 'p-limit'
 import { buildCatalog, type GitHubRepository } from '../src/lib/catalog'
 import {
   extractAwesomeRepositoryNames,
+  extractVerifiedRepositoryNames,
   prepareReadmeHtml,
   type ReadmeCatalog,
 } from '../src/lib/github-content'
@@ -14,6 +15,7 @@ import {
 const SEARCH_URL = 'https://api.github.com/search/repositories'
 const API_URL = 'https://api.github.com'
 const AWESOME_REPOSITORY = 'AdamPlatin123/awesome-dsh-plugins'
+const VERIFY_REPOSITORY = 'qing3a/dsh-plugin-verify'
 const PAGE_SIZE = 100
 const MAX_SEARCH_RESULTS = 1_000
 const README_CONCURRENCY = 8
@@ -73,13 +75,25 @@ async function sync() {
   }
 
   const repositories = [...new Map(pages.flat().map((repository) => [repository.id, repository])).values()]
-  const awesomeResponse = await fetchRenderedReadme(AWESOME_REPOSITORY)
-  if (!awesomeResponse.ok) {
-    throw new Error(`Awesome 清单请求失败：${awesomeResponse.status} ${awesomeResponse.statusText}`)
+  const [awesomeResponse, verifyResponse] = await Promise.all([
+    fetchRenderedReadme(AWESOME_REPOSITORY),
+    fetchRenderedReadme(VERIFY_REPOSITORY),
+  ])
+  if (!awesomeResponse.ok || !verifyResponse.ok) {
+    throw new Error(
+      `目录清单请求失败：Awesome ${awesomeResponse.status}，Verify ${verifyResponse.status}`,
+    )
   }
   const awesomeRepositoryNames = extractAwesomeRepositoryNames(await awesomeResponse.text())
+  const verifiedRepositoryNames = extractVerifiedRepositoryNames(await verifyResponse.text())
   const generatedAt = new Date().toISOString()
-  const catalog = buildCatalog(repositories, generatedAt, firstPage.total_count, awesomeRepositoryNames)
+  const catalog = buildCatalog(
+    repositories,
+    generatedAt,
+    firstPage.total_count,
+    awesomeRepositoryNames,
+    verifiedRepositoryNames,
+  )
   const readmes: ReadmeCatalog = {
     schemaVersion: 1,
     generatedAt,
@@ -126,6 +140,7 @@ async function sync() {
     ? `；警告：GitHub Search 上限为 ${MAX_SEARCH_RESULTS}，需要启用分段查询`
     : ''
   console.log(`Awesome 有效收录 ${awesomeRepositoryNames.size} 个仓库名；商店匹配 ${catalog.repositories.filter((repository) => repository.awesomeListed).length} 个`)
+  console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；商店匹配 ${catalog.stats.verified} 个`)
   console.log(`README 已加载 ${Object.keys(readmes.repositories).length} 个，缺失 ${missingReadmes} 个，失败 0 个`)
   console.log(`已同步 ${catalog.stats.fetched}/${firstPage.total_count} 个仓库到 ${outputPath}${warning}`)
 }
