@@ -19,6 +19,7 @@ const repositories = [
     stars: 20,
     pushedAt: '2026-08-14T00:00:00Z',
     verified: true,
+    validation: { overall: 'verified', label: '已验证' },
   },
   {
     repositoryId: 2,
@@ -31,6 +32,7 @@ const repositories = [
     stars: 5,
     pushedAt: '2026-08-13T00:00:00Z',
     verified: false,
+    validation: { overall: 'check-pending', label: '待结构检查' },
   },
   {
     repositoryId: 3,
@@ -43,6 +45,7 @@ const repositories = [
     stars: 50,
     pushedAt: '2026-08-12T00:00:00Z',
     verified: false,
+    validation: { overall: 'not-applicable', label: '非插件验证范围' },
   },
 ]
 
@@ -73,6 +76,33 @@ describe('plugin catalog filtering', () => {
       verifiedOnly: false,
       sort: 'recommended',
     })).toEqual([])
+  })
+
+  it('filters the remote catalog by the refreshable validation ladder state', () => {
+    expect(filterCatalogRepositories(repositories, {
+      query: '',
+      category: 'all',
+      validation: 'check-pending',
+      verifiedOnly: false,
+      sort: 'recommended',
+    }).map(({ repositoryId }) => repositoryId)).toEqual([2])
+  })
+
+  it('does not treat a legacy verification record as current SHA verification', () => {
+    const legacyRecorded = {
+      ...repositories[0],
+      repositoryId: 4,
+      fullName: 'owner/legacy-recorded',
+      verified: true,
+      validation: { overall: 'recorded', label: '已有验证记录' },
+    }
+
+    expect(filterCatalogRepositories([repositories[0], legacyRecorded], {
+      query: '',
+      category: 'all',
+      verifiedOnly: true,
+      sort: 'recommended',
+    }).map(({ repositoryId }) => repositoryId)).toEqual([1])
   })
 
   it('only offers the existing reference command for install-shaped project types', () => {

@@ -27,6 +27,7 @@ export const styles = String.raw`
 .dps-icon-button:focus-visible,
 .dps-load-more:focus-visible,
 .dps-retry:focus-visible,
+.dps-install-button:focus-visible,
 .dps-filter input:focus-visible,
 .dps-filter select:focus-visible {
   outline: 2px solid var(--dsw-alias-border-l3);
@@ -84,6 +85,14 @@ export const styles = String.raw`
   padding: 4px 0 20px;
 }
 
+.dps-store[data-mode='settings'] .dps-filter-bar {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.dps-store[data-mode='settings'] .dps-filter-search {
+  grid-column: 1 / -1;
+}
+
 .dps-store-head {
   display: flex;
   align-items: flex-start;
@@ -120,7 +129,7 @@ export const styles = String.raw`
 
 .dps-filter-bar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 150px 140px auto;
+  grid-template-columns: minmax(220px, 1fr) 140px 160px 140px auto;
   gap: 8px;
   align-items: center;
 }
@@ -176,16 +185,36 @@ export const styles = String.raw`
 }
 
 .dps-card {
+  position: relative;
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: 8px;
   box-sizing: border-box;
   min-width: 0;
   min-height: 174px;
+  overflow: hidden;
   padding: 14px;
   border: 1px solid var(--dsw-alias-border-l1);
   border-radius: 8px;
   background: var(--dsw-alias-bg-base);
+}
+
+.dps-card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.dps-card-link:focus-visible {
+  outline: 2px solid var(--dsw-alias-border-l3);
+  outline-offset: -2px;
+}
+
+.dps-card:has(.dps-card-link:hover),
+.dps-card:has(.dps-card-link:focus-visible) {
+  border-color: var(--dsw-alias-border-l3);
+  background: var(--dsw-alias-interactive-bg-hover);
 }
 
 .dps-card-head,
@@ -200,11 +229,13 @@ export const styles = String.raw`
 
 .dps-card-head,
 .dps-card-foot {
+  min-width: 0;
   justify-content: space-between;
   gap: 10px;
 }
 
 .dps-card-title {
+  flex: 1 1 auto;
   min-width: 0;
   gap: 8px;
 }
@@ -240,6 +271,7 @@ export const styles = String.raw`
   font-size: 12px;
   line-height: 18px;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -254,18 +286,48 @@ export const styles = String.raw`
   align-items: center;
   min-height: 20px;
   box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
   border-radius: 999px;
   padding: 1px 7px;
   color: var(--dsw-alias-label-tertiary);
   background: var(--dsw-alias-interactive-bg-hover);
   font-size: 10px;
   line-height: 16px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .dps-badge[data-kind='verified'] {
   color: #5eb98a;
   background: color-mix(in srgb, #4f9f75 14%, transparent);
+}
+
+.dps-badge[data-kind='validation'][data-status='verified'] {
+  color: #5eb98a;
+  background: color-mix(in srgb, #4f9f75 14%, transparent);
+}
+
+.dps-badge[data-kind='validation'][data-status$='failed'] {
+  color: #df6d6d;
+  background: color-mix(in srgb, #df6d6d 14%, transparent);
+}
+
+.dps-badge[data-kind='validation'][data-status$='running'] {
+  color: #6ba8d6;
+  background: color-mix(in srgb, #6ba8d6 14%, transparent);
+}
+
+.dps-badge[data-kind='validation'][data-status='expired'],
+.dps-badge[data-kind='validation'][data-status='inconclusive'],
+.dps-badge[data-kind='validation'][data-status='sandbox-pending'] {
+  color: #d89450;
+  background: color-mix(in srgb, #d89450 14%, transparent);
+}
+
+.dps-badge[data-kind='validation'][data-status='recorded'] {
+  color: #8d8bce;
+  background: color-mix(in srgb, #8d8bce 14%, transparent);
 }
 
 .dps-badge[data-kind='awesome'] {
@@ -281,13 +343,21 @@ export const styles = String.raw`
 }
 
 .dps-install-reference {
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
   gap: 6px;
   color: var(--dsw-alias-label-tertiary);
 }
 
+.dps-install-reference > svg {
+  flex: 0 0 auto;
+}
+
 .dps-install-reference code {
+  flex: 1 1 auto;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   font-size: 10px;
   text-overflow: ellipsis;
@@ -295,12 +365,20 @@ export const styles = String.raw`
 }
 
 .dps-card-actions {
+  position: relative;
+  z-index: 2;
   flex: 0 0 auto;
+  min-width: 0;
   gap: 2px;
 }
 
-.dps-card-actions a {
-  text-decoration: none;
+.dps-install-button {
+  display: inline-flex;
+  min-width: 0;
+  height: 28px;
+  gap: 4px;
+  padding: 0 8px;
+  white-space: nowrap;
 }
 
 .dps-empty,
@@ -330,6 +408,155 @@ export const styles = String.raw`
   cursor: pointer;
 }
 
+body > :has(> .dps-risk-modal) {
+  z-index: 1001;
+}
+
+.dps-risk-modal {
+  width: min(520px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dps-risk-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+}
+
+.dps-risk-header,
+.dps-risk-actions,
+.dps-risk-title {
+  display: flex;
+  align-items: center;
+}
+
+.dps-risk-header {
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 14px 0 18px;
+  border-bottom: 1px solid var(--dsw-alias-border-l1);
+}
+
+.dps-risk-title {
+  min-width: 0;
+  gap: 8px;
+  color: var(--dsw-alias-state-warning-primary, #d89450);
+}
+
+.dps-risk-title h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  line-height: 22px;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dps-risk-body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.dps-risk-body > strong,
+.dps-risk-body > p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.dps-risk-body > p {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.dps-risk-repository {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-base);
+}
+
+.dps-risk-repository span,
+.dps-risk-repository code,
+.dps-install-output {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dps-risk-repository span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dps-risk-repository code,
+.dps-install-output {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+.dps-risk-acknowledge {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.dps-risk-acknowledge input {
+  width: 15px;
+  height: 15px;
+  margin: 2px 0 0;
+  accent-color: #4f9f75;
+}
+
+.dps-install-status {
+  display: grid;
+  gap: 3px;
+}
+
+.dps-install-status[data-kind='success'] {
+  color: var(--dsw-alias-state-success-primary, #5eb98a);
+}
+
+.dps-install-status[data-kind='error'] {
+  color: var(--dsw-alias-state-error-primary, #df6d6d);
+}
+
+.dps-install-output {
+  max-height: 120px;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-base);
+}
+
+.dps-risk-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 58px;
+  padding: 0 18px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+}
+
 .dps-load-more {
   display: block;
   margin: 12px auto 2px;
@@ -341,6 +568,10 @@ export const styles = String.raw`
     height: calc(100vh - 16px);
   }
 
+  .dps-risk-modal {
+    width: calc(100vw - 16px);
+  }
+
   .dps-store {
     padding: 14px 12px 16px;
   }
@@ -350,6 +581,14 @@ export const styles = String.raw`
   }
 
   .dps-filter-search {
+    grid-column: 1 / -1;
+  }
+
+  .dps-store[data-mode='settings'] .dps-filter-bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .dps-store[data-mode='settings'] .dps-check {
     grid-column: 1 / -1;
   }
 

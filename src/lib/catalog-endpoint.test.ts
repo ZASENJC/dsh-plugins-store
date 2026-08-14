@@ -14,6 +14,12 @@ describe('public catalog endpoint', () => {
       source: { topic: 'dsh-plugin' },
     })
     expect(catalog.repositories.length).toBeGreaterThan(0)
+    expect(catalog.repositories[0].validation).toMatchObject({
+      overall: expect.any(String),
+      label: expect.any(String),
+      stages: expect.any(Object),
+    })
+    expect(catalog.stats.validationStatuses).toEqual(expect.any(Object))
     expect(JSON.stringify(catalog)).not.toMatch(/github_token|gh_token/i)
   })
 })

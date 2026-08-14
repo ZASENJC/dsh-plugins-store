@@ -1,12 +1,13 @@
 ---
-import { ChevronDown, Search, SlidersHorizontal } from '@lucide/astro'
+import { ArrowUpRight, Check, ChevronDown, Copy, Search, SlidersHorizontal, Terminal } from '@lucide/astro'
 
 import DeepSeekGridMark from '../components/DeepSeekGridMark.astro'
 import ProjectCard from '../components/ProjectCard.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { sortCatalogEntries, type Catalog } from '../lib/catalog'
+import { catalogData } from '../lib/catalog-data'
 import { CATEGORIES, PROJECT_TYPES } from '../lib/classification'
-import catalogData from '../data/catalog.json'
+import { VALIDATION_STATUS_DEFINITIONS } from '../lib/validation'
 
 const catalog = catalogData as Catalog
 const initialRepositories = sortCatalogEntries(catalog.repositories, 'recommended').slice(0, 24)
@@ -21,10 +22,44 @@ const generatedDate = new Intl.DateTimeFormat('zh-CN', {
 const serializedCatalog = JSON.stringify(catalog.repositories).replace(/</g, '\\u003c')
 const serializedCategories = JSON.stringify(CATEGORIES).replace(/</g, '\\u003c')
 const serializedTypes = JSON.stringify(PROJECT_TYPES).replace(/</g, '\\u003c')
+const serializedValidationStatuses = JSON.stringify(VALIDATION_STATUS_DEFINITIONS).replace(/</g, '\\u003c')
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
+const storeInstallCommand = 'dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store'
+const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugin-store#一键安装'
 ---
 
 <BaseLayout>
+  <section class="store-install-strip" aria-labelledby="store-install-title">
+    <div class="container store-install-strip__inner">
+      <div class="store-install-label">
+        <Terminal size={16} stroke-width={1.6} />
+        <span id="store-install-title">安装商店插件</span>
+      </div>
+      <div class="store-install-command">
+        <code id="store-install-command" title={storeInstallCommand}>{storeInstallCommand}</code>
+        <button
+          id="copy-store-install"
+          type="button"
+          aria-label="复制商店插件安装命令"
+          title="复制商店插件安装命令"
+        >
+          <Copy class="copy-icon" size={16} stroke-width={1.6} />
+          <Check class="check-icon" size={16} stroke-width={1.6} />
+        </button>
+      </div>
+      <a
+        class="store-install-action"
+        href={storeInstallGuideUrl}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <span>一键安装</span>
+        <ArrowUpRight size={15} stroke-width={1.6} />
+      </a>
+      <span id="store-install-status" class="visually-hidden" aria-live="polite"></span>
+    </div>
+  </section>
+
   <section class="catalog-head" data-catalog-head>
     <div class="catalog-head__art" aria-hidden="true">
       <DeepSeekGridMark class="catalog-head__grid-mark--base" gradientId="deepseek-grid-base" opacity={0.88} />
@@ -78,6 +113,17 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         </label>
 
         <label class="select-field">
+          <span class="select-value" id="validation-filter-value">全部验证状态</span>
+          <select id="validation-filter" aria-label="验证状态">
+            <option value="all">全部验证状态</option>
+            {VALIDATION_STATUS_DEFINITIONS.map((status) => (
+              <option value={status.id}>{status.label} · {catalog.stats.validationStatuses[status.id] ?? 0}</option>
+            ))}
+          </select>
+          <ChevronDown size={15} stroke-width={1.6} />
+        </label>
+
+        <label class="select-field">
           <span class="select-value" id="sort-filter-value">综合推荐</span>
           <select id="sort-filter" aria-label="排序方式">
             <option value="recommended">综合推荐</option>
@@ -95,8 +141,8 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         </button>
         <button class="category-filter category-filter--verified" type="button" data-category="verified">
           <i></i>
-          已验证
-          <span>{catalog.stats.verified}</span>
+          当前已验证
+          <span>{catalog.stats.validationStatuses.verified ?? 0}</span>
         </button>
         {CATEGORIES.map((category) => (
           <button class="category-filter" type="button" data-category={category.id}>
@@ -113,7 +159,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     <div class="container">
       <div class="results-head">
         <p><span id="result-count">{catalog.stats.fetched}</span> 个项目</p>
-        <p><i></i> Topic 已收录 · 验证状态见详情</p>
+        <p><i></i> 标识随目录同步刷新</p>
       </div>
 
       <div class="project-grid" id="project-grid">
@@ -139,10 +185,31 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   <script id="catalog-data" type="application/json" set:html={serializedCatalog} is:inline></script>
   <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
   <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
+  <script id="validation-status-data" type="application/json" set:html={serializedValidationStatuses} is:inline></script>
   <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
 
   <script>
     import { getHeroMotion } from '../lib/hero-motion'
+
+    const storeInstallCommand = document.getElementById('store-install-command')
+    const copyStoreInstall = document.getElementById('copy-store-install')
+    const storeInstallStatus = document.getElementById('store-install-status')
+
+    if (storeInstallCommand && copyStoreInstall && storeInstallStatus) {
+      copyStoreInstall.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(storeInstallCommand.textContent ?? '')
+        copyStoreInstall.classList.add('is-copied')
+        copyStoreInstall.setAttribute('aria-label', '安装命令已复制')
+        copyStoreInstall.setAttribute('title', '安装命令已复制')
+        storeInstallStatus.textContent = '安装命令已复制'
+        window.setTimeout(() => {
+          copyStoreInstall.classList.remove('is-copied')
+          copyStoreInstall.setAttribute('aria-label', '复制商店插件安装命令')
+          copyStoreInstall.setAttribute('title', '复制商店插件安装命令')
+          storeInstallStatus.textContent = ''
+        }, 1600)
+      })
+    }
 
     const catalogHead = document.querySelector<HTMLElement>('[data-catalog-head]')
     const supportsMotion = window.matchMedia('(pointer: fine)').matches
@@ -177,6 +244,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
     const categories = JSON.parse(document.getElementById('category-data').textContent)
     const projectTypes = JSON.parse(document.getElementById('type-data').textContent)
+    const validationStatuses = JSON.parse(document.getElementById('validation-status-data').textContent)
     const baseUrl = JSON.parse(document.getElementById('base-url').textContent)
     const categoryById = new Map(categories.map((category) => [category.id, category]))
     const typeById = new Map(projectTypes.map((type) => [type.id, type]))
@@ -184,8 +252,10 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     const sourceCard = grid.querySelector('[data-project-card]').cloneNode(true)
     const searchInput = document.getElementById('catalog-search')
     const typeFilter = document.getElementById('type-filter')
+    const validationFilter = document.getElementById('validation-filter')
     const sortFilter = document.getElementById('sort-filter')
     const typeFilterValue = document.getElementById('type-filter-value')
+    const validationFilterValue = document.getElementById('validation-filter-value')
     const sortFilterValue = document.getElementById('sort-filter-value')
     const categoryFilter = document.getElementById('category-filter')
     const resultCount = document.getElementById('result-count')
@@ -194,7 +264,10 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     const emptyState = document.getElementById('empty-state')
     const clearFilters = document.getElementById('clear-filters')
     const pageSize = 24
-    const requestedCategory = new URLSearchParams(window.location.search).get('category')
+    const requestedFilters = new URLSearchParams(window.location.search)
+    const requestedCategory = requestedFilters.get('category')
+    const requestedValidation = requestedFilters.get('validation')
+    const validationStatusIds = new Set(validationStatuses.map((status) => status.id))
     let selectedCategory = requestedCategory === 'verified' || categoryById.has(requestedCategory) ? requestedCategory : 'all'
     let visibleCount = pageSize
 
@@ -235,11 +308,13 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
       card.dataset.search = searchable
       card.dataset.category = repository.category
       card.dataset.type = repository.projectType
+      card.dataset.validationStatus = repository.validation.overall
       card.dataset.stars = String(repository.stars)
       card.dataset.updated = repository.pushedAt
       card.querySelector('[data-field="category-dot"]').style.setProperty('--category-color', category.color)
       setText(card, '[data-field="category"]', category.label)
       setText(card, '[data-field="project-type"]', projectType.label)
+      setText(card, '[data-field="validation-label"]', repository.validation.label)
       setText(card, '[data-field="owner"]', repository.owner.login)
       setText(card, '[data-field="description"]', repository.description)
       setText(card, '[data-field="stars"]', compactNumber(repository.stars))
@@ -257,6 +332,13 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
       openLink.href = detailUrl
       openLink.setAttribute('aria-label', `查看 ${repository.name} 详情`)
 
+      const validation = card.querySelector('[data-field="validation"]')
+      validation.dataset.tone = repository.validation.tone
+      validation.title = `验证状态：${repository.validation.label}`
+      validation.querySelectorAll('[data-validation-step]').forEach((step) => {
+        step.dataset.status = repository.validation.stages[step.dataset.validationStep].status
+      })
+
       const topicList = card.querySelector('[data-field="topics"]')
       const sourceTopic = topicList.querySelector('span')
       topicList.replaceChildren(...repository.topics.slice(0, 4).map((topic) => {
@@ -270,6 +352,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     const getFilteredRepositories = () => {
       const query = searchInput.value.trim().toLocaleLowerCase('zh-CN')
       const selectedType = typeFilter.value
+      const selectedValidation = validationFilter.value
       const filtered = repositories.filter((repository) => {
         const searchable = [
           repository.name,
@@ -280,8 +363,11 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         ].join(' ').toLocaleLowerCase('zh-CN')
         return (!query || searchable.includes(query))
           && (selectedCategory === 'all'
-            || (selectedCategory === 'verified' ? repository.verified : repository.category === selectedCategory))
+            || (selectedCategory === 'verified'
+              ? repository.validation.overall === 'verified'
+              : repository.category === selectedCategory))
           && (selectedType === 'all' || repository.projectType === selectedType)
+          && (selectedValidation === 'all' || repository.validation.overall === selectedValidation)
       })
 
       const compareStatus = (left, right) => {
@@ -360,9 +446,16 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
       target.textContent = select.selectedOptions[0]?.textContent ?? ''
     }
 
+    validationFilter.value = validationStatusIds.has(requestedValidation) ? requestedValidation : 'all'
+    syncSelectValue(validationFilter, validationFilterValue)
+
     searchInput.addEventListener('input', resetAndRender)
     typeFilter.addEventListener('change', () => {
       syncSelectValue(typeFilter, typeFilterValue)
+      resetAndRender()
+    })
+    validationFilter.addEventListener('change', () => {
+      syncSelectValue(validationFilter, validationFilterValue)
       resetAndRender()
     })
     sortFilter.addEventListener('change', () => {
@@ -385,8 +478,10 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     clearFilters.addEventListener('click', () => {
       searchInput.value = ''
       typeFilter.value = 'all'
+      validationFilter.value = 'all'
       sortFilter.value = 'recommended'
       syncSelectValue(typeFilter, typeFilterValue)
+      syncSelectValue(validationFilter, validationFilterValue)
       syncSelectValue(sortFilter, sortFilterValue)
       selectedCategory = 'all'
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
@@ -406,7 +501,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         resetAndRender()
       }
     })
-    if (selectedCategory !== 'all') {
+    if (selectedCategory !== 'all' || validationFilter.value !== 'all') {
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
         item.classList.toggle('is-active', item.dataset.category === selectedCategory)
       })
@@ -416,6 +511,106 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 </BaseLayout>
 
 <style>
+  .store-install-strip {
+    border-bottom: 1px solid var(--hairline);
+    background: var(--canvas-soft);
+  }
+
+  .store-install-strip__inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    min-height: 56px;
+  }
+
+  .store-install-label,
+  .store-install-command,
+  .store-install-action {
+    display: flex;
+    align-items: center;
+  }
+
+  .store-install-label {
+    gap: 8px;
+    color: var(--body);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .store-install-label :global(svg) {
+    color: #9fdda9;
+  }
+
+  .store-install-command {
+    min-width: 0;
+    min-height: 36px;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    background: var(--canvas);
+    padding-left: 12px;
+  }
+
+  .store-install-command code {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    color: var(--body);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .store-install-command button {
+    display: grid;
+    width: 36px;
+    min-height: 34px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 0;
+    border-left: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--mute);
+  }
+
+  .store-install-command button:hover,
+  .store-install-command button.is-copied {
+    background: var(--canvas-card);
+    color: var(--ink);
+  }
+
+  .store-install-command .check-icon,
+  .store-install-command .is-copied .copy-icon {
+    display: none;
+  }
+
+  .store-install-command .is-copied .check-icon {
+    display: block;
+    color: #9fdda9;
+  }
+
+  .store-install-action {
+    min-height: 36px;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid var(--outline);
+    border-radius: 6px;
+    color: var(--ink);
+    font-size: 12px;
+    line-height: 18px;
+    padding-inline: 12px;
+    transition: border-color 160ms ease, background-color 160ms ease;
+    white-space: nowrap;
+  }
+
+  .store-install-action:hover {
+    border-color: var(--outline-strong);
+    background: var(--canvas-card);
+  }
+
   .catalog-head {
     --hero-light-x: 50%;
     --hero-light-y: 50%;
@@ -523,7 +718,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
   .search-row {
     display: grid;
-    grid-template-columns: minmax(280px, 1fr) auto auto;
+    grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(150px, auto));
     gap: 8px;
   }
 
@@ -724,6 +919,28 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   }
 
   @media (max-width: 767px) {
+    .store-install-strip__inner {
+      grid-template-areas:
+        'label action'
+        'command command';
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 12px;
+      padding-block: 10px;
+    }
+
+    .store-install-label {
+      grid-area: label;
+    }
+
+    .store-install-command {
+      grid-area: command;
+    }
+
+    .store-install-action {
+      grid-area: action;
+      min-height: 36px;
+    }
+
     .catalog-head__art {
       top: 34%;
       left: -104px;

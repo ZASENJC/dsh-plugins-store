@@ -4,7 +4,7 @@ import { join } from 'node:path'
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { runShadowBatch } from './shadow-runner'
+import { runShadowBatch, type ShadowCatalogRepository } from './shadow-runner'
 import type { RepositoryStructureSnapshot } from './structure-check'
 
 const target = {
@@ -118,7 +118,7 @@ describe('P1 shadow runner', () => {
         defaultBranch: 'main',
       },
     ]
-    const snapshotLoader = vi.fn(async (repository: typeof repositories[number]): Promise<RepositoryStructureSnapshot> => {
+    const snapshotLoader = vi.fn(async (repository: ShadowCatalogRepository): Promise<RepositoryStructureSnapshot> => {
       if (repository.repositoryId === 1) {
         throw new Error('request failed token=secret /Users/private/source')
       }

@@ -4,7 +4,7 @@ import { ArrowLeft, Tag } from '@lucide/astro'
 import ProjectCard from '../../components/ProjectCard.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { sortCatalogEntries, type Catalog, type CatalogEntry } from '../../lib/catalog'
-import catalogData from '../../data/catalog.json'
+import { catalogData } from '../../lib/catalog-data'
 
 interface Props {
   topic: string

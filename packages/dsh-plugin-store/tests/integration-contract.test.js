@@ -31,14 +31,20 @@ describe('installable DSH plugin package', () => {
       '@deepseek-ai/dsh-client-ui-conversation',
       '@deepseek-ai/dsh-client-ui-settings-plugins',
     ]))
+    expect(manifest.scripts).toHaveProperty('prepack', 'node build.mjs')
+    expect(manifest.scripts).not.toHaveProperty('prepare')
   })
 
-  it('wires slash execution, the session utility, and the Plugins settings tab', () => {
+  it('wires slash execution to a root overlay plus the session utility and Plugins settings tab', () => {
     expect(existsSync(clientPath)).toBe(true)
     if (!existsSync(clientPath)) return
 
     const source = readFileSync(clientPath, 'utf8')
     expect(source).toContain('command/executed')
+    expect(source).toContain('consumeLocalInstallRequest')
+    expect(source).toContain('dialogController.openInstall')
+    expect(source).toContain("ctx.slots.inject('shell.overlay'")
+    expect(source).toContain('StoreOverlay')
     expect(source).toContain('conversation.session.header.utilities')
     expect(source).toContain('settings.plugins.tab')
     expect(source).toContain('commandName === \'store\'')
@@ -51,12 +57,20 @@ describe('installable DSH plugin package', () => {
     const source = readFileSync(componentsPath, 'utf8')
     expect(source).toContain('function StoreView')
     expect(source).toContain('function StoreModal')
+    expect(source).toContain('function StoreOverlay')
     expect(source).toContain('function StoreSettingsTab')
     expect(source).toContain('function InstallRiskModal')
+    expect(source).toContain('requestedInstallFullName')
+    expect(source).toContain('onInstallRequestConsumed')
+    expect(source).toMatch(/React\.useState\(\s*\(\) => buildExternalInstallTarget\(requestedInstallFullName\)/)
+    expect(source).toContain('onClose={closeInstallTarget}')
     expect(source.match(/<StoreView/g)).toHaveLength(2)
+    expect(source.match(/<StoreModal/g)).toHaveLength(1)
     expect(source).toContain('buildInstallCommand')
     expect(source).toContain("fetch('/api/dsh-plugin-store/install'")
     expect(source).toContain("t('store.riskAcknowledge')")
+    expect(source).toContain('repository.validation')
+    expect(source).toContain("t('store.validation')")
     expect(source).not.toMatch(/child_process|execFile|spawn\(/)
   })
 
@@ -67,5 +81,17 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain(".dps-store[data-mode='settings'] .dps-filter-search")
     expect(source).toContain('overflow-wrap: anywhere')
     expect(source).toContain('flex: 1 1 auto')
+    expect(source).toContain(".dps-badge[data-kind='validation']")
+    expect(source).toContain('body > :has(> .dps-risk-modal)')
+  })
+
+  it('opens store details from the card while keeping only install and copy actions', () => {
+    const source = readFileSync(componentsPath, 'utf8')
+
+    expect(source).toContain('className="dps-card-link"')
+    expect(source).toContain('href={detailUrl}')
+    expect(source).toContain("t('store.openDetails')")
+    expect(source).not.toContain('href={repository.url}')
+    expect(source).not.toContain("t('store.openRepository')")
   })
 })

@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
+import { chmod, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { promisify } from 'node:util'
@@ -49,24 +50,40 @@ function strings(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
-function dockerPrefix(sourceDir: string, temporarySize = '128m'): string[] {
+function dockerPrefix(
+  sourceDir: string,
+  { memory = '1g', temporarySize = '128m' }: { memory?: string, temporarySize?: string } = {},
+): string[] {
   return [
     'run', '--rm', '--read-only', '--cap-drop=ALL',
-    '--security-opt=no-new-privileges', '--pids-limit=128', '--memory=1g', '--cpus=1',
+    '--security-opt=no-new-privileges', '--pids-limit=128', `--memory=${memory}`, '--cpus=1',
     '--user=65532:65532', `--tmpfs=/tmp:rw,noexec,nosuid,size=${temporarySize}`,
     '--mount', `type=bind,src=${sourceDir},dst=/workspace,readonly`,
   ]
 }
 
-export function buildScannerCommands(sourceDirectory: string): ScannerCommand[] {
+function getTrivyCacheDirectory(value?: string): string {
+  return resolve(value ?? process.env.DSH_TRIVY_CACHE_DIR ?? join(tmpdir(), 'dsh-validation-scanner-cache', 'trivy-0.74.0'))
+}
+
+export function buildScannerCommands(
+  sourceDirectory: string,
+  { trivyCacheDirectory }: { trivyCacheDirectory?: string } = {},
+): ScannerCommand[] {
   const sourceDir = resolve(sourceDirectory)
+  const trivyCache = getTrivyCacheDirectory(trivyCacheDirectory)
   const runId = createHash('sha256').update(sourceDir).digest('hex').slice(0, 16)
   const outputRoot = join(tmpdir(), 'dsh-validation-scans', runId)
   return [
     {
       tool: 'trivy',
       file: 'docker',
-      args: [...dockerPrefix(sourceDir, '512m'), SCANNER_IMAGES.trivy, 'fs', '--quiet', '--cache-dir=/tmp/trivy-cache', '--format=json', '--scanners=vuln,secret', '/workspace'],
+      args: [
+        ...dockerPrefix(sourceDir, { temporarySize: '512m' }),
+        '--mount', `type=bind,src=${trivyCache},dst=/tmp/trivy-cache`,
+        SCANNER_IMAGES.trivy,
+        'fs', '--quiet', '--cache-dir=/tmp/trivy-cache', '--format=json', '--scanners=vuln,secret', '/workspace',
+      ],
       outputPath: join(outputRoot, 'trivy.json'),
     },
     {
@@ -166,9 +183,15 @@ function parseJson(output: string): unknown {
 
 export async function runScannerCommands(
   sourceDirectory: string,
-  { executor = defaultExecutor }: { executor?: Executor } = {},
+  {
+    executor = defaultExecutor,
+    trivyCacheDirectory,
+  }: { executor?: Executor, trivyCacheDirectory?: string } = {},
 ): Promise<ScannerResults> {
-  const commands = buildScannerCommands(sourceDirectory)
+  const trivyCache = getTrivyCacheDirectory(trivyCacheDirectory)
+  await mkdir(trivyCache, { recursive: true })
+  await chmod(trivyCache, 0o777)
+  const commands = buildScannerCommands(sourceDirectory, { trivyCacheDirectory: trivyCache })
   const result: ScannerResults = {
     trivy: { status: 'unavailable', vulnerabilities: [], secrets: [] },
     osv: { status: 'unavailable', vulnerabilities: [] },

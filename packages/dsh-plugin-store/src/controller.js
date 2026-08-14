@@ -1,7 +1,7 @@
 export class StoreDialogController {
   constructor() {
     this.listeners = new Set()
-    this.snapshot = Object.freeze({ bySession: Object.freeze({}) })
+    this.snapshot = Object.freeze({ open: false, installRequest: null })
   }
 
   getSnapshot = () => this.snapshot
@@ -11,20 +11,27 @@ export class StoreDialogController {
     return () => this.listeners.delete(listener)
   }
 
-  open(sessionId) {
-    this.set(sessionId, true)
+  open() {
+    this.set({ open: true })
   }
 
-  close(sessionId) {
-    this.set(sessionId, false)
+  openInstall(fullName) {
+    this.set({ open: true, installRequest: fullName })
   }
 
-  set(sessionId, open) {
-    const key = String(sessionId)
-    if ((this.snapshot.bySession[key] ?? false) === open) return
-    this.snapshot = Object.freeze({
-      bySession: Object.freeze({ ...this.snapshot.bySession, [key]: open }),
-    })
+  consumeInstallRequest = () => {
+    this.set({ installRequest: null })
+  }
+
+  close() {
+    this.set({ open: false, installRequest: null })
+  }
+
+  set(next) {
+    const snapshot = { ...this.snapshot, ...next }
+    if (this.snapshot.open === snapshot.open
+      && this.snapshot.installRequest === snapshot.installRequest) return
+    this.snapshot = Object.freeze(snapshot)
     for (const listener of this.listeners) listener()
   }
 }

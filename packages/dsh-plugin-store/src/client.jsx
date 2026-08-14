@@ -1,6 +1,7 @@
 import { CatalogStore } from './catalog.js'
-import { StoreHeaderAction, StoreSettingsTab } from './components.jsx'
+import { StoreHeaderAction, StoreOverlay, StoreSettingsTab } from './components.jsx'
 import { StoreDialogController } from './controller.js'
+import { consumeLocalInstallRequest } from './deep-link.js'
 import { NS, en, zh } from './locales.js'
 import { installStyles } from './styles.js'
 
@@ -14,18 +15,26 @@ export function apply(ctx) {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'plugin-store: dictionaries')
   ctx.effect(() => installStyles(), 'plugin-store: styles')
 
-  ctx.on('command/executed', (sessionId, commandName, result) => {
+  ctx.on('command/executed', (_sessionId, commandName, result) => {
     if (commandName === 'store' && result.kind === 'success') {
-      dialogController.open(sessionId)
+      dialogController.open()
     }
   })
+
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay',
+    id: 'plugin-store-dialog',
+    order: 40,
+    locale: NS,
+    inject: () => ({ catalogStore, dialogController }),
+  }, StoreOverlay))
 
   ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
     name: 'conversation.session.header.utilities',
     id: 'plugin-store',
     order: 40,
     locale: NS,
-    inject: () => ({ catalogStore, dialogController }),
+    inject: () => ({ dialogController }),
   }, StoreHeaderAction))
 
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
@@ -36,4 +45,7 @@ export function apply(ctx) {
     locale: NS,
     inject: () => ({ catalogStore }),
   }, StoreSettingsTab))
+
+  const installRequest = consumeLocalInstallRequest()
+  if (installRequest !== null) dialogController.openInstall(installRequest)
 }

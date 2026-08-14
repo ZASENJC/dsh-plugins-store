@@ -28,6 +28,7 @@ const searchable = [
   data-search={searchable}
   data-category={repository.category}
   data-type={repository.projectType}
+  data-validation-status={repository.validation.overall}
   data-stars={repository.stars}
   data-updated={repository.pushedAt}
 >
@@ -54,6 +55,23 @@ const searchable = [
   </div>
 
   <p class="project-card__description" data-field="description">{repository.description}</p>
+
+  <div
+    class="project-card__validation"
+    data-field="validation"
+    data-tone={repository.validation.tone}
+    title={`验证状态：${repository.validation.label}`}
+  >
+    <span class="project-card__validation-label">
+      <CircleDot size={13} stroke-width={1.8} />
+      <span data-field="validation-label">{repository.validation.label}</span>
+    </span>
+    <span class="project-card__validation-steps" aria-hidden="true">
+      {Object.entries(repository.validation.stages).map(([stage, evidence]) => (
+        <i data-validation-step={stage} data-status={evidence.status}></i>
+      ))}
+    </span>
+  </div>
 
   <div class="project-card__topics" data-field="topics" aria-label="项目标签">
     {repository.topics.slice(0, 4).map((topic) => <span>{topic}</span>)}
@@ -96,6 +114,9 @@ const searchable = [
 
   .project-card__topline,
   .project-card__identity,
+  .project-card__validation,
+  .project-card__validation-label,
+  .project-card__validation-steps,
   .project-card__footer,
   .project-card__metrics,
   .project-card__metrics span {
@@ -186,6 +207,50 @@ const searchable = [
     overflow: hidden;
     white-space: nowrap;
   }
+
+  .project-card__validation {
+    position: relative;
+    z-index: 2;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 24px;
+    color: var(--mute);
+    font-size: 11px;
+  }
+
+  .project-card__validation-label {
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .project-card__validation-label span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .project-card__validation[data-tone='success'] { color: #9fdda9; }
+  .project-card__validation[data-tone='danger'] { color: #ff9c8c; }
+  .project-card__validation[data-tone='warning'] { color: #ffc285; }
+  .project-card__validation[data-tone='running'] { color: #8fc7ff; }
+  .project-card__validation[data-tone='info'] { color: #b7b6ff; }
+
+  .project-card__validation-steps {
+    gap: 4px;
+  }
+
+  .project-card__validation-steps i {
+    width: 18px;
+    height: 3px;
+    border-radius: 9999px;
+    background: var(--hairline);
+  }
+
+  .project-card__validation-steps i[data-status='passed'] { background: #6fa87d; }
+  .project-card__validation-steps i[data-status='running'] { background: #6fa9d8; }
+  .project-card__validation-steps i[data-status='failed'] { background: #d9786c; }
+  .project-card__validation-steps i[data-status='inconclusive'] { background: #c49358; }
+  .project-card__validation-steps i[data-status='skipped'] { opacity: 0.35; }
 
   .project-card__topics span {
     overflow: hidden;

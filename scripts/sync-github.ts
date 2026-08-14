@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -11,6 +11,7 @@ import {
   extractAwesomeRepositoryNames,
   extractVerifiedRepositoryNames,
 } from '../src/lib/github-content'
+import { parseValidationFeed } from '../src/lib/validation'
 
 const SEARCH_URL = 'https://api.github.com/search/repositories'
 const API_URL = 'https://api.github.com'
@@ -21,6 +22,7 @@ const MAX_SEARCH_RESULTS = 1_000
 const MAX_SEARCH_PASSES = 3
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputPath = resolve(root, 'src/data/catalog.json')
+const validationPath = resolve(root, 'src/data/validation.json')
 
 interface SearchResponse {
   total_count: number
@@ -93,6 +95,7 @@ async function fetchRepositories() {
 
 async function sync() {
   const { repositories, reportedByGitHub } = await fetchRepositories()
+  const validationRecords = parseValidationFeed(JSON.parse(await readFile(validationPath, 'utf8')))
   const [awesomeResponse, verifyResponse] = await Promise.all([
     fetchRenderedReadme(AWESOME_REPOSITORY),
     fetchRenderedReadme(VERIFY_REPOSITORY),
@@ -111,6 +114,7 @@ async function sync() {
     reportedByGitHub,
     awesomeRepositoryNames,
     verifiedRepositoryNames,
+    validationRecords,
   )
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
@@ -120,6 +124,7 @@ async function sync() {
     : ''
   console.log(`Awesome 有效收录 ${awesomeRepositoryNames.size} 个仓库名；商店匹配 ${catalog.repositories.filter((repository) => repository.awesomeListed).length} 个`)
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
+  console.log(`验证状态文件匹配 ${validationRecords.size} 个仓库；当前完整验证 ${catalog.stats.validationStatuses.verified ?? 0} 个`)
   console.log(`已同步 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}${warning}`)
 }
 

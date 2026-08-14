@@ -1,17 +1,20 @@
 import * as React from 'react'
 import {
+  Button,
   IconCheckOutline16,
   IconCloseOutline16,
   IconCopyOutline16,
   IconCordisPluginOutline14,
+  IconDownloadOutline16,
   IconRefreshOutline16,
-  IconRightUpOutline16,
+  IconWarningOutline16,
   Modal,
   writeClipboard,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import {
   CATEGORY_LABELS,
   PROJECT_TYPE_LABELS,
+  VALIDATION_STATUS_IDS,
   buildInstallCommand,
   filterCatalogRepositories,
   formatCompactNumber,
@@ -19,12 +22,31 @@ import {
 
 const PAGE_SIZE = 24
 
-function ProjectCard({ repository, copied, onCopy, t }) {
+function buildExternalInstallTarget(fullName) {
+  if (fullName === null) return null
+  return {
+    repositoryId: `external:${fullName}`,
+    fullName,
+    projectType: 'plugin',
+  }
+}
+
+function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
   const command = buildInstallCommand(repository)
   const detailUrl = `https://dsh.aitreez.com/plugins/${repository.repositoryId}`
+  const validationState = repository.validation?.overall
+    ?? (repository.verified ? 'recorded' : 'check-pending')
 
   return (
     <article className="dps-card">
+      <a
+        className="dps-card-link"
+        href={detailUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`${t('store.openDetails')}: ${repository.fullName}`}
+        title={t('store.openDetails')}
+      />
       <div className="dps-card-head">
         <div className="dps-card-title">
           <h3 title={repository.name}>{repository.name}</h3>
@@ -34,7 +56,9 @@ function ProjectCard({ repository, copied, onCopy, t }) {
       <p className="dps-card-repo" title={repository.fullName}>{repository.fullName}</p>
       <p className="dps-card-description">{repository.description}</p>
       <div className="dps-badges">
-        {repository.verified && <span className="dps-badge" data-kind="verified">{t('store.verified')}</span>}
+        <span className="dps-badge" data-kind="validation" data-status={validationState}>
+          {t(`store.validation.${validationState}`)}
+        </span>
         {repository.awesomeListed && <span className="dps-badge" data-kind="awesome">{t('store.awesome')}</span>}
         <span className="dps-badge">{CATEGORY_LABELS[repository.category] ?? CATEGORY_LABELS.other}</span>
         <span className="dps-badge">{PROJECT_TYPE_LABELS[repository.projectType] ?? repository.projectType}</span>
@@ -44,8 +68,19 @@ function ProjectCard({ repository, copied, onCopy, t }) {
           <IconCordisPluginOutline14 size={14} />
           <code title={command ?? t('store.topicListed')}>{command ?? t('store.topicListed')}</code>
         </div>
-        <div className="dps-card-actions">
-          {command !== null && (
+        {command !== null && (
+          <div className="dps-card-actions">
+            <Button
+              className="dps-install-button"
+              size="sm"
+              variant="outline"
+              type="button"
+              disabled={installed}
+              onClick={() => onInstall(repository)}
+            >
+              {installed ? <IconCheckOutline16 size={14} /> : <IconDownloadOutline16 size={14} />}
+              <span>{installed ? t('store.installed') : t('store.install')}</span>
+            </Button>
             <button
               className="dps-icon-button"
               type="button"
@@ -55,44 +90,157 @@ function ProjectCard({ repository, copied, onCopy, t }) {
             >
               {copied ? <IconCheckOutline16 size={16} /> : <IconCopyOutline16 size={16} />}
             </button>
-          )}
-          <a
-            className="dps-icon-button"
-            href={detailUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={t('store.openDetails')}
-            title={t('store.openDetails')}
-          >
-            <IconCordisPluginOutline14 size={14} />
-          </a>
-          <a
-            className="dps-icon-button"
-            href={repository.url}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={t('store.openRepository')}
-            title={t('store.openRepository')}
-          >
-            <IconRightUpOutline16 size={16} />
-          </a>
-        </div>
+          </div>
+        )}
       </div>
     </article>
   )
 }
 
-export function StoreView({ catalogStore, mode, t }) {
+function InstallRiskModal({ target, onClose, onInstalled, t }) {
+  const [acknowledged, setAcknowledged] = React.useState(false)
+  const [phase, setPhase] = React.useState('idle')
+  const [message, setMessage] = React.useState('')
+
+  React.useEffect(() => {
+    setAcknowledged(false)
+    setPhase('idle')
+    setMessage('')
+  }, [target?.repositoryId])
+
+  const close = () => {
+    if (phase !== 'installing') onClose()
+  }
+
+  const install = async () => {
+    if (target === null || !acknowledged || phase === 'installing') return
+    setPhase('installing')
+    setMessage('')
+    try {
+      const response = await fetch('/api/dsh-plugin-store/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: target.fullName }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok || body.ok !== true) {
+        throw new Error(body.message ?? `${t('store.installFailed')} (${response.status})`)
+      }
+      setPhase('success')
+      setMessage(body.output ?? '')
+      onInstalled(target.repositoryId)
+    } catch (error) {
+      setPhase('error')
+      setMessage(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const command = target === null ? '' : buildInstallCommand(target)
+  const finished = phase === 'success'
+
+  return (
+    <Modal
+      open={target !== null}
+      onClose={close}
+      title={t('store.riskTitle')}
+      closeLabel={t('store.cancel')}
+      className="dps-risk-modal"
+      headless
+    >
+      {target !== null && (
+        <div className="dps-risk-shell">
+          <header className="dps-risk-header">
+            <div className="dps-risk-title">
+              <IconWarningOutline16 size={18} />
+              <h2>{t('store.riskTitle')}</h2>
+            </div>
+            <button
+              className="dps-icon-button"
+              type="button"
+              onClick={close}
+              disabled={phase === 'installing'}
+              aria-label={t('store.cancel')}
+              title={t('store.cancel')}
+            >
+              <IconCloseOutline16 size={16} />
+            </button>
+          </header>
+          <div className="dps-risk-body">
+            <strong>{t('store.riskLead')}</strong>
+            <p>{t('store.riskDetail')}</p>
+            <div className="dps-risk-repository">
+              <span>{target.fullName}</span>
+              <code>{command}</code>
+            </div>
+            {!finished && (
+              <label className="dps-risk-acknowledge">
+                <input
+                  type="checkbox"
+                  checked={acknowledged}
+                  disabled={phase === 'installing'}
+                  onChange={(event) => setAcknowledged(event.target.checked)}
+                />
+                <span>{t('store.riskAcknowledge')}</span>
+              </label>
+            )}
+            {phase === 'installing' && <p className="dps-install-status" role="status">{t('store.installing')}</p>}
+            {phase === 'success' && <p className="dps-install-status" data-kind="success" role="status">{t('store.installSuccess')}</p>}
+            {phase === 'error' && (
+              <p className="dps-install-status" data-kind="error" role="alert">
+                <strong>{t('store.installFailed')}</strong>
+                <span>{message}</span>
+              </p>
+            )}
+            {phase === 'success' && message && <pre className="dps-install-output">{message}</pre>}
+          </div>
+          <footer className="dps-risk-actions">
+            {finished ? (
+              <Button size="sm" variant="outline" type="button" onClick={close}>{t('store.done')}</Button>
+            ) : (
+              <>
+                <Button size="sm" variant="outline" type="button" disabled={phase === 'installing'} onClick={close}>
+                  {t('store.cancel')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  type="button"
+                  disabled={!acknowledged || phase === 'installing'}
+                  onClick={install}
+                >
+                  {phase === 'installing' ? t('store.installing') : t('store.confirmInstall')}
+                </Button>
+              </>
+            )}
+          </footer>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+export function StoreView({
+  catalogStore,
+  mode,
+  requestedInstallFullName = null,
+  onInstallRequestConsumed,
+  t,
+}) {
   const snapshot = React.useSyncExternalStore(
     catalogStore.subscribe,
     catalogStore.getSnapshot,
   )
   const [query, setQuery] = React.useState('')
   const [category, setCategory] = React.useState('all')
+  const [validation, setValidation] = React.useState('all')
   const [sort, setSort] = React.useState('recommended')
   const [verifiedOnly, setVerifiedOnly] = React.useState(false)
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE)
   const [copiedId, setCopiedId] = React.useState(null)
+  const [installTarget, setInstallTarget] = React.useState(
+    () => buildExternalInstallTarget(requestedInstallFullName),
+  )
+  const [installedIds, setInstalledIds] = React.useState(() => new Set())
 
   React.useEffect(() => {
     catalogStore.load()
@@ -100,15 +248,21 @@ export function StoreView({ catalogStore, mode, t }) {
 
   React.useEffect(() => {
     setVisibleCount(PAGE_SIZE)
-  }, [query, category, sort, verifiedOnly])
+  }, [query, category, validation, sort, verifiedOnly])
+
+  React.useEffect(() => {
+    const target = buildExternalInstallTarget(requestedInstallFullName)
+    if (target !== null) setInstallTarget(target)
+  }, [requestedInstallFullName])
 
   const repositories = snapshot.catalog?.repositories ?? []
   const filtered = React.useMemo(() => filterCatalogRepositories(repositories, {
     query,
     category,
+    validation,
     sort,
     verifiedOnly,
-  }), [repositories, query, category, sort, verifiedOnly])
+  }), [repositories, query, category, validation, sort, verifiedOnly])
   const visible = filtered.slice(0, visibleCount)
   const generatedAt = snapshot.catalog?.generatedAt
     ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -124,9 +278,14 @@ export function StoreView({ catalogStore, mode, t }) {
   }
 
   const refresh = () => catalogStore.load({ force: true })
+  const closeInstallTarget = () => {
+    setInstallTarget(null)
+    onInstallRequestConsumed?.()
+  }
 
   return (
-    <section className="dps-store" data-mode={mode} aria-label={t('header.title')}>
+    <>
+      <section className="dps-store" data-mode={mode} aria-label={t('header.title')}>
       <div className="dps-store-head">
         <div className="dps-store-meta">
           <p>{t('store.results', { visible: visible.length, total: filtered.length })}</p>
@@ -154,6 +313,18 @@ export function StoreView({ catalogStore, mode, t }) {
             placeholder={t('store.search')}
             aria-label={t('store.search')}
           />
+        </label>
+        <label className="dps-filter">
+          <select
+            value={validation}
+            onChange={(event) => setValidation(event.target.value)}
+            aria-label={t('store.validation')}
+          >
+            <option value="all">{t('store.validation.all')}</option>
+            {VALIDATION_STATUS_IDS.map((value) => (
+              <option key={value} value={value}>{t(`store.validation.${value}`)}</option>
+            ))}
+          </select>
         </label>
         <label className="dps-filter">
           <select
@@ -212,7 +383,9 @@ export function StoreView({ catalogStore, mode, t }) {
                   key={repository.repositoryId}
                   repository={repository}
                   copied={copiedId === repository.repositoryId}
+                  installed={installedIds.has(repository.repositoryId)}
                   onCopy={copyInstall}
+                  onInstall={setInstallTarget}
                   t={t}
                 />
               ))}
@@ -229,15 +402,22 @@ export function StoreView({ catalogStore, mode, t }) {
           </>
         )}
       </div>
-    </section>
+      </section>
+      <InstallRiskModal
+        target={installTarget}
+        onClose={closeInstallTarget}
+        onInstalled={(repositoryId) => setInstalledIds((current) => new Set(current).add(repositoryId))}
+        t={t}
+      />
+    </>
   )
 }
 
-export function StoreModal({ catalogStore, dialogController, open, sessionId, t }) {
+export function StoreModal({ catalogStore, dialogController, open, installRequest, t }) {
   return (
     <Modal
       open={open}
-      onClose={() => dialogController.close(sessionId)}
+      onClose={() => dialogController.close()}
       title={t('header.title')}
       closeLabel={t('dialog.close')}
       className="dps-modal"
@@ -249,45 +429,53 @@ export function StoreModal({ catalogStore, dialogController, open, sessionId, t 
           <button
             className="dps-icon-button"
             type="button"
-            onClick={() => dialogController.close(sessionId)}
+            onClick={() => dialogController.close()}
             aria-label={t('dialog.close')}
             title={t('dialog.close')}
           >
             <IconCloseOutline16 size={16} />
           </button>
         </header>
-        <StoreView catalogStore={catalogStore} mode="dialog" t={t} />
+        <StoreView
+          catalogStore={catalogStore}
+          mode="dialog"
+          requestedInstallFullName={installRequest}
+          onInstallRequestConsumed={dialogController.consumeInstallRequest}
+          t={t}
+        />
       </div>
     </Modal>
   )
 }
 
-export function StoreHeaderAction({ sessionId, dialogController, catalogStore, t }) {
+export function StoreOverlay({ dialogController, catalogStore, t }) {
   const dialog = React.useSyncExternalStore(
     dialogController.subscribe,
     dialogController.getSnapshot,
   )
-  const open = dialog.bySession[String(sessionId)] ?? false
 
   return (
-    <>
-      <button
-        className="dps-header-button"
-        type="button"
-        onClick={() => dialogController.open(sessionId)}
-        aria-label={t('header.open')}
-        title={t('header.open')}
-      >
-        <IconCordisPluginOutline14 size={16} />
-      </button>
-      <StoreModal
-        catalogStore={catalogStore}
-        dialogController={dialogController}
-        open={open}
-        sessionId={sessionId}
-        t={t}
-      />
-    </>
+    <StoreModal
+      catalogStore={catalogStore}
+      dialogController={dialogController}
+      open={dialog.open}
+      installRequest={dialog.installRequest}
+      t={t}
+    />
+  )
+}
+
+export function StoreHeaderAction({ dialogController, t }) {
+  return (
+    <button
+      className="dps-header-button"
+      type="button"
+      onClick={() => dialogController.open()}
+      aria-label={t('header.open')}
+      title={t('header.open')}
+    >
+      <IconCordisPluginOutline14 size={16} />
+    </button>
   )
 }
 

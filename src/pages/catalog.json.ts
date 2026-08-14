@@ -1,4 +1,4 @@
-import catalogData from '../data/catalog.json'
+import { catalogData } from '../lib/catalog-data'
 
 export const prerender = true
 

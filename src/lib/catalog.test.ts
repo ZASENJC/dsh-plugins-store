@@ -74,6 +74,11 @@ describe('catalog data', () => {
       verified: true,
       verificationUrl: 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95',
       status: { discovery: 'topic-listed', verification: 'verified' },
+      validation: {
+        overall: 'recorded',
+        label: '已有验证记录',
+        verified: false,
+      },
     })
     expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 12)).toMatchObject({
       verified: false,
@@ -110,6 +115,39 @@ describe('catalog data', () => {
       reportedByGitHub: 2,
       categories: { communication: 1 },
       projectTypes: { channel: 1 },
+      validationStatuses: { 'check-pending': 1 },
+    })
+  })
+
+  it('matches validation evidence by stable repository id and counts the current ladder state', () => {
+    const validationRecords = new Map([[githubRepository.id, {
+      repositoryId: githubRepository.id,
+      sourceSha: 'd'.repeat(40),
+      sourcePushedAt: githubRepository.pushed_at,
+      updatedAt: '2026-08-14T09:00:00Z',
+      structure: { status: 'passed' as const },
+      sandbox: { status: 'passed' as const, reportUrl: 'https://reports.example/current.json' },
+    }]])
+    const catalog = buildCatalog(
+      [githubRepository],
+      '2026-08-14T09:05:00.000Z',
+      1,
+      new Set(),
+      new Set(),
+      validationRecords,
+    )
+
+    expect(catalog.stats).toMatchObject({
+      verified: 1,
+      validationStatuses: { verified: 1 },
+    })
+    expect(catalog.repositories[0]).toMatchObject({
+      verified: true,
+      validation: {
+        overall: 'verified',
+        sourceSha: 'd'.repeat(40),
+        reportUrl: 'https://reports.example/current.json',
+      },
     })
   })
 

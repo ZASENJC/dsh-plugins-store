@@ -29,6 +29,21 @@ export const PROJECT_TYPE_LABELS = Object.freeze({
   channel: '渠道适配',
 })
 
+export const VALIDATION_STATUS_IDS = Object.freeze([
+  'unrecognized',
+  'check-pending',
+  'check-running',
+  'check-failed',
+  'sandbox-pending',
+  'sandbox-running',
+  'sandbox-failed',
+  'verified',
+  'expired',
+  'recorded',
+  'inconclusive',
+  'not-applicable',
+])
+
 const INSTALLABLE_TYPES = new Set(['plugin', 'skill', 'collection', 'channel'])
 
 export function buildInstallCommand(repository) {
@@ -57,7 +72,12 @@ export function filterCatalogRepositories(repositories, filters) {
   const tokens = filters.query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
   const filtered = repositories.filter((repository) => {
     if (filters.category !== 'all' && repository.category !== filters.category) return false
-    if (filters.verifiedOnly && !repository.verified) return false
+    if (filters.validation && filters.validation !== 'all'
+      && repository.validation?.overall !== filters.validation) return false
+    const currentVerified = repository.validation
+      ? repository.validation.overall === 'verified'
+      : repository.verified
+    if (filters.verifiedOnly && !currentVerified) return false
     if (tokens.length === 0) return true
     const searchText = normalizedSearchText(repository)
     return tokens.every((token) => searchText.includes(token))

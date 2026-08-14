@@ -9,6 +9,7 @@ import {
   CircleAlert,
   CircleDot,
   Copy,
+  Download,
   ExternalLink,
   GitFork,
   CodeXml,
@@ -19,9 +20,11 @@ import {
 import ProjectCard from '../../components/ProjectCard.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { formatCompactNumber, formatRelativeDate, sortCatalogEntries, type Catalog, type CatalogEntry } from '../../lib/catalog'
+import { catalogData } from '../../lib/catalog-data'
 import { getCategory, getProjectTypeLabel } from '../../lib/classification'
 import { getReadmeApiUrl } from '../../lib/readme'
-import catalogData from '../../data/catalog.json'
+import { buildLocalDshInstallUrl } from '../../lib/dsh-install-link'
+import { VALIDATION_STAGE_DEFINITIONS } from '../../lib/validation'
 
 export function getStaticPaths() {
   const catalog = catalogData as Catalog
@@ -39,7 +42,30 @@ const { repository } = Astro.props as Props
 const category = getCategory(repository.category)
 const installableTypes = new Set(['plugin', 'skill', 'collection', 'channel'])
 const showInstallReference = installableTypes.has(repository.projectType)
-const installCommand = `dsh plugin --profile web add github:${repository.fullName}`
+const installRef = repository.validation.verified && repository.validation.sourceSha
+  ? `#${repository.validation.sourceSha}`
+  : ''
+const installCommand = `dsh plugin --profile web add github:${repository.fullName}${installRef}`
+const localDshInstallUrl = buildLocalDshInstallUrl(repository.fullName)
+const validationStageStatusLabels = {
+  pending: '等待处理',
+  running: '正在执行',
+  passed: '已通过',
+  failed: '未通过',
+  inconclusive: '需要复核',
+  skipped: '不适用',
+}
+const validationUpdatedAt = repository.validation.updatedAt
+  ? new Intl.DateTimeFormat('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(repository.validation.updatedAt))
+  : null
 const related = sortCatalogEntries(
   (catalogData as Catalog).repositories
     .filter((item) => item.repositoryId !== repository.repositoryId && item.category === repository.category),
@@ -116,6 +142,54 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           </div>
         </section>
 
+        <section class="detail-section validation-section" data-validation-status={repository.validation.overall}>
+          <div class="validation-heading">
+            <div>
+              <p class="mono-label">VALIDATION LADDER</p>
+              <h2>验证进度</h2>
+            </div>
+            <span data-tone={repository.validation.tone}><CircleDot size={14} stroke-width={1.8} /> {repository.validation.label}</span>
+          </div>
+          <div class="validation-ladder">
+            {VALIDATION_STAGE_DEFINITIONS.map((stage, index) => {
+              const evidence = repository.validation.stages[stage.id]
+              return (
+                <div class="validation-step" data-status={evidence.status}>
+                  <span class="validation-step__index">{String(index + 1).padStart(2, '0')}</span>
+                  <span class="validation-step__mark"><i></i></span>
+                  <span class="validation-step__copy">
+                    <strong>{stage.label}</strong>
+                    <small>{validationStageStatusLabels[evidence.status]}</small>
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          {(repository.validation.sourceSha || repository.validation.dshVersion || repository.validation.platform || validationUpdatedAt) && (
+            <dl class="validation-evidence">
+              {repository.validation.sourceSha && <div><dt>Commit</dt><dd>{repository.validation.sourceSha.slice(0, 12)}</dd></div>}
+              {repository.validation.dshVersion && <div><dt>DSH</dt><dd>{repository.validation.dshVersion}</dd></div>}
+              {repository.validation.platform && <div><dt>平台</dt><dd>{repository.validation.platform}</dd></div>}
+              {validationUpdatedAt && <div><dt>验证时间</dt><dd>{validationUpdatedAt}</dd></div>}
+            </dl>
+          )}
+          {repository.validation.reason && <p class="validation-reason">{repository.validation.reason}</p>}
+          {(repository.validation.reportUrl || repository.validation.issueUrl) && (
+            <div class="validation-actions">
+              {repository.validation.reportUrl && (
+                <a class="outline-button" href={repository.validation.reportUrl} target="_blank" rel="noreferrer">
+                  查看验证报告 <ExternalLink size={14} stroke-width={1.6} />
+                </a>
+              )}
+              {repository.validation.issueUrl && (
+                <a class="outline-button" href={repository.validation.issueUrl} target="_blank" rel="noreferrer">
+                  查看相关 Issue <ExternalLink size={14} stroke-width={1.6} />
+                </a>
+              )}
+            </div>
+          )}
+        </section>
+
         <section class="detail-section readme-section">
           <details
             class="readme-disclosure"
@@ -168,7 +242,9 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           <section class="detail-section install-section">
             <div class="install-heading">
               <div><p class="mono-label">INSTALL REFERENCE</p><h2>安装参考</h2></div>
-              <span><CircleAlert size={15} stroke-width={1.6} /> 未验证</span>
+              <span data-tone={repository.validation.tone}>
+                <CircleAlert size={15} stroke-width={1.6} /> {repository.validation.label}
+              </span>
             </div>
             <div class="command-row">
               <code id="install-command">{installCommand}</code>
@@ -177,7 +253,24 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
                 <Check class="check-icon" size={16} stroke-width={1.6} />
               </button>
             </div>
-            <p>该命令依据官方 GitHub 安装格式生成，尚未确认仓库结构、构建脚本或当前 DSH 兼容性。</p>
+            <div class="install-actions">
+              <a
+                class="primary-button install-dsh-button"
+                href={localDshInstallUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`在本机 DSH 中安装 ${repository.fullName}`}
+              >
+                <Download size={17} stroke-width={1.6} />
+                在 DSH 中安装
+                <ArrowUpRight size={15} stroke-width={1.6} />
+              </a>
+            </div>
+            <p>
+              {repository.validation.verified
+                ? '该命令已固定到通过当前验证的 commit；验证仍不等同安全审计或官方背书。'
+                : '该命令指向仓库当前默认分支；尚无绑定当前 commit 的完整验证结果。'}
+            </p>
           </section>
         )}
       </div>
@@ -192,14 +285,14 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           <div><dt>数据来源</dt><dd>GitHub Topic</dd></div>
           <div>
             <dt>验证状态</dt>
-            <dd class:list={{ 'status-warning': !repository.verified, 'status-verified': repository.verified }}>
-              {repository.verified && repository.verificationUrl
+            <dd class:list={{ 'status-warning': !repository.validation.verified, 'status-verified': repository.validation.verified }}>
+              {repository.validation.reportUrl
                 ? (
-                  <a href={repository.verificationUrl} target="_blank" rel="noreferrer">
-                    已验证 <ExternalLink size={12} stroke-width={1.6} />
+                  <a href={repository.validation.reportUrl} target="_blank" rel="noreferrer">
+                    {repository.validation.label} <ExternalLink size={12} stroke-width={1.6} />
                   </a>
                 )
-                : '尚未验证'}
+                : repository.validation.label}
             </dd>
           </div>
           <div>
@@ -207,7 +300,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
             <dd class:list={{ 'status-listed': repository.awesomeListed }}>{repository.awesomeListed ? '已收录' : '未收录'}</dd>
           </div>
         </dl>
-        <p class="facts-note">Verified 表示该项目在记录环境中通过运行时验证，不等同官方背书、完整功能测试或安全审计。</p>
+        <p class="facts-note">只有绑定当前 commit 的完整实机结果显示为“已验证”；其他标识仅代表对应步骤的记录。</p>
       </aside>
     </div>
   </section>
@@ -422,11 +515,50 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   .classification-grid span { color: var(--mute); font-size: 12px; }
   .classification-grid strong { font-size: 15px; font-weight: 400; }
   .classification-note { margin-top: 18px; color: var(--mute); font-size: 13px; line-height: 22px; }
+  .validation-heading, .validation-heading > span, .validation-step, .validation-step__copy, .validation-actions { display: flex; }
+  .validation-heading { align-items: flex-start; justify-content: space-between; gap: 24px; }
+  .validation-heading > span { min-height: 28px; align-items: center; gap: 6px; border: 1px solid var(--hairline); border-radius: 9999px; color: var(--mute); font-size: 11px; padding-inline: 10px; white-space: nowrap; }
+  .validation-heading > span[data-tone='success'] { border-color: rgba(159, 221, 169, 0.35); color: #9fdda9; }
+  .validation-heading > span[data-tone='danger'] { border-color: rgba(255, 156, 140, 0.35); color: #ff9c8c; }
+  .validation-heading > span[data-tone='warning'] { border-color: rgba(255, 194, 133, 0.35); color: #ffc285; }
+  .validation-heading > span[data-tone='running'] { border-color: rgba(143, 199, 255, 0.35); color: #8fc7ff; }
+  .validation-heading > span[data-tone='info'] { border-color: rgba(183, 182, 255, 0.35); color: #b7b6ff; }
+  .validation-ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 20px; border-block: 1px solid var(--hairline); }
+  .validation-step { min-width: 0; align-items: center; gap: 10px; padding: 16px 12px; }
+  .validation-step + .validation-step { border-left: 1px solid var(--hairline); }
+  .validation-step__index { color: var(--mute); font-family: var(--font-mono); font-size: 10px; }
+  .validation-step__mark { display: grid; width: 10px; height: 10px; flex: 0 0 auto; place-items: center; border: 1px solid var(--outline); border-radius: 50%; }
+  .validation-step__mark i { width: 4px; height: 4px; border-radius: 50%; background: var(--mute); }
+  .validation-step__copy { min-width: 0; flex-direction: column; gap: 2px; }
+  .validation-step__copy strong { overflow: hidden; font-size: 12px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+  .validation-step__copy small { color: var(--mute); font-size: 10px; }
+  .validation-step[data-status='passed'] .validation-step__mark { border-color: #6fa87d; }
+  .validation-step[data-status='passed'] .validation-step__mark i { background: #9fdda9; }
+  .validation-step[data-status='running'] .validation-step__mark { border-color: #6fa9d8; }
+  .validation-step[data-status='running'] .validation-step__mark i { background: #8fc7ff; }
+  .validation-step[data-status='failed'] .validation-step__mark { border-color: #d9786c; }
+  .validation-step[data-status='failed'] .validation-step__mark i { background: #ff9c8c; }
+  .validation-step[data-status='inconclusive'] .validation-step__mark { border-color: #c49358; }
+  .validation-step[data-status='inconclusive'] .validation-step__mark i { background: #ffc285; }
+  .validation-step[data-status='skipped'] { opacity: 0.45; }
+  .validation-evidence { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 16px 0 0; }
+  .validation-evidence div { min-width: 0; border-left: 1px solid var(--hairline); padding-left: 12px; }
+  .validation-evidence dt { color: var(--mute); font-size: 10px; }
+  .validation-evidence dd { margin: 4px 0 0; overflow: hidden; font-family: var(--font-mono); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+  .validation-reason { margin: 16px 0 0; border-left: 2px solid #d9786c; color: var(--body); font-size: 12px; line-height: 20px; padding-left: 12px; }
+  .validation-actions { gap: 8px; margin-top: 16px; }
+  .validation-actions .outline-button { min-height: 36px; }
   .install-heading { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
   .install-heading h2 { margin-bottom: 16px; }
   .install-heading > span { gap: 6px; border: 1px solid rgba(255, 194, 133, 0.35); border-radius: 9999px; color: #ffc285; font-size: 11px; padding: 5px 10px; }
+  .install-heading > span[data-tone='success'] { border-color: rgba(159, 221, 169, 0.35); color: #9fdda9; }
+  .install-heading > span[data-tone='danger'] { border-color: rgba(255, 156, 140, 0.35); color: #ff9c8c; }
+  .install-heading > span[data-tone='running'] { border-color: rgba(143, 199, 255, 0.35); color: #8fc7ff; }
+  .install-heading > span[data-tone='info'] { border-color: rgba(183, 182, 255, 0.35); color: #b7b6ff; }
   .command-row { display: flex; width: 100%; min-width: 0; align-items: center; gap: 12px; border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--canvas-soft); padding: 10px 10px 10px 16px; }
   .command-row code { min-width: 0; flex: 1; overflow-x: auto; color: var(--body); font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+  .install-actions { display: flex; margin-top: 12px; }
+  .install-dsh-button { min-height: 40px; }
   .check-icon, .is-copied .copy-icon { display: none; }
   .is-copied .check-icon { display: block; }
   .install-section > p { margin-top: 12px; color: var(--mute); font-size: 12px; line-height: 20px; }
@@ -464,6 +596,12 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     .classification-grid { grid-template-columns: 1fr; }
     .classification-grid div + div { border-top: 1px solid var(--hairline); border-left: 0; }
     .topic-cloud a { min-height: 44px; }
+    .validation-heading { align-items: flex-start; }
+    .validation-ladder { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .validation-step:nth-child(3) { border-left: 0; border-top: 1px solid var(--hairline); }
+    .validation-step:nth-child(4) { border-top: 1px solid var(--hairline); }
+    .validation-evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+    .validation-actions { flex-direction: column; align-items: stretch; }
     .readme-disclosure summary { min-height: 84px; }
     .readme-toggle { min-width: 76px; min-height: 44px; }
     .readme-content { padding-block: 24px 32px; }

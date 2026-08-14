@@ -6,6 +6,13 @@ import {
   type Confidence,
   type ProjectType,
 } from './classification'
+import {
+  VALIDATION_STATUS_DEFINITIONS,
+  buildValidationStatus,
+  type ValidationOverall,
+  type ValidationRecord,
+  type ValidationStatus,
+} from './validation'
 
 export const VERIFICATION_DIRECTORY_URL = 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95'
 export const VERIFIED_REPOSITORY_OVERRIDES: ReadonlyMap<string, string> = new Map([
@@ -72,6 +79,7 @@ export interface CatalogEntry {
   awesomeListed: boolean
   verified: boolean
   verificationUrl: string | null
+  validation: ValidationStatus
   status: {
     discovery: 'topic-listed'
     verification: 'verified' | 'not-verified'
@@ -92,6 +100,7 @@ export interface Catalog {
     verified: number
     categories: Partial<Record<Category, number>>
     projectTypes: Partial<Record<ProjectType, number>>
+    validationStatuses: Partial<Record<ValidationOverall, number>>
   }
   repositories: CatalogEntry[]
 }
@@ -102,6 +111,7 @@ export function createCatalogEntry(
   repository: GitHubRepository,
   awesomeRepositoryNames: ReadonlySet<string> = new Set(),
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
+  validationRecord?: ValidationRecord,
 ): CatalogEntry {
   const classification = classifyRepository({
     fullName: repository.full_name,
@@ -113,6 +123,14 @@ export function createCatalogEntry(
   const verificationUrl = verifiedRepositoryNames.has(normalizedFullName)
     ? VERIFICATION_DIRECTORY_URL
     : VERIFIED_REPOSITORY_OVERRIDES.get(normalizedFullName) ?? null
+  const validation = buildValidationStatus({
+    repositoryId: repository.id,
+    projectType: classification.projectType,
+    repositoryPushedAt: repository.pushed_at,
+    record: validationRecord,
+    legacyVerificationUrl: verificationUrl,
+  })
+  const verified = validation.verified || verificationUrl !== null
 
   return {
     id: `github:${repository.id}`,
@@ -146,11 +164,12 @@ export function createCatalogEntry(
     classificationConfidence: classification.confidence,
     defaultBranch: repository.default_branch || 'main',
     awesomeListed: awesomeRepositoryNames.has(repository.name.toLowerCase()),
-    verified: verificationUrl !== null,
+    verified,
     verificationUrl,
+    validation,
     status: {
       discovery: 'topic-listed',
-      verification: verificationUrl ? 'verified' : 'not-verified',
+      verification: verified ? 'verified' : 'not-verified',
     },
   }
 }
@@ -161,6 +180,7 @@ export function buildCatalog(
   reportedByGitHub = repositories.length,
   awesomeRepositoryNames: ReadonlySet<string> = new Set(),
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
+  validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
 ): Catalog {
   const uniqueRepositories = new Map<number, GitHubRepository>()
   for (const repository of repositories) {
@@ -178,15 +198,18 @@ export function buildCatalog(
       repository,
       normalizedAwesomeNames,
       normalizedVerifiedNames,
+      validationRecords.get(repository.id),
     )),
     'recommended',
   )
   const categoryCounts: Partial<Record<Category, number>> = {}
   const typeCounts: Partial<Record<ProjectType, number>> = {}
+  const validationCounts: Partial<Record<ValidationOverall, number>> = {}
 
   for (const entry of entries) {
     categoryCounts[entry.category] = (categoryCounts[entry.category] ?? 0) + 1
     typeCounts[entry.projectType] = (typeCounts[entry.projectType] ?? 0) + 1
+    validationCounts[entry.validation.overall] = (validationCounts[entry.validation.overall] ?? 0) + 1
   }
 
   return {
@@ -203,8 +226,47 @@ export function buildCatalog(
       verified: entries.filter((entry) => entry.verified).length,
       categories: categoryCounts,
       projectTypes: typeCounts,
+      validationStatuses: validationCounts,
     },
     repositories: entries,
+  }
+}
+
+export function hydrateCatalogValidation(
+  catalog: Catalog,
+  validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
+): Catalog {
+  const repositories = catalog.repositories.map((entry) => {
+    const validation = buildValidationStatus({
+      repositoryId: entry.repositoryId,
+      projectType: entry.projectType,
+      repositoryPushedAt: entry.pushedAt,
+      record: validationRecords.get(entry.repositoryId),
+      legacyVerificationUrl: entry.verificationUrl,
+    })
+    const verified = validation.verified || entry.verificationUrl !== null
+    return {
+      ...entry,
+      verified,
+      validation,
+      status: {
+        ...entry.status,
+        verification: verified ? 'verified' as const : 'not-verified' as const,
+      },
+    }
+  })
+  const validationStatuses: Partial<Record<ValidationOverall, number>> = {}
+  for (const entry of repositories) {
+    validationStatuses[entry.validation.overall] = (validationStatuses[entry.validation.overall] ?? 0) + 1
+  }
+  return {
+    ...catalog,
+    stats: {
+      ...catalog.stats,
+      verified: repositories.filter((entry) => entry.verified).length,
+      validationStatuses,
+    },
+    repositories,
   }
 }
 
@@ -285,5 +347,9 @@ export function getEmptyCatalog(): Catalog {
 }
 
 export function getCatalogDefinitions() {
-  return { categories: CATEGORIES, projectTypes: PROJECT_TYPES }
+  return {
+    categories: CATEGORIES,
+    projectTypes: PROJECT_TYPES,
+    validationStatuses: VALIDATION_STATUS_DEFINITIONS,
+  }
 }
