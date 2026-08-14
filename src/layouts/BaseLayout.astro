@@ -2,17 +2,24 @@
 import { CodeXml } from '@lucide/astro'
 import { Github } from 'simple-icons-astro'
 
-import { getCanonicalUrl } from '../lib/seo'
+import {
+  getCanonicalUrl,
+  HOME_DESCRIPTION,
+  HOME_TITLE,
+  serializeJsonLd,
+} from '../lib/seo'
 import '../styles/global.css'
 
 interface Props {
   title?: string
   description?: string
+  structuredData?: Record<string, unknown>
 }
 
 const {
-  title = 'DSH插件商店（DSH-plugin store）',
-  description = '自动收录和分类 GitHub dsh-plugin Topic 项目。',
+  title = HOME_TITLE,
+  description = HOME_DESCRIPTION,
+  structuredData,
 } = Astro.props
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const canonicalUrl = getCanonicalUrl(Astro.url)
@@ -41,6 +48,9 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
     <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
     <title>{title}</title>
+    {structuredData && (
+      <script type="application/ld+json" set:html={serializeJsonLd(structuredData)}></script>
+    )}
     {
       cloudflareAnalyticsConfig && (
         <script
