@@ -97,6 +97,17 @@ function assertBinding(report: ValidationReport, plan: LinuxSandboxPlan): void {
   }
 }
 
+function infrastructureCode(
+  stepId: SandboxStepId,
+  execution: ExecutorResult,
+): SandboxStepResult['infrastructureCode'] {
+  if (stepId !== 'install-plugin') return undefined
+  return /ERR_PNPM_NO_OFFLINE_(?:META|TARBALL)|cannot download it in offline mode/i
+    .test(`${execution.stdout}\n${execution.stderr}`)
+    ? 'OFFLINE_DEPENDENCY_CACHE_MISS'
+    : undefined
+}
+
 export async function executeLinuxSandboxPlan(
   structureReport: ValidationReport,
   plan: LinuxSandboxPlan,
@@ -122,7 +133,13 @@ export async function executeLinuxSandboxPlan(
   try {
     for (const step of plan.steps) {
       const execution = await executor(step.command, step.id, step.timeoutMs)
-      results.push({ stepId: step.id, exitCode: execution.exitCode, timedOut: execution.timedOut })
+      const infrastructureFailure = infrastructureCode(step.id, execution)
+      results.push({
+        stepId: step.id,
+        exitCode: execution.exitCode,
+        timedOut: execution.timedOut,
+        ...(infrastructureFailure ? { infrastructureCode: infrastructureFailure } : {}),
+      })
       if (execution.timedOut || execution.exitCode !== 0) break
 
       if (step.id === 'install-plugin') {

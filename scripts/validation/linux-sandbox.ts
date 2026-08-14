@@ -44,6 +44,7 @@ export interface SandboxStepResult {
   stepId: SandboxStepId
   exitCode: number | null
   timedOut: boolean
+  infrastructureCode?: 'OFFLINE_DEPENDENCY_CACHE_MISS'
 }
 
 export interface SandboxExecutionSummary {
@@ -174,6 +175,9 @@ export function buildLinuxSandboxPlan(
 export function summarizeSandboxExecution(results: SandboxStepResult[]): SandboxExecutionSummary {
   const failed = results.find((result) => result.timedOut || result.exitCode !== 0)
   if (!failed) return { finalStatus: 'verified', attribution: 'plugin', code: 'SANDBOX_PASSED' }
+  if (failed.infrastructureCode) {
+    return { finalStatus: 'inconclusive', attribution: 'infrastructure', code: failed.infrastructureCode }
+  }
   if (failed.timedOut) {
     return { finalStatus: 'inconclusive', attribution: 'infrastructure', code: 'SANDBOX_TIMEOUT' }
   }

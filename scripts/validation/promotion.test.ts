@@ -81,7 +81,12 @@ function reportFor(
 
 function reportsForAll(runs = 2): ValidationReport[] {
   return baseline.targets.flatMap((target) => (
-    Array.from({ length: runs }, (_, index) => reportFor(target, index + 1))
+    Array.from({ length: runs }, (_, index) => {
+      const expected = target.expectedFinalStatuses[0]
+      return expected === 'failed' || expected === 'structure_failed'
+        ? negativeReportFor(target, index + 1, expected)
+        : reportFor(target, index + 1, expected)
+    })
   ))
 }
 
