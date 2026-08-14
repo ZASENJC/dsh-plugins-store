@@ -25,9 +25,11 @@ describe('pinned scanner adapters', () => {
       expect(command.outputPath.startsWith('/tmp/dsh-source/')).toBe(false)
     }
     expect(commands[0].args).toContain('aquasec/trivy:0.74.0')
-    expect(commands[0].args).toContain('--tmpfs=/tmp:rw,noexec,nosuid,size=1g')
-    expect(commands[0].args).toContain('--memory=2g')
+    expect(commands[0].args).toContain('--memory=1g')
     expect(commands[0].args).toContain('--cache-dir=/tmp/trivy-cache')
+    expect(commands[0].args).toEqual(expect.arrayContaining([
+      expect.stringMatching(/^type=bind,src=.+,dst=\/tmp\/trivy-cache$/),
+    ]))
     expect(commands[1].args).toContain('ghcr.io/google/osv-scanner:v2.5.0')
     expect(commands[2].args).toContain('ghcr.io/gitleaks/gitleaks:v8.30.1')
   })
