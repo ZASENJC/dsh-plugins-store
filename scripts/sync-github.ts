@@ -2,14 +2,10 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import pLimit from 'p-limit'
-
 import { buildCatalog, type GitHubRepository } from '../src/lib/catalog'
 import {
   extractAwesomeRepositoryNames,
   extractVerifiedRepositoryNames,
-  prepareReadmeHtml,
-  type ReadmeCatalog,
 } from '../src/lib/github-content'
 
 const SEARCH_URL = 'https://api.github.com/search/repositories'
@@ -18,10 +14,8 @@ const AWESOME_REPOSITORY = 'AdamPlatin123/awesome-dsh-plugins'
 const VERIFY_REPOSITORY = 'qing3a/dsh-plugin-verify'
 const PAGE_SIZE = 100
 const MAX_SEARCH_RESULTS = 1_000
-const README_CONCURRENCY = 8
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputPath = resolve(root, 'src/data/catalog.json')
-const readmeOutputPath = resolve(root, 'src/data/readmes.json')
 
 interface SearchResponse {
   total_count: number
@@ -94,54 +88,14 @@ async function sync() {
     awesomeRepositoryNames,
     verifiedRepositoryNames,
   )
-  const readmes: ReadmeCatalog = {
-    schemaVersion: 1,
-    generatedAt,
-    repositories: {},
-  }
-  const limit = pLimit(README_CONCURRENCY)
-  let missingReadmes = 0
-  const readmeFailures: string[] = []
-
-  await Promise.all(repositories.map((repository) => limit(async () => {
-    try {
-      const response = await fetchRenderedReadme(repository.full_name)
-      if (response.status === 404 || response.status === 409) {
-        missingReadmes += 1
-        return
-      }
-      if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText}`)
-      }
-
-      const html = prepareReadmeHtml(await response.text(), {
-        fullName: repository.full_name,
-        defaultBranch: repository.default_branch || 'main',
-      })
-      if (html) readmes.repositories[String(repository.id)] = html
-      else missingReadmes += 1
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      readmeFailures.push(`${repository.full_name}: ${message}`)
-    }
-  })))
-
-  if (readmeFailures.length > 0) {
-    throw new Error(`README 同步失败 ${readmeFailures.length} 个：${readmeFailures.slice(0, 5).join('；')}`)
-  }
-
   await mkdir(dirname(outputPath), { recursive: true })
-  await Promise.all([
-    writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8'),
-    writeFile(readmeOutputPath, `${JSON.stringify(readmes)}\n`, 'utf8'),
-  ])
+  await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
 
   const warning = firstPage.total_count > MAX_SEARCH_RESULTS
     ? `；警告：GitHub Search 上限为 ${MAX_SEARCH_RESULTS}，需要启用分段查询`
     : ''
   console.log(`Awesome 有效收录 ${awesomeRepositoryNames.size} 个仓库名；商店匹配 ${catalog.repositories.filter((repository) => repository.awesomeListed).length} 个`)
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；商店匹配 ${catalog.stats.verified} 个`)
-  console.log(`README 已加载 ${Object.keys(readmes.repositories).length} 个，缺失 ${missingReadmes} 个，失败 0 个`)
   console.log(`已同步 ${catalog.stats.fetched}/${firstPage.total_count} 个仓库到 ${outputPath}${warning}`)
 }
 

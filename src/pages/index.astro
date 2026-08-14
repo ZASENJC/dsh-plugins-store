@@ -85,6 +85,11 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         <button class="category-filter is-active" type="button" data-category="all">
           全部 <span>{catalog.stats.fetched}</span>
         </button>
+        <button class="category-filter category-filter--verified" type="button" data-category="verified">
+          <i></i>
+          已验证
+          <span>{catalog.stats.verified}</span>
+        </button>
         {CATEGORIES.map((category) => (
           <button class="category-filter" type="button" data-category={category.id}>
             <i style={`--category-color: ${category.color}`}></i>
@@ -100,7 +105,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     <div class="container">
       <div class="results-head">
         <p><span id="result-count">{catalog.stats.fetched}</span> 个项目</p>
-        <p><i></i> Topic 已收录 · 尚未安装验证</p>
+        <p><i></i> Topic 已收录 · 验证状态见详情</p>
       </div>
 
       <div class="project-grid" id="project-grid">
@@ -150,7 +155,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     const clearFilters = document.getElementById('clear-filters')
     const pageSize = 24
     const requestedCategory = new URLSearchParams(window.location.search).get('category')
-    let selectedCategory = categoryById.has(requestedCategory) ? requestedCategory : 'all'
+    let selectedCategory = requestedCategory === 'verified' || categoryById.has(requestedCategory) ? requestedCategory : 'all'
     let visibleCount = pageSize
 
     const compactNumber = (value) => {
@@ -213,8 +218,9 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
       openLink.setAttribute('aria-label', `查看 ${repository.name} 详情`)
 
       const topicList = card.querySelector('[data-field="topics"]')
+      const sourceTopic = topicList.querySelector('span')
       topicList.replaceChildren(...repository.topics.slice(0, 4).map((topic) => {
-        const item = document.createElement('span')
+        const item = sourceTopic.cloneNode(true)
         item.textContent = topic
         return item
       }))
@@ -233,7 +239,8 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           ...repository.topics,
         ].join(' ').toLocaleLowerCase('zh-CN')
         return (!query || searchable.includes(query))
-          && (selectedCategory === 'all' || repository.category === selectedCategory)
+          && (selectedCategory === 'all'
+            || (selectedCategory === 'verified' ? repository.verified : repository.category === selectedCategory))
           && (selectedType === 'all' || repository.projectType === selectedType)
       })
 
@@ -503,6 +510,10 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     height: 5px;
     border-radius: 50%;
     background: var(--category-color);
+  }
+
+  .category-filter--verified i {
+    background: #9fdda9;
   }
 
   .category-filter span {

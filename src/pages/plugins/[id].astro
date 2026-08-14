@@ -20,9 +20,8 @@ import ProjectCard from '../../components/ProjectCard.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { formatCompactNumber, formatRelativeDate, sortCatalogEntries, type Catalog, type CatalogEntry } from '../../lib/catalog'
 import { getCategory, getProjectTypeLabel } from '../../lib/classification'
-import type { ReadmeCatalog } from '../../lib/github-content'
+import { getReadmeApiUrl } from '../../lib/readme'
 import catalogData from '../../data/catalog.json'
-import readmeData from '../../data/readmes.json'
 
 export function getStaticPaths() {
   const catalog = catalogData as Catalog
@@ -46,7 +45,8 @@ const related = sortCatalogEntries(
     .filter((item) => item.repositoryId !== repository.repositoryId && item.category === repository.category),
   'stars',
 ).slice(0, 3)
-const readmeHtml = (readmeData as ReadmeCatalog).repositories[String(repository.repositoryId)] ?? ''
+const readmeApiUrl = getReadmeApiUrl(repository.fullName)
+const verifyDirectoryUrl = 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95'
 const absoluteDate = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   year: 'numeric',
@@ -118,7 +118,13 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         </section>
 
         <section class="detail-section readme-section">
-          <details class="readme-disclosure">
+          <details
+            class="readme-disclosure"
+            id="readme-disclosure"
+            data-readme-api={readmeApiUrl}
+            data-full-name={repository.fullName}
+            data-default-branch={repository.defaultBranch}
+          >
             <summary>
               <span class="readme-heading">
                 <span class="mono-label">PROJECT README</span>
@@ -130,10 +136,14 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
                 <ChevronDown size={18} stroke-width={1.6} />
               </span>
             </summary>
-            <div class="readme-content">
-              {readmeHtml
-                ? <div class="markdown-body" set:html={readmeHtml}></div>
-                : <p class="readme-empty">该仓库暂未提供可读取的 README。</p>}
+            <div class="readme-content" id="readme-content" aria-live="polite" aria-busy="false">
+              <p class="readme-state" id="readme-state">正在读取 GitHub README...</p>
+              <div class="markdown-body" id="readme-body" hidden></div>
+              <div class="readme-error" id="readme-error" hidden>
+                <p id="readme-error-message">README 暂时无法读取。</p>
+                <button class="outline-button" id="retry-readme" type="button">重试</button>
+                <a class="outline-button" href={repository.url} target="_blank" rel="noreferrer">前往仓库</a>
+              </div>
             </div>
           </details>
         </section>
@@ -181,13 +191,24 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           <div><dt>最后推送</dt><dd>{absoluteDate}</dd></div>
           <div><dt>归档状态</dt><dd>{repository.archived ? '已归档' : '活跃'}</dd></div>
           <div><dt>数据来源</dt><dd>GitHub Topic</dd></div>
-          <div><dt>验证状态</dt><dd class="status-warning">尚未验证</dd></div>
+          <div>
+            <dt>验证状态</dt>
+            <dd class:list={{ 'status-warning': !repository.verified, 'status-verified': repository.verified }}>
+              {repository.verified
+                ? (
+                  <a href={verifyDirectoryUrl} target="_blank" rel="noreferrer">
+                    已验证 <ExternalLink size={12} stroke-width={1.6} />
+                  </a>
+                )
+                : '尚未验证'}
+            </dd>
+          </div>
           <div>
             <dt>awesome-dsh-plugins</dt>
             <dd class:list={{ 'status-listed': repository.awesomeListed }}>{repository.awesomeListed ? '已收录' : '未收录'}</dd>
           </div>
         </dl>
-        <p class="facts-note">Topic 与 Awesome 收录均为目录信号，不构成安全、质量或兼容性背书。</p>
+        <p class="facts-note">Verified 表示该项目在记录环境中通过运行时验证，不等同官方背书、完整功能测试或安全审计。</p>
       </aside>
     </div>
   </section>
@@ -206,11 +227,14 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     </section>
   )}
 
-  <script is:inline>
+  <script>
+    import { resolveReadmeReference } from '../../lib/readme'
+
     const copyButton = document.getElementById('copy-command')
-    if (copyButton) {
+    const installCommandElement = document.getElementById('install-command')
+    if (copyButton && installCommandElement) {
       copyButton.addEventListener('click', async () => {
-        const command = document.getElementById('install-command').textContent
+        const command = installCommandElement.textContent ?? ''
         await navigator.clipboard.writeText(command)
         copyButton.classList.add('is-copied')
         copyButton.setAttribute('aria-label', '已复制')
@@ -220,6 +244,87 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
         }, 1600)
       })
     }
+
+    const readmeDisclosure = document.querySelector<HTMLDetailsElement>('#readme-disclosure')!
+    const readmeContent = document.querySelector<HTMLElement>('#readme-content')!
+    const readmeState = document.querySelector<HTMLElement>('#readme-state')!
+    const readmeBody = document.querySelector<HTMLElement>('#readme-body')!
+    const readmeError = document.querySelector<HTMLElement>('#readme-error')!
+    const readmeErrorMessage = document.querySelector<HTMLElement>('#readme-error-message')!
+    const retryReadme = document.getElementById('retry-readme')
+    let readmeLoaded = false
+    let readmeLoading = false
+
+    const showReadmeError = (message: string) => {
+      readmeState.hidden = true
+      readmeBody.hidden = true
+      readmeErrorMessage.textContent = message
+      readmeError.hidden = false
+    }
+
+    const loadReadme = async () => {
+      if (readmeLoaded || readmeLoading) return
+      readmeLoading = true
+      readmeContent.setAttribute('aria-busy', 'true')
+      readmeState.hidden = false
+      readmeState.textContent = '正在读取 GitHub README...'
+      readmeBody.hidden = true
+      readmeError.hidden = true
+
+      try {
+        const response = await fetch(readmeDisclosure.dataset.readmeApi!, {
+          headers: { Accept: 'application/vnd.github.html+json' },
+        })
+        if (response.status === 404 || response.status === 409) {
+          readmeState.textContent = '该仓库暂未提供可读取的 README。'
+          readmeLoaded = true
+          return
+        }
+        if (response.status === 403 || response.status === 429) {
+          throw new Error('GitHub API 访问频率已达上限，请稍后重试。')
+        }
+        if (!response.ok) throw new Error('GitHub README 暂时无法读取，请稍后重试。')
+
+        const documentFragment = new DOMParser().parseFromString(await response.text(), 'text/html')
+        const wrapper = documentFragment.querySelector('#readme')
+        const article = wrapper?.querySelector('article.markdown-body')
+        if (!wrapper || !article) throw new Error('GitHub README response did not contain an article')
+
+        const location = {
+          fullName: readmeDisclosure.dataset.fullName!,
+          defaultBranch: readmeDisclosure.dataset.defaultBranch || 'main',
+          readmePath: wrapper.getAttribute('data-path') || 'README.md',
+        }
+        article.querySelectorAll('a[href]').forEach((link) => {
+          const href = link.getAttribute('href')
+          if (!href) return
+          link.setAttribute('href', resolveReadmeReference(href, location, 'link'))
+          if (!href.startsWith('#')) {
+            link.setAttribute('target', '_blank')
+            link.setAttribute('rel', 'noreferrer')
+          }
+        })
+        article.querySelectorAll('[src]').forEach((media) => {
+          const src = media.getAttribute('src')
+          if (src) media.setAttribute('src', resolveReadmeReference(src, location, 'media'))
+        })
+
+        readmeBody.replaceChildren(...Array.from(article.childNodes).map((node) => document.importNode(node, true)))
+        readmeState.hidden = true
+        readmeBody.hidden = false
+        readmeLoaded = true
+      } catch (error) {
+        showReadmeError(error instanceof Error ? error.message : 'GitHub README 暂时无法读取，请稍后重试。')
+      } finally {
+        readmeLoading = false
+        readmeContent.setAttribute('aria-busy', 'false')
+      }
+    }
+
+    readmeDisclosure?.addEventListener('toggle', () => {
+      if (readmeDisclosure.open) void loadReadme()
+    })
+    retryReadme?.addEventListener('click', () => void loadReadme())
   </script>
 </BaseLayout>
 
@@ -270,7 +375,10 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   .readme-disclosure[open] .readme-toggle__open { display: inline; }
   .readme-disclosure[open] .readme-toggle svg { transform: rotate(180deg); }
   .readme-content { min-width: 0; overflow: hidden; border-top: 1px solid var(--hairline); padding-block: 28px 40px; }
-  .readme-empty { margin: 0; color: var(--mute); font-size: 14px; }
+  .readme-state, .readme-error p { margin: 0; color: var(--mute); font-size: 14px; }
+  .readme-error { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .readme-error[hidden] { display: none; }
+  .readme-error p { width: 100%; }
   :global(.readme-content .markdown-body) { min-width: 0; color: var(--body); font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
   :global(.readme-content .markdown-body > :first-child) { margin-top: 0; }
   :global(.readme-content .markdown-body > :last-child) { margin-bottom: 0; }
@@ -330,6 +438,9 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   .repository-facts dt { color: var(--mute); }
   .repository-facts dd { gap: 6px; margin: 0; text-align: right; }
   .repository-facts .status-warning { color: #ffc285; }
+  .repository-facts .status-verified, .repository-facts .status-verified a { color: #9fdda9; }
+  .repository-facts .status-verified a { display: inline-flex; align-items: center; gap: 5px; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
+  .repository-facts .status-verified a:hover { text-decoration-color: currentColor; }
   .repository-facts .status-listed { color: #9fdda9; }
   .facts-note { margin-top: 12px; color: var(--mute); font-size: 11px; line-height: 18px; }
   .related-section { border-top: 1px solid var(--hairline); padding-block: 56px 64px; }

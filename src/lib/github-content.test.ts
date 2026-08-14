@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import {
   extractAwesomeRepositoryNames,
   extractVerifiedRepositoryNames,
-  prepareReadmeHtml,
 } from './github-content'
 
 describe('awesome-dsh-plugins catalog matching', () => {
@@ -63,63 +62,5 @@ describe('dsh-plugin-verify catalog matching', () => {
     `
 
     expect([...extractVerifiedRepositoryNames(html)]).toEqual(['owner/verified-plugin'])
-  })
-})
-
-describe('GitHub README rendering', () => {
-  it('returns the rendered body and resolves relative repository links and media', () => {
-    const html = `
-      <div id="readme" data-path="docs/README.md">
-        <article class="markdown-body">
-          <h1>Plugin</h1>
-          <a href="../CHANGELOG.md">Changelog</a>
-          <a href="#install">Install</a>
-          <a href="https://example.com/docs">External docs</a>
-          <img src="../assets/demo.png" alt="Demo">
-        </article>
-      </div>
-    `
-
-    const rendered = prepareReadmeHtml(html, {
-      fullName: 'Owner/Plugin',
-      defaultBranch: 'main',
-    })
-
-    expect(rendered).toContain('<h1>Plugin</h1>')
-    expect(rendered).toContain('href="https://github.com/Owner/Plugin/blob/main/CHANGELOG.md"')
-    expect(rendered).toContain('href="#install"')
-    expect(rendered).toContain('href="https://example.com/docs"')
-    expect(rendered).toContain('src="https://raw.githubusercontent.com/Owner/Plugin/main/assets/demo.png"')
-    expect(rendered).not.toContain('id="readme"')
-  })
-
-  it('returns an empty string when GitHub does not return a README article', () => {
-    expect(prepareReadmeHtml('<p>Not found</p>', {
-      fullName: 'Owner/Plugin',
-      defaultBranch: 'main',
-    })).toBe('')
-  })
-
-  it('keeps external media and resolves GitHub-root and query-bearing references', () => {
-    const rendered = prepareReadmeHtml(`
-      <div id="readme">
-        <article class="markdown-body">
-          <a href="/Owner/Plugin/issues">Issues</a>
-          <a href="guide.md?plain=1#usage">Guide</a>
-          <a href="?plain=1">Current document</a>
-          <img src="/assets/github.png" alt="GitHub asset">
-          <img src="https://example.com/logo.png" alt="External asset">
-        </article>
-      </div>
-    `, {
-      fullName: 'Owner/Plugin',
-      defaultBranch: 'main',
-    })
-
-    expect(rendered).toContain('href="https://github.com/Owner/Plugin/issues"')
-    expect(rendered).toContain('href="https://github.com/Owner/Plugin/blob/main/guide.md?plain=1#usage"')
-    expect(rendered).toContain('href="?plain=1"')
-    expect(rendered).toContain('src="https://github.com/assets/github.png"')
-    expect(rendered).toContain('src="https://example.com/logo.png"')
   })
 })
