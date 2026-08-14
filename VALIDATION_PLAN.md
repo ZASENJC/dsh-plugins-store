@@ -56,4 +56,7 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - P0 RED: `src/lib/validation-report.test.ts` failed because the report module did not exist.
 - P0 GREEN: 8 focused tests passed for the versioned report contract, legal transitions, deterministic failure evidence, binding freshness, and history-preserving expiry.
 - Added `validation/schemas/report.schema.json` and the matching strict TypeScript parser/state machine.
-- Next: define P1 execution-type routing and structure-check fixtures in RED.
+- P1 RED: execution routing, non-executing structure checks, scanner failure attribution, security quarantine, and shadow report isolation were defined before implementation.
+- P1 core GREEN: 24 focused P0/P1 tests pass. Shadow reports are immutable and atomic, unknown projects remain `unrecognized`, scanner outages are infrastructure failures, and no public validation or Issue writer is reachable.
+- Restored the root package metadata after npm added unrelated README-derived fields; retained only the required `yaml` parser dependency.
+- Next: add the GitHub fixed-SHA snapshot loader and pinned scanner adapters, then wire the artifact-only shadow workflow.

@@ -38,7 +38,8 @@
       ]
     },
     "executionType": {
-      "enum": ["host-tool", "web", "command", "channel-mcp", "native", "skill", "collection", "non-plugin"]
+      "type": ["string", "null"],
+      "enum": ["host-tool", "web", "command", "channel-mcp", "native", "skill", "collection", "non-plugin", null]
     },
     "repository": {
       "type": "object",

@@ -99,7 +99,7 @@ export interface ValidationReport {
   reportId: string
   mode: 'shadow' | 'enforce'
   validationKind: ValidationKind
-  executionType: ExecutionType
+  executionType: ExecutionType | null
   repository: {
     id: number
     fullName: string
@@ -285,7 +285,7 @@ export function parseValidationReport(value: unknown): ValidationReport {
     throw new Error('验证报告标识或模式无效')
   }
   if (!VALIDATION_KIND_SET.has(value.validationKind as string)
-    || !EXECUTION_TYPE_SET.has(value.executionType as string)) {
+    || (value.executionType !== null && !EXECUTION_TYPE_SET.has(value.executionType as string))) {
     throw new Error('验证类型无效')
   }
   if (!isRecord(value.repository)
