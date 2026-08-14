@@ -73,6 +73,17 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
             <Github size={12} aria-hidden="true" />
             © 2026 ZASENJC · MIT
           </a>
+          <span class="site-footer__star-prompt">
+            <span aria-hidden="true">·</span>
+            <a
+              href="https://github.com/ZASENJC/dsh-plugins-store"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="在 GitHub 为 DSH插件商店点 Star"
+            >
+              觉得有帮助？欢迎给项目点个 Star ❤️
+            </a>
+          </span>
         </div>
         <p>数据来自 GitHub Topic，收录不代表审核、兼容或安全背书。</p>
       </div>
@@ -143,9 +154,16 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
   .site-footer__brand {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     white-space: nowrap;
+  }
+
+  .site-footer__star-prompt {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .site-footer__brand a {
