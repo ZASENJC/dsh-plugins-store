@@ -59,4 +59,5 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - P1 RED: execution routing, non-executing structure checks, scanner failure attribution, security quarantine, and shadow report isolation were defined before implementation.
 - P1 core GREEN: 24 focused P0/P1 tests pass. Shadow reports are immutable and atomic, unknown projects remain `unrecognized`, scanner outages are infrastructure failures, and no public validation or Issue writer is reachable.
 - Restored the root package metadata after npm added unrelated README-derived fields; retained only the required `yaml` parser dependency.
-- Next: add the GitHub fixed-SHA snapshot loader and pinned scanner adapters, then wire the artifact-only shadow workflow.
+- P1 snapshot/scanner GREEN: 30 focused tests pass. Numeric repository identity is revalidated, default branches resolve to full SHAs, truncated trees are rejected, source blobs are not downloaded, and sanitized Trivy/OSV/Gitleaks adapters use fixed container versions and read-only source mounts.
+- Next: wire catalog discovery, safe fixed-SHA archive acquisition, and the artifact-only shadow workflow.

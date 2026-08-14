@@ -51,6 +51,10 @@ export interface RepositoryStructureSnapshot {
       status: 'passed' | 'findings' | 'unavailable'
       vulnerabilities: ScannerVulnerability[]
     }
+    gitleaks?: {
+      status: 'passed' | 'findings' | 'unavailable'
+      secrets: ScannerSecret[]
+    }
   }
 }
 
@@ -452,7 +456,9 @@ export function runStructureCheck(
 
   const scannerUnavailable = snapshot.scans.trivy.status === 'unavailable'
     || snapshot.scans.osv.status === 'unavailable'
+    || snapshot.scans.gitleaks?.status === 'unavailable'
   const secretFindings = snapshot.scans.trivy.secrets.length
+    + (snapshot.scans.gitleaks?.secrets.length ?? 0)
   const vulnerabilityFindings = [
     ...snapshot.scans.trivy.vulnerabilities,
     ...snapshot.scans.osv.vulnerabilities,
@@ -470,6 +476,13 @@ export function runStructureCheck(
     check(checks, 'VULNERABILITY_REVIEW_REQUIRED', 'quarantined', 'security', 'Known vulnerabilities require policy review.', undefined, 'osv-scanner')
   } else {
     check(checks, 'OSV_SCAN_CLEAN', 'passed', 'security', 'OSV scan produced no known vulnerability findings.', undefined, 'osv-scanner')
+  }
+  if (snapshot.scans.gitleaks?.status === 'unavailable') {
+    check(checks, 'GITLEAKS_SCAN_UNAVAILABLE', 'not-run', 'security', 'Gitleaks result is unavailable.', undefined, 'gitleaks')
+  } else if ((snapshot.scans.gitleaks?.secrets.length ?? 0) > 0) {
+    check(checks, 'GITLEAKS_SCAN_QUARANTINE', 'quarantined', 'security', 'Potential secret material requires private human review.', undefined, 'gitleaks')
+  } else if (snapshot.scans.gitleaks) {
+    check(checks, 'GITLEAKS_SCAN_CLEAN', 'passed', 'security', 'Gitleaks scan produced no secret findings.', undefined, 'gitleaks')
   }
 
   const requiredFailure = checks.find(({ status, severity }) => status === 'failed' && severity === 'required')
