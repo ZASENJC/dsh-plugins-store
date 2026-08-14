@@ -21,11 +21,15 @@ describe('P2 validator image contract', () => {
       },
       overrides: {
         '@aws-sdk/credential-provider-node': '3.972.79',
+        '@aws-sdk/credential-provider-ini': '3.973.13',
       },
     })
     expect(toolchainLock.lockfileVersion).toBe(3)
     expect(toolchainLock.packages[''].dependencies).toEqual(toolchainManifest.dependencies)
     expect(toolchainLock.packages['node_modules/@aws-sdk/credential-provider-node'].version).toBe('3.972.79')
+    expect(toolchainLock.packages[
+      'node_modules/@aws-sdk/credential-provider-node/node_modules/@aws-sdk/credential-provider-ini'
+    ].version).toBe('3.973.13')
     expect(dockerfile).toMatch(/USER node\s*$/m)
     expect(dockerfile).not.toMatch(/(ENV|ARG)\s+.*(TOKEN|SECRET|KEY)/i)
   })

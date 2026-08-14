@@ -1,11 +1,14 @@
 FROM mcr.microsoft.com/playwright:v1.55.0-noble
 
 USER root
-RUN npm install --global --ignore-scripts @deepseek-ai/dsh@0.1.0-rc.6 pnpm@11.19.0 \
+COPY validation/sandbox/toolchain/package.json validation/sandbox/toolchain/package-lock.json /validator/toolchain/
+RUN npm ci --prefix /validator/toolchain --omit=dev --ignore-scripts \
     && npm install --prefix /validator --ignore-scripts playwright@1.55.0 ws@8.18.3 \
     && npm cache clean --force \
     && mkdir -p /validation/workspace /validation/home /validation/dsh-home /validation/artifacts \
     && chown -R pwuser:pwuser /validator /validation
+
+ENV PATH="/validator/toolchain/node_modules/.bin:${PATH}"
 
 COPY --chown=pwuser:pwuser validation/sandbox/web-smoke.mjs /validator/web-smoke.mjs
 COPY --chown=pwuser:pwuser validation/sandbox/channel-mock-smoke.mjs /validator/channel-mock-smoke.mjs

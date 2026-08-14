@@ -1,0 +1,13 @@
+{
+  "name": "dsh-plugin-validator-toolchain",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@deepseek-ai/dsh": "0.1.0-rc.6",
+    "pnpm": "11.19.0"
+  },
+  "overrides": {
+    "@aws-sdk/credential-provider-node": "3.972.79",
+    "@aws-sdk/credential-provider-ini": "3.973.13"
+  }
+}
