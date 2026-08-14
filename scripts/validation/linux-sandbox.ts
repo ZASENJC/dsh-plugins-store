@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+
 import type { ValidationBinding, ValidationStatus } from '../../src/lib/validation-report'
 
 export interface LinuxSandboxTarget {
@@ -51,6 +54,17 @@ export interface SandboxExecutionSummary {
 }
 
 const VALIDATOR_IMAGE = 'dsh-plugin-validator:0.1.0'
+
+function dependencyInstallCommand(sourceDirectory: string): string[] {
+  if (existsSync(join(sourceDirectory, 'package-lock.json'))
+    || existsSync(join(sourceDirectory, 'npm-shrinkwrap.json'))) {
+    return ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']
+  }
+  if (existsSync(join(sourceDirectory, 'pnpm-lock.yaml'))) {
+    return ['pnpm', 'install', '--frozen-lockfile', '--ignore-scripts']
+  }
+  return ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']
+}
 
 function runArgs({
   containerName,
@@ -143,7 +157,7 @@ export function buildLinuxSandboxPlan(
         command: { file: 'docker', args: ['volume', 'create', resourceName] },
       },
       makeStep('copy-source', 'acquisition', 'none', ['node', '/validator/copy-source.mjs', '/source', '/validation/workspace/plugin'], sourceDirectory),
-      makeStep('install-dependencies', 'acquisition', 'bridge', ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']),
+      makeStep('install-dependencies', 'acquisition', 'bridge', dependencyInstallCommand(sourceDirectory)),
       makeStep('build', 'execution', 'none', ['npm', 'run', 'build', '--if-present']),
       makeStep('install-plugin', 'execution', 'none', ['dsh', 'plugin', '--profile', 'validation', 'add', '--ignore-scripts', 'file:/validation/workspace/plugin']),
       makeStep('load', 'execution', 'none', ['dsh', '--profile', 'validation', '--dump-config']),
