@@ -4,7 +4,11 @@ import { buildArchiveExtractionCommand, downloadPinnedArchive } from './archive-
 
 describe('fixed-SHA archive acquisition', () => {
   it('builds a non-root, networkless extraction container without host runtime access', () => {
-    const command = buildArchiveExtractionCommand('/tmp/repository.tar.gz', '/tmp/source')
+    const command = buildArchiveExtractionCommand(
+      '/tmp/repository.tar.gz',
+      '/tmp/source',
+      { uid: 1001, gid: 121 },
+    )
 
     expect(command.file).toBe('docker')
     expect(command.args).toEqual(expect.arrayContaining([
@@ -12,7 +16,7 @@ describe('fixed-SHA archive acquisition', () => {
       '--read-only',
       '--cap-drop=ALL',
       '--security-opt=no-new-privileges',
-      '--user=65532:65532',
+      '--user=1001:121',
       'alpine:3.22.1',
       'tar',
     ]))
