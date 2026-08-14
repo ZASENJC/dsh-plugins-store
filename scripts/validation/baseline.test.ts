@@ -45,4 +45,24 @@ describe('P2 Linux headless/tool baseline', () => {
     expect(() => parseBaseline({ ...base, targets: [{ ...target, sourceSha: 'main' }] })).toThrow('sourceSha')
     expect(() => parseBaseline({ ...base, targets: [target, { ...target, fullName: 'fixture/renamed' }] })).toThrow('duplicate')
   })
+
+  it('supports loader smoke for host plugins that do not register tools', () => {
+    const baseline = parseBaseline({
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T12:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.0',
+      targets: [{
+        repositoryId: 1,
+        fullName: 'fixture/host-plugin',
+        sourceSha: 'a'.repeat(40),
+        executionType: 'host-tool',
+        smokeMode: 'loader',
+        expectedFinalStatuses: ['verified'],
+      }],
+    })
+
+    expect(baseline.targets[0].smokeMode).toBe('loader')
+  })
 })
