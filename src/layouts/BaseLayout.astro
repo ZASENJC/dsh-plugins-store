@@ -14,6 +14,9 @@ const {
   description = '自动收录和分类 GitHub dsh-plugin Topic 项目。',
 } = Astro.props
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
+const cloudflareAnalyticsConfig = import.meta.env.PROD
+  ? JSON.stringify({ token: 'cefc4fa1bb984a789124d58b900f13b8' })
+  : null
 ---
 
 <!doctype html>
@@ -25,6 +28,16 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
     <title>{title}</title>
+    {
+      cloudflareAnalyticsConfig && (
+        <script
+          is:inline
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={cloudflareAnalyticsConfig}
+        ></script>
+      )
+    }
   </head>
   <body>
     <header class="site-header">
