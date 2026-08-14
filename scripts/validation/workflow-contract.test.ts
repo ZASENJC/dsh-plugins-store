@@ -20,6 +20,9 @@ describe('decoupled incremental validation workflows', () => {
     const workflow = await readFile('.github/workflows/validate-plugins.yml', 'utf8')
 
     expect(workflow).toContain("cron: '17 * * * *'")
+    expect(workflow).toMatch(/force_full:[\s\S]*type: boolean/)
+    expect(workflow).toContain('FORCE_FULL')
+    expect(workflow).toMatch(/test "\$FORCE_FULL" != "true"[\s\S]*--previous/)
     expect(workflow).not.toContain('workflow_run')
     expect(workflow).toContain('validate:select')
     expect(workflow).toContain('validate:shadow')

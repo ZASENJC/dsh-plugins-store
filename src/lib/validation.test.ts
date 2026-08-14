@@ -69,6 +69,46 @@ describe('validation ladder', () => {
     })
   })
 
+  it('separates infrastructure review from security quarantine in public status', () => {
+    const feed = parseValidationFeed({
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T08:30:00Z',
+      records: [{
+        repositoryId: 101,
+        sourceSha: 'a'.repeat(40),
+        sourcePushedAt: baseInput.repositoryPushedAt,
+        updatedAt: '2026-08-14T08:25:00Z',
+        structure: { status: 'inconclusive', reason: '验证基础设施暂不可用' },
+        sandbox: { status: 'skipped' },
+      }, {
+        repositoryId: 102,
+        sourceSha: 'b'.repeat(40),
+        sourcePushedAt: baseInput.repositoryPushedAt,
+        updatedAt: '2026-08-14T08:26:00Z',
+        structure: { status: 'quarantined', reason: '需要人工安全复核' },
+        sandbox: { status: 'skipped' },
+      }],
+    })
+
+    expect(buildValidationStatus({ ...baseInput, record: feed.get(101) })).toMatchObject({
+      overall: 'inconclusive',
+      label: '需要复核',
+      tone: 'warning',
+      verified: false,
+    })
+    expect(buildValidationStatus({
+      ...baseInput,
+      repositoryId: 102,
+      record: feed.get(102),
+    })).toMatchObject({
+      overall: 'security-review',
+      label: '安全复核中',
+      tone: 'warning',
+      verified: false,
+      stages: { structure: { status: 'quarantined' }, sandbox: { status: 'skipped' } },
+    })
+  })
+
   it('marks a pinned passing result verified and expires it when the repository changes', () => {
     const record = {
       repositoryId: 101,

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { describe, expect, it } from 'vitest'
 
-import type { ValidationReport, ValidationStatus } from '../../src/lib/validation-report'
+import type { FailureAttribution, ValidationReport, ValidationStatus } from '../../src/lib/validation-report'
 import { parseBaseline, type BaselineTarget } from './baseline'
 import {
   assessPromotionGate,
@@ -127,6 +127,29 @@ function negativeReportFor(
   }
 }
 
+function attributedStructureReportFor(
+  target: BaselineTarget,
+  run: number,
+  attribution: FailureAttribution,
+  code: string,
+): ValidationReport {
+  const report = negativeReportFor(target, run, 'structure_failed')
+  const failure = {
+    ...report.failure!,
+    attribution,
+    code,
+    reason: code,
+    fingerprint: `${target.repositoryId}-${code}`,
+  }
+  return {
+    ...report,
+    failure,
+    events: report.events.map((event) => (
+      event.status === 'structure_failed' ? { ...event, ...failure } : event
+    )),
+  }
+}
+
 describe('P4 promotion quality gate', () => {
   it('requires all 20 baseline targets and accepts one fresh observation per target', () => {
     const partial = baseline.targets.slice(0, 1).map((target) => reportFor(target, 1))
@@ -213,6 +236,40 @@ describe('P4 promotion quality gate', () => {
         reason: expect.stringContaining('离线'),
       },
     })
+  })
+
+  it('publishes infrastructure and policy structure outcomes without blaming the plugin', () => {
+    const gateReports = reportsForAll(1)
+    const infrastructure = attributedStructureReportFor(
+      baseline.targets[0],
+      9,
+      'infrastructure',
+      'SCANNER_UNAVAILABLE',
+    )
+    const policy = attributedStructureReportFor(
+      baseline.targets[1],
+      9,
+      'policy',
+      'SECURITY_REVIEW_REQUIRED',
+    )
+
+    const feed = buildPublicValidationFeed(
+      baseline,
+      [...gateReports, infrastructure, policy],
+      '2026-08-14T14:00:00.000Z',
+      gateReports,
+    )
+
+    expect(feed.records.find(({ repositoryId }) => repositoryId === infrastructure.repository.id))
+      .toMatchObject({
+        structure: { status: 'inconclusive', reason: expect.stringContaining('SCANNER_UNAVAILABLE') },
+        sandbox: { status: 'skipped' },
+      })
+    expect(feed.records.find(({ repositoryId }) => repositoryId === policy.repository.id))
+      .toMatchObject({
+        structure: { status: 'quarantined', reason: expect.stringContaining('SECURITY_REVIEW_REQUIRED') },
+        sandbox: { status: 'skipped' },
+      })
   })
 
   it('promotes one current verified binding per target after the baseline gate passes', () => {

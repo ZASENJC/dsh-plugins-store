@@ -251,6 +251,68 @@ describe('shadow structure check', () => {
     expect(JSON.stringify(result)).not.toContain('github-pat')
   })
 
+  it('keeps a Gitleaks secret finding isolated from the clean Trivy result', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      scans: {
+        ...validScans,
+        gitleaks: {
+          status: 'findings',
+          secrets: [{ ruleId: 'generic-api-key', path: 'fixture.txt' }],
+        },
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('quarantined')
+    expect(result.report.structureChecks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'TRIVY_SCAN_CLEAN', status: 'passed', tool: 'trivy' }),
+      expect.objectContaining({ code: 'GITLEAKS_SCAN_QUARANTINE', status: 'quarantined', tool: 'gitleaks' }),
+    ]))
+    expect(result.report.structureChecks).not.toContainEqual(expect.objectContaining({
+      code: 'SECRET_SCAN_QUARANTINE',
+      tool: 'trivy',
+    }))
+  })
+
+  it('retains a Trivy vulnerability finding when OSV is unavailable', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      scans: {
+        trivy: {
+          status: 'findings',
+          vulnerabilities: [{ id: 'CVE-2026-FIXTURE', severity: 'HIGH' }],
+          secrets: [],
+        },
+        osv: { status: 'unavailable', vulnerabilities: [] },
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('quarantined')
+    expect(result.report.structureChecks).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: 'TRIVY_VULNERABILITY_REVIEW_REQUIRED',
+        status: 'quarantined',
+        tool: 'trivy',
+      }),
+      expect.objectContaining({ code: 'OSV_SCAN_UNAVAILABLE', status: 'not-run', tool: 'osv-scanner' }),
+    ]))
+    expect(result.report.structureChecks).not.toContainEqual(expect.objectContaining({
+      code: 'TRIVY_SCAN_CLEAN',
+    }))
+  })
+
   it('attributes unavailable scanners to infrastructure and blocks sandbox queueing', () => {
     const result = runStructureCheck({
       ...hostToolSnapshot,

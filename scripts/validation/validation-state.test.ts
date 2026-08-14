@@ -198,13 +198,13 @@ describe('incremental validation cursor', () => {
       [4, {
         repositoryId: 4,
         sourceSha: 'c'.repeat(40),
-        sourcePushedAt: '2026-08-14T12:00:00.000Z',
+        sourcePushedAt: catalog.repositories[3].pushedAt,
         updatedAt: '2026-08-14T16:10:00.000Z',
         dshVersion: target.dshVersion,
         platform: target.platform,
         validatorVersion: target.validatorVersion,
-        structure: { status: 'passed' },
-        sandbox: { status: 'inconclusive' },
+        structure: { status: 'quarantined' as any },
+        sandbox: { status: 'skipped' },
       }],
     ])
 
@@ -219,6 +219,7 @@ describe('incremental validation cursor', () => {
     expect(repaired?.entries).toEqual([
       { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
       { repositoryId: 2, pushedAt: catalog.repositories[1].pushedAt },
+      { repositoryId: 4, pushedAt: catalog.repositories[3].pushedAt },
     ])
     expect(reconcileValidationState(catalog, null, records, target, '2026-08-14T16:20:00.000Z')).toBeNull()
   })
