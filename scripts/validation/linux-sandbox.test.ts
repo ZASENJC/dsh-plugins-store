@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { buildLinuxSandboxPlan, summarizeSandboxExecution } from './linux-sandbox'
 
@@ -10,6 +14,20 @@ const target = {
   smokeMode: 'tool-registration' as const,
   expectedFinalStatuses: ['verified' as const],
 }
+
+const temporaryDirectories: string[] = []
+
+function pinnedSourceWith(lockfile: 'package-lock.json' | 'npm-shrinkwrap.json' | 'pnpm-lock.yaml'): string {
+  const sourceDirectory = join(tmpdir(), `dsh-lockfile-${process.pid}-${temporaryDirectories.length}`)
+  mkdirSync(sourceDirectory, { recursive: true })
+  writeFileSync(join(sourceDirectory, lockfile), '{}\n')
+  temporaryDirectories.push(sourceDirectory)
+  return sourceDirectory
+}
+
+afterEach(() => {
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true })
+})
 
 describe('P2 restricted Linux sandbox command plan', () => {
   it('separates network acquisition from non-network execution and destroys the volume', () => {
@@ -80,5 +98,21 @@ describe('P2 restricted Linux sandbox command plan', () => {
       attribution: 'infrastructure',
       code: 'SANDBOX_TIMEOUT',
     })
+  })
+
+  it.each([
+    ['package-lock.json', ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']],
+    ['npm-shrinkwrap.json', ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']],
+    ['pnpm-lock.yaml', ['pnpm', 'install', '--frozen-lockfile', '--ignore-scripts']],
+  ] as const)('uses the package manager pinned by %s instead of misattributing install failures', (lockfile, expectedCommand) => {
+    const plan = buildLinuxSandboxPlan(target, {
+      runId: `fixture-${lockfile.replaceAll('.', '-')}`,
+      sourceDirectory: pinnedSourceWith(lockfile),
+      dshVersion: '0.1.0-rc.6',
+      validatorVersion: '0.1.0',
+    })
+
+    const installDependencies = plan.steps.find(({ id }) => id === 'install-dependencies')!
+    expect(installDependencies.command.args.slice(-expectedCommand.length)).toEqual(expectedCommand)
   })
 })
