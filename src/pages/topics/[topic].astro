@@ -3,7 +3,7 @@ import { ArrowLeft, Tag } from '@lucide/astro'
 
 import ProjectCard from '../../components/ProjectCard.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import type { Catalog, CatalogEntry } from '../../lib/catalog'
+import { sortCatalogEntries, type Catalog, type CatalogEntry } from '../../lib/catalog'
 import catalogData from '../../data/catalog.json'
 
 interface Props {
@@ -20,7 +20,10 @@ export function getStaticPaths() {
     params: { topic },
     props: {
       topic,
-      repositories: catalog.repositories.filter((repository) => repository.topics.includes(topic)),
+      repositories: sortCatalogEntries(
+        catalog.repositories.filter((repository) => repository.topics.includes(topic)),
+        'stars',
+      ),
     },
   }))
 }

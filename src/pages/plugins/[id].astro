@@ -2,8 +2,10 @@
 import {
   ArrowLeft,
   ArrowUpRight,
+  BookOpen,
   CalendarDays,
   Check,
+  ChevronDown,
   CircleAlert,
   CircleDot,
   Copy,
@@ -16,10 +18,11 @@ import {
 
 import ProjectCard from '../../components/ProjectCard.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
-import type { Catalog, CatalogEntry } from '../../lib/catalog'
-import { formatCompactNumber, formatRelativeDate } from '../../lib/catalog'
+import { formatCompactNumber, formatRelativeDate, sortCatalogEntries, type Catalog, type CatalogEntry } from '../../lib/catalog'
 import { getCategory, getProjectTypeLabel } from '../../lib/classification'
+import type { ReadmeCatalog } from '../../lib/github-content'
 import catalogData from '../../data/catalog.json'
+import readmeData from '../../data/readmes.json'
 
 export function getStaticPaths() {
   const catalog = catalogData as Catalog
@@ -38,9 +41,12 @@ const category = getCategory(repository.category)
 const installableTypes = new Set(['plugin', 'skill', 'collection', 'channel'])
 const showInstallReference = installableTypes.has(repository.projectType)
 const installCommand = `dsh plugin --profile web add github:${repository.fullName}`
-const related = (catalogData as Catalog).repositories
-  .filter((item) => item.repositoryId !== repository.repositoryId && item.category === repository.category)
-  .slice(0, 3)
+const related = sortCatalogEntries(
+  (catalogData as Catalog).repositories
+    .filter((item) => item.repositoryId !== repository.repositoryId && item.category === repository.category),
+  'stars',
+).slice(0, 3)
+const readmeHtml = (readmeData as ReadmeCatalog).repositories[String(repository.repositoryId)] ?? ''
 const absoluteDate = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   year: 'numeric',
@@ -111,6 +117,27 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           </div>
         </section>
 
+        <section class="detail-section readme-section">
+          <details class="readme-disclosure">
+            <summary>
+              <span class="readme-heading">
+                <span class="mono-label">PROJECT README</span>
+                <span class="readme-title"><BookOpen size={20} stroke-width={1.6} /> README</span>
+              </span>
+              <span class="readme-toggle">
+                <span class="readme-toggle__closed">展开</span>
+                <span class="readme-toggle__open">收起</span>
+                <ChevronDown size={18} stroke-width={1.6} />
+              </span>
+            </summary>
+            <div class="readme-content">
+              {readmeHtml
+                ? <div class="markdown-body" set:html={readmeHtml}></div>
+                : <p class="readme-empty">该仓库暂未提供可读取的 README。</p>}
+            </div>
+          </details>
+        </section>
+
         <section class="detail-section classification-section">
           <p class="mono-label">CLASSIFICATION EVIDENCE</p>
           <h2>分类依据</h2>
@@ -155,8 +182,12 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           <div><dt>归档状态</dt><dd>{repository.archived ? '已归档' : '活跃'}</dd></div>
           <div><dt>数据来源</dt><dd>GitHub Topic</dd></div>
           <div><dt>验证状态</dt><dd class="status-warning">尚未验证</dd></div>
+          <div>
+            <dt>awesome-dsh-plugins</dt>
+            <dd class:list={{ 'status-listed': repository.awesomeListed }}>{repository.awesomeListed ? '已收录' : '未收录'}</dd>
+          </div>
         </dl>
-        <p class="facts-note">收录仅代表仓库添加了 `dsh-plugin` Topic，不构成安全、质量或兼容性背书。</p>
+        <p class="facts-note">Topic 与 Awesome 收录均为目录信号，不构成安全、质量或兼容性背书。</p>
       </aside>
     </div>
   </section>
@@ -225,6 +256,59 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   .topic-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
   .topic-cloud a { display: inline-flex; min-height: 32px; align-items: center; border: 1px solid var(--outline); border-radius: 9999px; color: var(--body); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0; padding-inline: 12px; transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease; }
   .topic-cloud a:hover { border-color: var(--outline-strong); background: var(--canvas-soft); color: var(--ink); }
+  .readme-section { padding-top: 0; }
+  .readme-disclosure { border-block: 1px solid var(--hairline); }
+  .readme-disclosure summary { display: flex; min-height: 88px; align-items: center; justify-content: space-between; gap: 24px; cursor: pointer; list-style: none; padding-block: 18px; }
+  .readme-disclosure summary::-webkit-details-marker { display: none; }
+  .readme-heading { display: grid; gap: 6px; }
+  .readme-title { display: flex; align-items: center; gap: 9px; font-size: 24px; line-height: 32px; }
+  .readme-title svg { color: var(--mute); }
+  .readme-toggle { display: inline-flex; min-width: 74px; min-height: 36px; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--outline); border-radius: 9999px; color: var(--body); font-size: 12px; padding-inline: 12px; }
+  .readme-toggle svg { transition: transform 160ms ease; }
+  .readme-toggle__open { display: none; }
+  .readme-disclosure[open] .readme-toggle__closed { display: none; }
+  .readme-disclosure[open] .readme-toggle__open { display: inline; }
+  .readme-disclosure[open] .readme-toggle svg { transform: rotate(180deg); }
+  .readme-content { min-width: 0; overflow: hidden; border-top: 1px solid var(--hairline); padding-block: 28px 40px; }
+  .readme-empty { margin: 0; color: var(--mute); font-size: 14px; }
+  :global(.readme-content .markdown-body) { min-width: 0; color: var(--body); font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+  :global(.readme-content .markdown-body > :first-child) { margin-top: 0; }
+  :global(.readme-content .markdown-body > :last-child) { margin-bottom: 0; }
+  :global(.readme-content .markdown-body h1),
+  :global(.readme-content .markdown-body h2),
+  :global(.readme-content .markdown-body h3),
+  :global(.readme-content .markdown-body h4) { margin: 32px 0 14px; color: var(--ink); font-weight: 500; line-height: 1.3; }
+  :global(.readme-content .markdown-body h1) { border-bottom: 1px solid var(--hairline); font-size: 30px; padding-bottom: 12px; }
+  :global(.readme-content .markdown-body h2) { border-bottom: 1px solid var(--hairline); font-size: 24px; padding-bottom: 10px; }
+  :global(.readme-content .markdown-body h3) { font-size: 20px; }
+  :global(.readme-content .markdown-body h4) { font-size: 17px; }
+  :global(.readme-content .markdown-body p),
+  :global(.readme-content .markdown-body ul),
+  :global(.readme-content .markdown-body ol),
+  :global(.readme-content .markdown-body blockquote),
+  :global(.readme-content .markdown-body pre),
+  :global(.readme-content .markdown-body table),
+  :global(.readme-content .markdown-body details) { margin: 0 0 18px; }
+  :global(.readme-content .markdown-body ul),
+  :global(.readme-content .markdown-body ol) { padding-left: 28px; }
+  :global(.readme-content .markdown-body li + li) { margin-top: 5px; }
+  :global(.readme-content .markdown-body a) { color: var(--ink); text-decoration: underline; text-decoration-color: var(--outline-strong); text-underline-offset: 3px; }
+  :global(.readme-content .markdown-body a:hover) { text-decoration-color: currentColor; }
+  :global(.readme-content .markdown-body .anchor) { display: none; }
+  :global(.readme-content .markdown-body blockquote) { border-left: 3px solid var(--outline-strong); color: var(--mute); padding-left: 16px; }
+  :global(.readme-content .markdown-body code) { border-radius: 4px; background: var(--canvas-soft); color: var(--body); font-family: var(--font-mono); font-size: 0.88em; padding: 2px 5px; }
+  :global(.readme-content .markdown-body pre) { max-width: 100%; overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--radius); background: var(--canvas-soft); padding: 16px; }
+  :global(.readme-content .markdown-body pre code) { background: transparent; padding: 0; }
+  :global(.readme-content .markdown-body markdown-accessiblity-table) { display: block; max-width: 100%; overflow-x: auto; }
+  :global(.readme-content .markdown-body table) { width: 100%; border-collapse: collapse; }
+  :global(.readme-content .markdown-body th),
+  :global(.readme-content .markdown-body td) { border: 1px solid var(--hairline); padding: 8px 10px; text-align: left; }
+  :global(.readme-content .markdown-body th) { background: var(--canvas-soft); color: var(--ink); font-weight: 500; }
+  :global(.readme-content .markdown-body img),
+  :global(.readme-content .markdown-body video) { height: auto; max-width: 100%; }
+  :global(.readme-content .markdown-body hr) { height: 1px; margin: 28px 0; border: 0; background: var(--hairline); }
+  :global(.readme-content .markdown-body details) { border: 1px solid var(--hairline); border-radius: var(--radius); padding: 12px 14px; }
+  :global(.readme-content .markdown-body summary) { cursor: pointer; }
   .classification-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--hairline); }
   .classification-grid div { display: grid; gap: 6px; padding: 16px; }
   .classification-grid div + div { border-left: 1px solid var(--hairline); }
@@ -246,6 +330,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   .repository-facts dt { color: var(--mute); }
   .repository-facts dd { gap: 6px; margin: 0; text-align: right; }
   .repository-facts .status-warning { color: #ffc285; }
+  .repository-facts .status-listed { color: #9fdda9; }
   .facts-note { margin-top: 12px; color: var(--mute); font-size: 11px; line-height: 18px; }
   .related-section { border-top: 1px solid var(--hairline); padding-block: 56px 64px; }
   .related-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
@@ -269,6 +354,11 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
     .classification-grid { grid-template-columns: 1fr; }
     .classification-grid div + div { border-top: 1px solid var(--hairline); border-left: 0; }
     .topic-cloud a { min-height: 44px; }
+    .readme-disclosure summary { min-height: 84px; }
+    .readme-toggle { min-width: 76px; min-height: 44px; }
+    .readme-content { padding-block: 24px 32px; }
+    :global(.readme-content .markdown-body h1) { font-size: 26px; }
+    :global(.readme-content .markdown-body h2) { font-size: 22px; }
     .install-heading { align-items: flex-start; }
     .related-grid { grid-template-columns: 1fr; }
   }
