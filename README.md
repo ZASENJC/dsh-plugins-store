@@ -21,9 +21,9 @@
   </a>
 </p>
 
-自动收录并整理 GitHub [`dsh-plugin`](https://github.com/topics/dsh-plugin) Topic 项目，提供搜索、分类、排序和标签聚合浏览。
+面向 DeepSeek Harness 生态的 DSH 插件商店，自动收录并整理 GitHub [`dsh-plugin`](https://github.com/topics/dsh-plugin) Topic 项目，提供搜索、分类、排序和标签聚合浏览。
 
-[访问 DSH-plugin store](https://dsh.aitreez.com/)
+[访问 DSH 插件商店（DeepSeek Harness 插件目录）](https://dsh.aitreez.com/)
 
 ## 项目截图
 

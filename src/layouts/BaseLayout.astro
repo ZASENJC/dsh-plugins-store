@@ -49,7 +49,7 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
     <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
     <title>{title}</title>
     {structuredData && (
-      <script type="application/ld+json" set:html={serializeJsonLd(structuredData)}></script>
+      <script is:inline type="application/ld+json" set:html={serializeJsonLd(structuredData)}></script>
     )}
     {
       cloudflareAnalyticsConfig && (
