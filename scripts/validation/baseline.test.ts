@@ -64,4 +64,28 @@ describe('P2 Linux headless/tool baseline', () => {
 
     expect(baseline.targets[0].smokeMode).toBe('loader')
   })
+
+  it('allows fixed-SHA negative controls to declare failed structure or runtime outcomes', () => {
+    const target = {
+      repositoryId: 1,
+      fullName: 'fixture/negative-control',
+      sourceSha: 'a'.repeat(40),
+      executionType: 'host-tool',
+      smokeMode: 'loader',
+    }
+    const header = {
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T12:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.0',
+    }
+
+    for (const expectedFinalStatuses of [['failed'], ['structure_failed']]) {
+      expect(parseBaseline({
+        ...header,
+        targets: [{ ...target, expectedFinalStatuses }],
+      }).targets[0].expectedFinalStatuses).toEqual(expectedFinalStatuses)
+    }
+  })
 })

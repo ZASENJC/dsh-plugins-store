@@ -148,6 +148,55 @@ describe('shadow structure check', () => {
     })
   })
 
+  it('accepts a declared bare relative main entrypoint when the pinned Git tree contains it', () => {
+    const manifest = JSON.parse(hostToolSnapshot.files['package.json'] as string)
+    manifest.main = 'index.js'
+    delete manifest.exports
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      files: {
+        ...hostToolSnapshot.files,
+        'package.json': JSON.stringify(manifest),
+        'lib/index.js': undefined,
+        'index.js': '',
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('passed')
+    expect(result.report.structureChecks).toContainEqual(expect.objectContaining({
+      code: 'PACKAGE_ENTRYPOINTS_VALID',
+      status: 'passed',
+    }))
+  })
+
+  it('records a private package registry as an external credential requirement without executing it', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      files: {
+        ...hostToolSnapshot.files,
+        '.npmrc': '@dsh-external:registry=https://npm.pkg.github.com/\n',
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('passed')
+    expect(result.report.structureChecks).toContainEqual(expect.objectContaining({
+      code: 'EXTERNAL_CREDENTIALS_REQUIRED',
+      status: 'warning',
+    }))
+  })
+
   it('records prepare as a build requirement instead of running it', () => {
     const manifest = JSON.parse(hostToolSnapshot.files['package.json'] as string)
     manifest.scripts = { prepare: 'npm run build', build: 'tsc' }

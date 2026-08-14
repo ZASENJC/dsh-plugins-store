@@ -39,6 +39,7 @@ describe('GitHub fixed-SHA snapshot loader', () => {
         truncated: false,
         tree: [
           { path: 'package.json', type: 'blob', sha: 'pkg', size: 300 },
+          { path: '.npmrc', type: 'blob', sha: 'npmrc', size: 80 },
           { path: 'cordis.patch.yml', type: 'blob', sha: 'patch', size: 120 },
           { path: 'lib/index.js', type: 'blob', sha: 'code', size: 40_000 },
           { path: 'LICENSE', type: 'blob', sha: 'license', size: 1_000 },
@@ -47,6 +48,10 @@ describe('GitHub fixed-SHA snapshot loader', () => {
       if (url.endsWith('/repositories/42/git/blobs/pkg')) return jsonResponse({
         encoding: 'base64',
         content: Buffer.from('{"main":"./lib/index.js"}').toString('base64'),
+      })
+      if (url.endsWith('/repositories/42/git/blobs/npmrc')) return jsonResponse({
+        encoding: 'base64',
+        content: Buffer.from('@private:registry=https://npm.pkg.github.com/\n').toString('base64'),
       })
       if (url.endsWith('/repositories/42/git/blobs/patch')) return jsonResponse({
         encoding: 'base64',
@@ -74,6 +79,7 @@ describe('GitHub fixed-SHA snapshot loader', () => {
       sourceSha,
     })
     expect(snapshot.files['package.json']).toBe('{"main":"./lib/index.js"}')
+    expect(snapshot.files['.npmrc']).toBe('@private:registry=https://npm.pkg.github.com/\n')
     expect(snapshot.files['lib/index.js']).toBe('')
     expect(fetchImpl).not.toHaveBeenCalledWith(
       expect.stringContaining('/git/blobs/code'),

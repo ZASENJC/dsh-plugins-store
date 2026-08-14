@@ -85,6 +85,43 @@ function reportsForAll(runs = 2): ValidationReport[] {
   ))
 }
 
+function negativeReportFor(
+  target: BaselineTarget,
+  run: number,
+  status: 'failed' | 'structure_failed',
+): ValidationReport {
+  const report = reportFor(target, run)
+  const code = status === 'failed' ? 'PLUGIN_BUILD_FAILED' : 'PACKAGE_ENTRYPOINT_MISSING'
+  const failure = {
+    attribution: 'plugin' as const,
+    code,
+    reason: code,
+    fingerprint: `${target.repositoryId}-${code}`,
+    reproducibility: { attempts: 1, matchingFingerprints: 1 },
+  }
+  if (status === 'structure_failed') {
+    return {
+      ...report,
+      currentStatus: status,
+      events: [
+        ...report.events.slice(0, 2),
+        { sequence: 3, stage: 'structure', status, at: report.startedAt, ...failure },
+      ],
+      failure,
+    }
+  }
+  return {
+    ...report,
+    currentStatus: status,
+    events: [
+      ...report.events.slice(0, 5),
+      { sequence: 6, stage: 'installation', status: 'install_failed', at: report.startedAt, ...failure },
+      { sequence: 7, stage: 'final', status, at: report.startedAt, ...failure },
+    ],
+    failure,
+  }
+}
+
 describe('P4 promotion quality gate', () => {
   it('requires all 20 baseline targets and accepts one fresh observation per target', () => {
     const partial = baseline.targets.slice(0, 1).map((target) => reportFor(target, 1))
@@ -127,6 +164,24 @@ describe('P4 promotion quality gate', () => {
       reasons: [],
       metrics: { mismatchedReports: 0 },
     })
+  })
+
+  it('accepts declared negative controls as coverage without promoting them as verified', () => {
+    const rawBaseline = JSON.parse(JSON.stringify(baseline))
+    rawBaseline.targets[0].expectedFinalStatuses = ['failed']
+    rawBaseline.targets[1].expectedFinalStatuses = ['structure_failed']
+    const negativeBaseline = parseBaseline(rawBaseline)
+    const reports = reportsForAll(1)
+    reports[0] = negativeReportFor(negativeBaseline.targets[0], 1, 'failed')
+    reports[1] = negativeReportFor(negativeBaseline.targets[1], 1, 'structure_failed')
+
+    expect(assessPromotionGate(negativeBaseline, reports)).toMatchObject({
+      eligible: true,
+      reasons: [],
+      metrics: { observedTargets: 20, unexpectedReports: 0 },
+    })
+    expect(buildPublicValidationFeed(negativeBaseline, reports, '2026-08-14T14:00:00.000Z').records)
+      .toHaveLength(18)
   })
 
   it('promotes one current verified binding per target after the baseline gate passes', () => {

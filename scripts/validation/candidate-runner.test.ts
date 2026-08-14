@@ -68,6 +68,19 @@ describe('dynamic validation candidate runner', () => {
       disposition: 'inconclusive',
       code: 'WEB_SMOKE_CONTRACT_REQUIRED',
     })
+
+    const credentialBound = structureReport(4, 'host-tool')
+    credentialBound.structureChecks.push({
+      code: 'EXTERNAL_CREDENTIALS_REQUIRED',
+      status: 'warning',
+      severity: 'advisory',
+      message: 'A private package registry requires credentials.',
+      path: '.npmrc',
+    })
+    expect(planCandidate(credentialBound)).toMatchObject({
+      disposition: 'inconclusive',
+      code: 'EXTERNAL_CREDENTIALS_REQUIRED',
+    })
   })
 
   it('executes one candidate at a time and continues after an infrastructure failure', async () => {
