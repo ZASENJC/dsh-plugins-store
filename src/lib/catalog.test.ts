@@ -7,6 +7,7 @@ import {
   formatRelativeDate,
   getCatalogDefinitions,
   getEmptyCatalog,
+  mixRecommendedEntries,
   sortCatalogEntries,
 } from './catalog'
 
@@ -277,6 +278,56 @@ describe('catalog data', () => {
       'owner/unverified-high',
       'owner/unverified-next',
     ])
+  })
+
+  it('randomizes the discovery position within each recommendation batch', () => {
+    const priority = ['verified-a', 'verified-b', 'verified-c', 'verified-d']
+    const discovery = ['discovery-a', 'discovery-b']
+
+    expect(mixRecommendedEntries(priority, discovery, () => 0)).toEqual([
+      'discovery-a', 'verified-a', 'verified-b',
+      'discovery-b', 'verified-c', 'verified-d',
+    ])
+    expect(mixRecommendedEntries(priority, discovery, () => 0.99)).toEqual([
+      'verified-a', 'verified-b', 'discovery-a',
+      'verified-c', 'verified-d', 'discovery-b',
+    ])
+  })
+
+  it('keeps seeded recommendation positions stable across server and browser renders', () => {
+    const entries = ['verified-a', 'verified-b', 'verified-c', 'verified-d', 'discovery-a', 'discovery-b']
+      .map((fullName, index) => ({
+        ...githubRepository,
+        id: 100 + index,
+        name: fullName,
+        full_name: `owner/${fullName}`,
+        stargazers_count: 100 - index,
+      }))
+    const catalog = buildCatalog(
+      entries,
+      '2026-08-15T00:00:00.000Z',
+      entries.length,
+      new Set(),
+      new Set(),
+      new Map(entries.slice(0, 4).map((entry) => [entry.id, {
+        repositoryId: entry.id,
+        sourceSha: 'a'.repeat(40),
+        sourcePushedAt: entry.pushed_at,
+        updatedAt: '2026-08-15T01:00:00Z',
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        validatorVersion: '0.1.2',
+        structure: { status: 'passed' as const },
+        sandbox: { status: 'passed' as const },
+      }])),
+    )
+
+    const first = sortCatalogEntries(catalog.repositories, 'recommended', catalog.generatedAt)
+    const second = sortCatalogEntries(catalog.repositories, 'recommended', catalog.generatedAt)
+    const otherSeed = sortCatalogEntries(catalog.repositories, 'recommended', '2026-08-16T00:00:00.000Z')
+
+    expect(second.map(({ fullName }) => fullName)).toEqual(first.map(({ fullName }) => fullName))
+    expect(otherSeed.map(({ fullName }) => fullName)).not.toEqual(first.map(({ fullName }) => fullName))
   })
 
   it('uses the selected global sort before status tie-breakers', () => {
