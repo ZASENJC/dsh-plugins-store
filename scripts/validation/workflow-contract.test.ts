@@ -46,6 +46,8 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).toContain('gh api')
     expect(syncWorkflow).toContain('--input /tmp/source-classification-persist.json')
     expect(syncWorkflow).toMatch(/Persist source classification archive[\s\S]*Sync GitHub Topic/)
+    expect(syncWorkflow).toContain('git show "origin/$VALIDATION_BRANCH:src/data/source-classification.json"')
+    expect(syncWorkflow).toContain('archive_is_newer_or_equal')
     expect(syncWorkflow).not.toContain('rm -f src/data/source-classification.json')
     expect(syncWorkflow).not.toContain('Restore last successful validation feed')
     expect(syncWorkflow).not.toContain('validation-restore')

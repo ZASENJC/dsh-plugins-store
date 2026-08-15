@@ -41,6 +41,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if test ! -f src/data/source-classification.json; then
+            persisted_archive="$(mktemp)"
+            if git fetch --no-tags origin "$VALIDATION_BRANCH" >/dev/null 2>&1 \
+              && git show "origin/$VALIDATION_BRANCH:src/data/source-classification.json" > "$persisted_archive" 2>/dev/null; then
+              mv "$persisted_archive" src/data/source-classification.json
+            else
+              rm -f "$persisted_archive"
+            fi
+          fi
           download_artifact_with_retry() {
             local run_id="$1"
             local artifact_name="$2"
@@ -57,6 +66,23 @@ jobs:
               fi
             done
             return 1
+          }
+          archive_is_newer_or_equal() {
+            local candidate="$1"
+            if test ! -f src/data/source-classification.json; then return 0; fi
+            CURRENT_ARCHIVE=src/data/source-classification.json CANDIDATE_ARCHIVE="$candidate" node -e '
+              const fs = require("node:fs")
+              try {
+                const current = JSON.parse(fs.readFileSync(process.env.CURRENT_ARCHIVE, "utf8"))
+                const candidate = JSON.parse(fs.readFileSync(process.env.CANDIDATE_ARCHIVE, "utf8"))
+                const currentTime = Date.parse(current.generatedAt)
+                const candidateTime = Date.parse(candidate.generatedAt)
+                process.exit(Number.isFinite(currentTime) && Number.isFinite(candidateTime)
+                  && candidateTime < currentTime ? 1 : 0)
+              } catch {
+                process.exit(0)
+              }
+            '
           }
           restored=false
           for workflow_name in validate-plugins.yml classify-plugins.yml; do
@@ -86,7 +112,8 @@ jobs:
               artifact_dir="classification-restore/$run_id"
               if download_artifact_with_retry "$run_id" "$artifact_name" "$artifact_dir" \
                 && test -f "$artifact_dir/source-classification.json" \
-                && node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$artifact_dir/source-classification.json"; then
+                && node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$artifact_dir/source-classification.json" \
+                && archive_is_newer_or_equal "$artifact_dir/source-classification.json"; then
                 cp "$artifact_dir/source-classification.json" src/data/source-classification.json
                 restored=true
                 break 2
