@@ -44,6 +44,20 @@ describe('GitHub catalog discovery filter', () => {
     expect(query.get('per_page')).toBe('100')
   })
 
+  it('adds date and star qualifiers to partition queries', () => {
+    const query = buildSearchQuery(
+      2,
+      { createdStart: '2026-01-01', createdEnd: '2026-01-02', starsStart: 4, starsEnd: 9 },
+      { sort: 'stars', order: 'asc' },
+    )
+
+    expect(query.get('q')).toContain('created:2026-01-01..2026-01-02')
+    expect(query.get('q')).toContain('stars:4..9')
+    expect(query.get('sort')).toBe('stars')
+    expect(query.get('order')).toBe('asc')
+    expect(query.get('page')).toBe('2')
+  })
+
   it('keeps a non-application repository and defensively excludes archived repositories and forks', () => {
     const kept = repository()
     const result = filterEligibleRepositories([
@@ -86,6 +100,7 @@ describe('GitHub catalog discovery filter', () => {
     const fetcher = async (
       page: number,
       partition: SearchPartition,
+      request: { sort: 'stars' | 'created'; order: 'asc' | 'desc' },
     ) => {
       calls.push({ page, partition })
       const key = partition.createdStart === undefined
@@ -94,6 +109,9 @@ describe('GitHub catalog discovery filter', () => {
       const matching = key === 'root'
         ? rows
         : rows.filter((row) => row.created_at.startsWith(key))
+      matching.sort((left, right) => request.order === 'asc'
+        ? left.created_at.localeCompare(right.created_at)
+        : right.created_at.localeCompare(left.created_at))
       const pageSize = 2
       return {
         total_count: matching.length,
@@ -113,5 +131,41 @@ describe('GitHub catalog discovery filter', () => {
     expect(result.repositories.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5])
     expect(calls.some(({ partition }) => partition.createdStart === '2026-01-01')).toBe(true)
     expect(calls.some(({ partition }) => partition.createdStart === '2026-01-02')).toBe(true)
+  })
+
+  it('falls back to star partitions when one creation day is still oversized', async () => {
+    const rows = Array.from({ length: 5 }, (_, index) => repository({
+      id: index + 1,
+      stargazers_count: index,
+      created_at: '2026-01-01T00:00:00Z',
+    }))
+    const fetcher = async (
+      page: number,
+      partition: SearchPartition,
+      request: { sort: 'stars' | 'created'; order: 'asc' | 'desc' },
+    ) => {
+      const matching = rows
+        .filter((row) => partition.starsStart === undefined
+          || (row.stargazers_count >= partition.starsStart
+            && row.stargazers_count <= partition.starsEnd!))
+        .sort((left, right) => request.order === 'asc'
+          ? left.stargazers_count - right.stargazers_count
+          : right.stargazers_count - left.stargazers_count)
+      const pageSize = 2
+      return {
+        total_count: matching.length,
+        incomplete_results: false,
+        items: matching.slice((page - 1) * pageSize, page * pageSize),
+      }
+    }
+
+    const result = await fetchAllSearchRepositories(fetcher, {
+      maxResultsPerQuery: 3,
+      pageSize: 2,
+      initialDateStart: '2026-01-01',
+      initialDateEnd: '2026-01-01',
+    })
+
+    expect(new Set(result.repositories.map(({ id }) => id))).toEqual(new Set([1, 2, 3, 4, 5]))
   })
 })

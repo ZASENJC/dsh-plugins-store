@@ -16,28 +16,21 @@ import { extractInstallReference, type InstallReference } from '../src/lib/insta
 import { parseValidationFeed } from '../src/lib/validation'
 import {
   buildSearchQuery,
-  filterEligibleRepositories,
-  SEARCH_PAGE_SIZE,
-  type SearchRepository,
+  fetchAllSearchRepositories,
+  type SearchPage,
+  type SearchPartition,
+  type SearchRequestOptions,
 } from '../src/lib/github-discovery'
 
 const SEARCH_URL = 'https://api.github.com/search/repositories'
 const API_URL = 'https://api.github.com'
 const AWESOME_REPOSITORY = 'AdamPlatin123/awesome-dsh-plugins'
 const VERIFY_REPOSITORY = 'qing3a/dsh-plugin-verify'
-const MAX_SEARCH_RESULTS = 1_000
-const MAX_SEARCH_PASSES = 3
 const README_CONCURRENCY = 8
 const README_TIMEOUT_MS = 12_000
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputPath = resolve(root, 'src/data/catalog.json')
 const validationPath = resolve(root, 'src/data/validation.json')
-
-interface SearchResponse {
-  total_count: number
-  incomplete_results: boolean
-  items: SearchRepository[]
-}
 
 function getHeaders(accept = 'application/vnd.github+json'): HeadersInit {
   const headers: Record<string, string> = {
@@ -104,46 +97,22 @@ async function fetchInstallReferences(repositories: GitHubRepository[]): Promise
   return references
 }
 
-async function fetchPage(page: number): Promise<SearchResponse> {
-  const query = buildSearchQuery(page)
+async function fetchPage(
+  page: number,
+  partition: SearchPartition,
+  request: SearchRequestOptions,
+): Promise<SearchPage> {
+  const query = buildSearchQuery(page, partition, request)
   const response = await fetch(`${SEARCH_URL}?${query}`, { headers: getHeaders() })
   if (!response.ok) {
     const remaining = response.headers.get('x-ratelimit-remaining')
     throw new Error(`GitHub API 请求失败：${response.status} ${response.statusText}，剩余额度 ${remaining ?? '未知'}`)
   }
-  return response.json() as Promise<SearchResponse>
+  return response.json() as Promise<SearchPage>
 }
 
 async function fetchRepositories() {
-  const repositories = new Map<number, GitHubRepository>()
-  let reportedByGitHub = 0
-  let availableCount = 0
-
-  for (let attempt = 1; attempt <= MAX_SEARCH_PASSES; attempt += 1) {
-    const firstPage = await fetchPage(1)
-    reportedByGitHub = Math.max(reportedByGitHub, firstPage.total_count)
-    availableCount = Math.min(reportedByGitHub, MAX_SEARCH_RESULTS)
-    const pageCount = Math.ceil(availableCount / SEARCH_PAGE_SIZE)
-    let incompleteResults = firstPage.incomplete_results
-
-    for (const repository of firstPage.items) repositories.set(repository.id, repository)
-    for (let page = 2; page <= pageCount; page += 1) {
-      const response = await fetchPage(page)
-      incompleteResults ||= response.incomplete_results
-      for (const repository of response.items) repositories.set(repository.id, repository)
-    }
-
-    if (!incompleteResults && repositories.size >= availableCount) {
-      return {
-        repositories: filterEligibleRepositories([...repositories.values()]),
-        reportedByGitHub,
-      }
-    }
-
-    console.warn(`GitHub Search 第 ${attempt} 轮仅取得 ${repositories.size}/${availableCount} 个唯一仓库，正在合并重试`)
-  }
-
-  throw new Error(`GitHub Search 连续 ${MAX_SEARCH_PASSES} 轮仍不完整：${repositories.size}/${availableCount}，保留现有目录`)
+  return fetchAllSearchRepositories((page, partition, request) => fetchPage(page, partition, request))
 }
 
 async function sync() {
@@ -174,14 +143,11 @@ async function sync() {
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
 
-  const warning = reportedByGitHub > MAX_SEARCH_RESULTS
-    ? `；警告：GitHub Search 上限为 ${MAX_SEARCH_RESULTS}，需要启用分段查询`
-    : ''
   console.log(`Awesome 有效收录 ${awesomeRepositoryNames.size} 个仓库名；商店匹配 ${catalog.repositories.filter((repository) => repository.awesomeListed).length} 个`)
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
   console.log(`验证状态文件匹配 ${validationRecords.size} 个仓库；当前完整验证 ${catalog.stats.validationStatuses.verified ?? 0} 个`)
   console.log(`README 安装特征匹配 ${installReferences.size} 个仓库；失败或无明确命令不影响目录同步`)
-  console.log(`已同步 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}${warning}`)
+  console.log(`已同步 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
 }
 
 await sync()
