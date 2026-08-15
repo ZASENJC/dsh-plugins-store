@@ -201,6 +201,7 @@ export function buildCatalog(
       validationRecords.get(repository.id),
     )),
     'recommended',
+    generatedAt,
   )
   const categoryCounts: Partial<Record<Category, number>> = {}
   const typeCounts: Partial<Record<ProjectType, number>> = {}
@@ -270,7 +271,51 @@ export function hydrateCatalogValidation(
   }
 }
 
-export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort): CatalogEntry[] {
+function createSeededRandom(seed: string): () => number {
+  let state = 2_166_136_261
+  for (let index = 0; index < seed.length; index += 1) {
+    state = Math.imul(state ^ seed.charCodeAt(index), 16_777_619)
+  }
+  return () => {
+    state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0
+    return state / 4_294_967_296
+  }
+}
+
+export function mixRecommendedEntries<T>(
+  priority: readonly T[],
+  discovery: readonly T[],
+  random: () => number = Math.random,
+): T[] {
+  const mixed: T[] = []
+  let priorityIndex = 0
+  let discoveryIndex = 0
+
+  while (priorityIndex < priority.length || discoveryIndex < discovery.length) {
+    const priorityCount = Math.min(2, priority.length - priorityIndex)
+    const hasDiscovery = discoveryIndex < discovery.length
+    if (!hasDiscovery) {
+      mixed.push(...priority.slice(priorityIndex, priorityIndex + priorityCount))
+      priorityIndex += priorityCount
+      continue
+    }
+
+    const discoveryPosition = Math.floor(random() * (priorityCount + 1))
+    for (let slot = 0; slot <= priorityCount; slot += 1) {
+      if (slot === discoveryPosition) {
+        mixed.push(discovery[discoveryIndex])
+        discoveryIndex += 1
+      } else {
+        mixed.push(priority[priorityIndex])
+        priorityIndex += 1
+      }
+    }
+  }
+
+  return mixed
+}
+
+export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort, seed = ''): CatalogEntry[] {
   const compareStatus = (left: CatalogEntry, right: CatalogEntry) => {
     const verifiedPriority = Number(right.verified) - Number(left.verified)
     return verifiedPriority
@@ -288,22 +333,7 @@ export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort): 
     const discovery = entries
       .filter((entry) => !entry.verified)
       .sort(compareStars)
-    const mixed: CatalogEntry[] = []
-    let priorityIndex = 0
-    let discoveryIndex = 0
-
-    while (priorityIndex < priority.length || discoveryIndex < discovery.length) {
-      for (let slot = 0; slot < 2 && priorityIndex < priority.length; slot += 1) {
-        mixed.push(priority[priorityIndex])
-        priorityIndex += 1
-      }
-      if (discoveryIndex < discovery.length) {
-        mixed.push(discovery[discoveryIndex])
-        discoveryIndex += 1
-      }
-    }
-
-    return mixed
+    return mixRecommendedEntries(priority, discovery, createSeededRandom(seed))
   }
 
   return [...entries].sort((left, right) => {

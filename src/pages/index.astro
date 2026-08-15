@@ -11,7 +11,7 @@ import { buildHomepageStructuredData } from '../lib/seo'
 import { VALIDATION_STATUS_DEFINITIONS } from '../lib/validation'
 
 const catalog = catalogData as Catalog
-const initialRepositories = sortCatalogEntries(catalog.repositories, 'recommended').slice(0, 24)
+const initialRepositories = sortCatalogEntries(catalog.repositories, 'recommended', catalog.generatedAt).slice(0, 24)
 const generatedDate = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   month: '2-digit',
@@ -220,6 +220,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
   </section>
 
   <script id="catalog-data" type="application/json" set:html={serializedCatalog} is:inline></script>
+  <script id="catalog-generated-at" type="application/json" set:html={JSON.stringify(catalog.generatedAt)} is:inline></script>
   <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
   <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
   <script id="validation-status-data" type="application/json" set:html={serializedValidationStatuses} is:inline></script>
@@ -283,6 +284,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
   <script is:inline>
     const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
+    const recommendationSeed = JSON.parse(document.getElementById('catalog-generated-at').textContent)
     const categories = JSON.parse(document.getElementById('category-data').textContent)
     const projectTypes = JSON.parse(document.getElementById('type-data').textContent)
     const validationStatuses = JSON.parse(document.getElementById('validation-status-data').textContent)
@@ -314,6 +316,46 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     let visibleCount = pageSize
 
     const t = (key, params = {}, fallback = key) => window.dshI18n?.t(key, params) ?? fallback
+
+    const createSeededRandom = (seed) => {
+      let state = 2166136261
+      for (let index = 0; index < seed.length; index += 1) {
+        state = Math.imul(state ^ seed.charCodeAt(index), 16777619)
+      }
+      return () => {
+        state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+        return state / 4294967296
+      }
+    }
+
+    const mixRecommendedRepositories = (priority, discovery, random) => {
+      const mixed = []
+      let priorityIndex = 0
+      let discoveryIndex = 0
+
+      while (priorityIndex < priority.length || discoveryIndex < discovery.length) {
+        const priorityCount = Math.min(2, priority.length - priorityIndex)
+        const hasDiscovery = discoveryIndex < discovery.length
+        if (!hasDiscovery) {
+          mixed.push(...priority.slice(priorityIndex, priorityIndex + priorityCount))
+          priorityIndex += priorityCount
+          continue
+        }
+
+        const discoveryPosition = Math.floor(random() * (priorityCount + 1))
+        for (let slot = 0; slot <= priorityCount; slot += 1) {
+          if (slot === discoveryPosition) {
+            mixed.push(discovery[discoveryIndex])
+            discoveryIndex += 1
+          } else {
+            mixed.push(priority[priorityIndex])
+            priorityIndex += 1
+          }
+        }
+      }
+
+      return mixed
+    }
 
     const getCatalogFilterParams = () => {
       const params = new URLSearchParams()
@@ -470,22 +512,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         const discovery = filtered
           .filter((repository) => !repository.verified)
           .sort(compareStars)
-        const mixed = []
-        let priorityIndex = 0
-        let discoveryIndex = 0
-
-        while (priorityIndex < priority.length || discoveryIndex < discovery.length) {
-          for (let slot = 0; slot < 2 && priorityIndex < priority.length; slot += 1) {
-            mixed.push(priority[priorityIndex])
-            priorityIndex += 1
-          }
-          if (discoveryIndex < discovery.length) {
-            mixed.push(discovery[discoveryIndex])
-            discoveryIndex += 1
-          }
-        }
-
-        return mixed
+        return mixRecommendedRepositories(priority, discovery, createSeededRandom(recommendationSeed))
       }
 
       return filtered.sort((left, right) => {

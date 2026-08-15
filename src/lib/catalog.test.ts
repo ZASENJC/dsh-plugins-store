@@ -262,22 +262,18 @@ describe('catalog data', () => {
       ]),
     )
 
-    expect(catalog.repositories.map(({ fullName }) => fullName)).toEqual([
+    const catalogNames = catalog.repositories.map(({ fullName }) => fullName)
+    expect(catalogNames).toHaveLength(6)
+    expect(new Set(catalogNames)).toEqual(new Set([
       'owner/verified-tie',
       'owner/verified-last',
       'owner/ordinary-popular',
       'owner/ordinary-next',
       'owner/unverified-high',
       'owner/unverified-next',
-    ])
-    expect(sortCatalogEntries(catalog.repositories, 'recommended').map(({ fullName }) => fullName)).toEqual([
-      'owner/verified-tie',
-      'owner/verified-last',
-      'owner/ordinary-popular',
-      'owner/ordinary-next',
-      'owner/unverified-high',
-      'owner/unverified-next',
-    ])
+    ]))
+    expect(sortCatalogEntries(catalog.repositories, 'recommended', catalog.generatedAt)
+      .map(({ fullName }) => fullName)).toEqual(catalogNames)
   })
 
   it('randomizes the discovery position within each recommendation batch', () => {
