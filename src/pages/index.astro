@@ -454,10 +454,8 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       })
 
       const compareStatus = (left, right) => {
-        const featuredPriority = Number(right.awesomeListed || right.verified)
-          - Number(left.awesomeListed || left.verified)
         const verifiedPriority = Number(right.verified) - Number(left.verified)
-        return featuredPriority || verifiedPriority
+        return verifiedPriority
       }
       const compareStars = (left, right) => (
         right.stars - left.stars
@@ -467,10 +465,10 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
       if (sortFilter.value === 'recommended') {
         const priority = filtered
-          .filter((repository) => repository.awesomeListed || repository.verified)
+          .filter((repository) => repository.verified)
           .sort(compareStars)
         const discovery = filtered
-          .filter((repository) => !repository.awesomeListed && !repository.verified)
+          .filter((repository) => !repository.verified)
           .sort(compareStars)
         const mixed = []
         let priorityIndex = 0

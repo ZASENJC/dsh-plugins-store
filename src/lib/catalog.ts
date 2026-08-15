@@ -272,10 +272,8 @@ export function hydrateCatalogValidation(
 
 export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort): CatalogEntry[] {
   const compareStatus = (left: CatalogEntry, right: CatalogEntry) => {
-    const featuredPriority = Number(right.awesomeListed || right.verified)
-      - Number(left.awesomeListed || left.verified)
     const verifiedPriority = Number(right.verified) - Number(left.verified)
-    return featuredPriority || verifiedPriority
+    return verifiedPriority
   }
   const compareStars = (left: CatalogEntry, right: CatalogEntry) => (
     right.stars - left.stars
@@ -285,10 +283,10 @@ export function sortCatalogEntries(entries: CatalogEntry[], sort: CatalogSort): 
 
   if (sort === 'recommended') {
     const priority = entries
-      .filter((entry) => entry.awesomeListed || entry.verified)
+      .filter((entry) => entry.verified)
       .sort(compareStars)
     const discovery = entries
-      .filter((entry) => !entry.awesomeListed && !entry.verified)
+      .filter((entry) => !entry.verified)
       .sort(compareStars)
     const mixed: CatalogEntry[] = []
     let priorityIndex = 0

@@ -179,14 +179,14 @@ describe('catalog data', () => {
       new Set(['dsh-live-stats']),
     )
 
-    expect(catalog.repositories[0]).toMatchObject({
+    expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 2)).toMatchObject({
       fullName: 'original-owner/DSH-Live-Stats',
       awesomeListed: true,
     })
-    expect(catalog.repositories[1].awesomeListed).toBe(false)
+    expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 1)?.awesomeListed).toBe(false)
   })
 
-  it('interleaves two priority projects with one high-star discovery project', () => {
+  it('interleaves two verified projects with one high-star discovery project', () => {
     const ordinaryPopular = {
       ...githubRepository,
       id: 21,
@@ -201,11 +201,11 @@ describe('catalog data', () => {
       full_name: 'owner/ordinary-next',
       stargazers_count: 9_000,
     }
-    const awesomeHigh = {
+    const unverifiedHigh = {
       ...githubRepository,
       id: 23,
-      name: 'awesome-high',
-      full_name: 'owner/awesome-high',
+      name: 'unverified-high',
+      full_name: 'owner/unverified-high',
       stargazers_count: 100,
     }
     const verifiedTie = {
@@ -215,11 +215,11 @@ describe('catalog data', () => {
       full_name: 'owner/verified-tie',
       stargazers_count: 100,
     }
-    const awesomeNext = {
+    const unverifiedNext = {
       ...githubRepository,
       id: 25,
-      name: 'awesome-next',
-      full_name: 'owner/awesome-next',
+      name: 'unverified-next',
+      full_name: 'owner/unverified-next',
       stargazers_count: 90,
     }
     const verifiedLast = {
@@ -230,10 +230,10 @@ describe('catalog data', () => {
       stargazers_count: 80,
     }
     const catalog = buildCatalog(
-      [ordinaryPopular, ordinaryNext, awesomeHigh, verifiedTie, awesomeNext, verifiedLast],
+      [ordinaryPopular, ordinaryNext, unverifiedHigh, verifiedTie, unverifiedNext, verifiedLast],
       '2026-08-14T00:00:00.000Z',
       6,
-      new Set(['awesome-high', 'awesome-next']),
+      new Set(['unverified-high', 'unverified-next']),
       new Set(),
       new Map([
         [24, {
@@ -263,19 +263,19 @@ describe('catalog data', () => {
 
     expect(catalog.repositories.map(({ fullName }) => fullName)).toEqual([
       'owner/verified-tie',
-      'owner/awesome-high',
-      'owner/ordinary-popular',
-      'owner/awesome-next',
       'owner/verified-last',
+      'owner/ordinary-popular',
       'owner/ordinary-next',
+      'owner/unverified-high',
+      'owner/unverified-next',
     ])
     expect(sortCatalogEntries(catalog.repositories, 'recommended').map(({ fullName }) => fullName)).toEqual([
       'owner/verified-tie',
-      'owner/awesome-high',
-      'owner/ordinary-popular',
-      'owner/awesome-next',
       'owner/verified-last',
+      'owner/ordinary-popular',
       'owner/ordinary-next',
+      'owner/unverified-high',
+      'owner/unverified-next',
     ])
   })
 
@@ -316,7 +316,7 @@ describe('catalog data', () => {
     expect(sortCatalogEntries(catalog.repositories, 'name')[0].fullName).toBe('owner/alpha-ordinary')
   })
 
-  it('prefers priority and then verified projects only when global sort values are equal', () => {
+  it('prefers verified projects only when global sort values are equal', () => {
     const ordinaryTie = {
       ...githubRepository,
       id: 41,
@@ -324,11 +324,11 @@ describe('catalog data', () => {
       full_name: 'owner-c/ordinary-tie',
       stargazers_count: 100,
     }
-    const awesomeTie = {
+    const unverifiedTie = {
       ...githubRepository,
       id: 42,
-      name: 'awesome-tie',
-      full_name: 'owner-b/awesome-tie',
+      name: 'unverified-tie',
+      full_name: 'owner-z/unverified-tie',
       stargazers_count: 100,
     }
     const verifiedTie = {
@@ -339,10 +339,10 @@ describe('catalog data', () => {
       stargazers_count: 100,
     }
     const catalog = buildCatalog(
-      [ordinaryTie, awesomeTie, verifiedTie],
+      [ordinaryTie, unverifiedTie, verifiedTie],
       '2026-08-14T00:00:00.000Z',
       3,
-      new Set(['awesome-tie']),
+      new Set(),
       new Set(),
       new Map([[43, {
         repositoryId: 43,
@@ -359,8 +359,8 @@ describe('catalog data', () => {
 
     expect(sortCatalogEntries(catalog.repositories, 'stars').map(({ fullName }) => fullName)).toEqual([
       'owner-a/verified-tie',
-      'owner-b/awesome-tie',
       'owner-c/ordinary-tie',
+      'owner-z/unverified-tie',
     ])
   })
 
