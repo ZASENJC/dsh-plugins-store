@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { PROJECT_TYPES, type ProjectType } from '../../src/lib/classification'
+import { parseSourceDiscovery } from '../../src/lib/source-classification-archive'
 import { downloadPinnedArchive, extractPinnedArchive } from './archive-downloader'
 import { loadExtractedSnapshot, resolvePinnedSourceSha } from './archive-snapshot'
 import { runScannerCommands, type ScannerResults } from './scanner-adapters'
@@ -32,6 +33,20 @@ export function discoverCatalogRepositories(value: unknown): ShadowCatalogReposi
   if (!catalog || catalog.schemaVersion !== 1 || !Array.isArray(catalog.repositories)) {
     throw new Error('Catalog discovery source is invalid')
   }
+  if (catalog.repositories.some((raw) => asRecord(raw)?.full_name !== undefined)) {
+    const discovery = parseSourceDiscovery(value)
+    return discovery.repositories.map((repository) => ({
+      repositoryId: repository.repositoryId,
+      fullName: repository.fullName,
+      url: repository.url,
+      pushedAt: repository.pushedAt,
+      projectType: repository.projectType,
+      topics: repository.topics,
+      defaultBranch: repository.defaultBranch,
+      archived: repository.archived,
+      sizeKb: repository.sizeKb,
+    }))
+  }
   const repositories = catalog.repositories.map((raw): ShadowCatalogRepository => {
     const repository = asRecord(raw)
     if (!repository
@@ -46,8 +61,8 @@ export function discoverCatalogRepositories(value: unknown): ShadowCatalogReposi
       || !repository.topics.every((topic) => typeof topic === 'string')
       || typeof repository.defaultBranch !== 'string'
       || typeof repository.archived !== 'boolean'
-      || !Number.isSafeInteger(repository.size)
-      || Number(repository.size) < 0) {
+      || (!Number.isSafeInteger(repository.size) && !Number.isSafeInteger(repository.sizeKb))
+      || Number(repository.size ?? repository.sizeKb) < 0) {
       throw new Error('Catalog repository discovery record is invalid')
     }
     return {
@@ -59,7 +74,7 @@ export function discoverCatalogRepositories(value: unknown): ShadowCatalogReposi
       topics: repository.topics as string[],
       defaultBranch: repository.defaultBranch,
       archived: repository.archived,
-      sizeKb: Number(repository.size),
+      sizeKb: Number(repository.size ?? repository.sizeKb),
     }
   })
   return repositories.sort((left, right) => left.repositoryId - right.repositoryId)
@@ -70,18 +85,20 @@ export function selectRepositoryShard(
   shardIndex: number,
   shardCount: number,
   selectedRepositoryIds?: ReadonlySet<number>,
+  shardPlan?: ReadonlyMap<number, number>,
 ): ShadowCatalogRepository[] {
   if (!Number.isSafeInteger(shardCount) || shardCount < 1
     || !Number.isSafeInteger(shardIndex) || shardIndex < 0 || shardIndex >= shardCount) {
     throw new Error('Invalid validation shard coordinates')
   }
   return repositories.filter((repository, index) => (
-    index % shardCount === shardIndex
+    (shardPlan?.get(repository.repositoryId) ?? (index % shardCount)) === shardIndex
     && (selectedRepositoryIds === undefined || selectedRepositoryIds.has(repository.repositoryId))
   ))
 }
 
 interface CliOptions {
+  discoveryPath: string
   outputDir: string
   shardIndex: number
   shardCount: number
@@ -104,6 +121,7 @@ export function parseShadowCliOptions(args: string[]): CliOptions {
     values.set(option, value)
   }
   return {
+    discoveryPath: resolve(values.get('--discovery') ?? join(root, 'src/data/catalog.json')),
     outputDir: resolve(values.get('--output') ?? join(root, 'validation/reports')),
     shardIndex: parseInteger(values.get('--shard-index') ?? '0', '--shard-index'),
     shardCount: parseInteger(values.get('--shard-count') ?? '1', '--shard-count'),
@@ -114,14 +132,16 @@ export function parseShadowCliOptions(args: string[]): CliOptions {
 
 export async function runShadowCli(args = process.argv.slice(2)): Promise<void> {
   const options = parseShadowCliOptions(args)
-  const catalog = JSON.parse(await readFile(join(root, 'src/data/catalog.json'), 'utf8'))
+  const catalog = JSON.parse(await readFile(options.discoveryPath, 'utf8'))
   const discovered = discoverCatalogRepositories(catalog)
-  const selected = options.selectionPath === null
+  const selection = options.selectionPath === null
+    ? null
+    : parseValidationSelection(JSON.parse(await readFile(options.selectionPath, 'utf8')))
+  const selected = selection === null ? undefined : new Set(selection.repositoryIds)
+  const shardPlan = selection?.shardPlan === undefined
     ? undefined
-    : new Set(parseValidationSelection(
-      JSON.parse(await readFile(options.selectionPath, 'utf8')),
-    ).repositoryIds)
-  const shard = selectRepositoryShard(discovered, options.shardIndex, options.shardCount, selected)
+    : new Map(selection.shardPlan.map(({ repositoryId, shard }) => [repositoryId, shard]))
+  const shard = selectRepositoryShard(discovered, options.shardIndex, options.shardCount, selected, shardPlan)
   const repositories = options.limit > 0 ? shard.slice(0, options.limit) : shard
   const now = new Date().toISOString()
 

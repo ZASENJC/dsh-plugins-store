@@ -126,7 +126,12 @@ export async function runCandidateBatch(
       result = markInconclusive(report, plan.code, 'inconclusive', now)
     }
     reports.push(result)
-    await onReport(result)
+    try {
+      await onReport(result)
+    } catch {
+      // A report persistence failure is isolated to this repository; the shard
+      // continues so the archive can mark the missing observation for retry.
+    }
   }
 
   return {

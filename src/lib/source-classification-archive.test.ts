@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildSourceClassificationArchive,
   buildValidationCatalog,
+  parseSourceClassificationArchive,
   selectSourceClassificationTargets,
   type SourceClassificationArchive,
   type SourceDiscoverySnapshot,
@@ -159,5 +160,49 @@ describe('source classification archive', () => {
       disposition: 'inconclusive',
       failureCode: 'CLASSIFICATION_NOT_OBSERVED',
     })
+  })
+
+  it('rejects a classification record whose classifier version differs from the archive', () => {
+    expect(() => parseSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T04:00:00Z',
+      mode: 'full',
+      classifierVersion: '0.1.0',
+      records: [{
+        repositoryId: 1,
+        fullName: 'owner/plugin',
+        sourcePushedAt: discovery.repositories[0].pushedAt,
+        sourceSha: pluginClassification.sourceSha,
+        disposition: 'include',
+        classification: { ...pluginClassification, classifierVersion: '0.0.9' },
+      }],
+    })).toThrow('classifier version')
+  })
+
+  it('rejects validation evidence whose SHA does not match the classified source', () => {
+    expect(() => parseSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T00:00:00Z',
+      mode: 'full',
+      classifierVersion: '0.1.0',
+      records: [{
+        repositoryId: 1,
+        fullName: 'owner/plugin',
+        sourcePushedAt: discovery.repositories[0].pushedAt,
+        sourceSha: pluginClassification.sourceSha,
+        disposition: 'include',
+        validation: {
+          status: 'passed',
+          disposition: 'verified',
+          stage: 'sandbox',
+          sourceSha: 'b'.repeat(40),
+          checkedAt: '2026-08-16T00:00:00Z',
+          dshVersion: '0.1.0-rc.6',
+          platform: 'linux-x64',
+          validatorVersion: '0.1.2',
+          executionType: 'host-tool',
+        },
+      }],
+    })).toThrow('SHA binding')
   })
 })

@@ -36,6 +36,28 @@ describe('catalog discovery and stable sharding', () => {
     })
   })
 
+  it('accepts the raw discovery snapshot used by classified validation', () => {
+    const repositories = discoverCatalogRepositories({
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T00:00:00Z',
+      reportedByGitHub: 1,
+      repositories: [{
+        id: 11,
+        full_name: 'fixture/raw-plugin',
+        html_url: 'https://github.com/fixture/raw-plugin',
+        name: 'raw-plugin',
+        description: 'DSH plugin',
+        pushed_at: '2026-08-14T00:00:00Z',
+        topics: ['dsh-plugin', 'deepseek-harness'],
+        default_branch: 'main',
+        archived: false,
+        fork: false,
+        size: 120,
+      }],
+    })
+    expect(repositories[0]).toMatchObject({ repositoryId: 11, fullName: 'fixture/raw-plugin', sizeKb: 120 })
+  })
+
   it('splits a large catalog without duplicates or skipped repository IDs', () => {
     const repositories = discoverCatalogRepositories(catalog)
     const ids = Array.from({ length: 20 }, (_, shardIndex) => (

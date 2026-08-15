@@ -49,6 +49,7 @@ export interface FetchAllSearchOptions {
 
 export interface FetchAllSearchResult {
   repositories: SearchRepository[]
+  allRepositories: SearchRepository[]
   reportedByGitHub: number
 }
 
@@ -256,8 +257,12 @@ export async function fetchAllSearchRepositories(
       )
       const uniqueRepositories = new Map<number, SearchRepository>()
       for (const repository of repositories) uniqueRepositories.set(repository.id, repository)
+      const allRepositories = [...uniqueRepositories.values()].filter((repository) => (
+        !repository.archived && !repository.fork
+      ))
       return {
-        repositories: filterEligibleRepositories([...uniqueRepositories.values()]),
+        repositories: filterEligibleRepositories(allRepositories),
+        allRepositories,
         reportedByGitHub,
       }
     } catch (error) {

@@ -11,6 +11,11 @@ import {
   type SourceClassification,
 } from './source-classification'
 import {
+  currentSourceClassification,
+  isExcludedByCurrentArchive,
+  type SourceClassificationArchive,
+} from './source-classification-archive'
+import {
   VALIDATION_STATUS_DEFINITIONS,
   buildValidationStatus,
   type ValidationOverall,
@@ -135,6 +140,7 @@ export function createCatalogEntry(
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
   validationRecord?: ValidationRecord,
   installReference?: InstallReference,
+  sourceClassificationOverride?: SourceClassification,
 ): CatalogEntry {
   const topicClassification = classifyRepository({
     fullName: repository.full_name,
@@ -142,7 +148,8 @@ export function createCatalogEntry(
     description: repository.description ?? '',
     topics: repository.topics ?? [],
   })
-  const sourceClassification = usableSourceClassification(validationRecord, repository.pushed_at)
+  const sourceClassification = sourceClassificationOverride
+    ?? usableSourceClassification(validationRecord, repository.pushed_at)
   const useSourceType = sourceClassification !== null
     && sourceClassification.projectType !== 'unknown'
     && sourceClassification.confidence !== 'low'
@@ -229,6 +236,7 @@ export function buildCatalog(
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
   validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
   installReferences: ReadonlyMap<number, InstallReference> = new Map(),
+  classificationArchive: SourceClassificationArchive | null = null,
 ): Catalog {
   const uniqueRepositories = new Map<number, GitHubRepository>()
   for (const repository of repositories) {
@@ -239,11 +247,20 @@ export function buildCatalog(
     [...verifiedRepositoryNames].map((name) => name.toLowerCase()),
   )
   const entries = sortCatalogEntries(
-    [...uniqueRepositories.values()].map((repository) => createCatalogEntry(
+    [...uniqueRepositories.values()]
+      .filter((repository) => !isExcludedByCurrentArchive({
+        repositoryId: repository.id,
+        pushedAt: repository.pushed_at,
+      }, classificationArchive))
+      .map((repository) => createCatalogEntry(
       repository,
       normalizedVerifiedNames,
       validationRecords.get(repository.id),
       installReferences.get(repository.id),
+      currentSourceClassification({
+        repositoryId: repository.id,
+        pushedAt: repository.pushed_at,
+      }, classificationArchive),
     )),
     'recommended',
     generatedAt,

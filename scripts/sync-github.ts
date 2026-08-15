@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import {
@@ -11,6 +11,11 @@ import { classifyRepository } from '../src/lib/classification'
 import { extractVerifiedRepositoryNames } from '../src/lib/github-content'
 import { extractInstallReference, type InstallReference } from '../src/lib/install-reference'
 import { parseValidationFeed } from '../src/lib/validation'
+import {
+  parseSourceClassificationArchive,
+  validationRecordsFromArchive,
+  type SourceClassificationArchive,
+} from '../src/lib/source-classification-archive'
 import {
   buildSearchQuery,
   fetchAllSearchRepositories,
@@ -27,6 +32,9 @@ const README_TIMEOUT_MS = 12_000
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputPath = resolve(root, 'src/data/catalog.json')
 const validationPath = resolve(root, 'src/data/validation.json')
+const classificationArchivePath = resolve(
+  process.env.CLASSIFICATION_ARCHIVE_PATH ?? join(root, 'src/data/source-classification.json'),
+)
 
 function getHeaders(accept = 'application/vnd.github+json'): HeadersInit {
   const headers: Record<string, string> = {
@@ -125,31 +133,61 @@ async function fetchRepositories() {
   return fetchAllSearchRepositories((page, partition, request) => fetchPage(page, partition, request))
 }
 
+async function readClassificationArchive(): Promise<SourceClassificationArchive | null> {
+  try {
+    return parseSourceClassificationArchive(JSON.parse(await readFile(classificationArchivePath, 'utf8')))
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return null
+    console.warn('源码分类档案不可用，目录同步回退到主题分类')
+    return null
+  }
+}
+
 async function sync() {
-  const { repositories, reportedByGitHub } = await fetchRepositories()
-  const validationRecords = parseValidationFeed(JSON.parse(await readFile(validationPath, 'utf8')))
+  const { repositories, allRepositories, reportedByGitHub } = await fetchRepositories()
+  const classificationArchive = await readClassificationArchive()
+  const feedValidationRecords = parseValidationFeed(JSON.parse(await readFile(validationPath, 'utf8')))
+  const archiveValidationRecords = validationRecordsFromArchive(classificationArchive)
+  const validationRecords = new Map(feedValidationRecords)
+  for (const [repositoryId, record] of archiveValidationRecords) {
+    const repository = allRepositories.find(({ id }) => id === repositoryId)
+    if (repository && record.sourcePushedAt === repository.pushed_at) validationRecords.set(repositoryId, record)
+  }
   const verifyResponse = await fetchRenderedReadme(VERIFY_REPOSITORY)
   if (!verifyResponse.ok) {
     throw new Error(`验证目录请求失败：Verify ${verifyResponse.status}`)
   }
   const verifiedRepositoryNames = extractVerifiedRepositoryNames(await verifyResponse.text())
-  const installReferences = await fetchInstallReferences(repositories)
+  const catalogRepositories = classificationArchive === null ? repositories : allRepositories
+  const installReferences = await fetchInstallReferences(catalogRepositories)
   const generatedAt = new Date().toISOString()
   const catalog = buildCatalog(
-    repositories,
+    catalogRepositories,
     generatedAt,
     reportedByGitHub,
     verifiedRepositoryNames,
     validationRecords,
     installReferences,
+    classificationArchive,
   )
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
 
+  const discoveryPath = process.env.DISCOVERY_OUTPUT_PATH
+  if (discoveryPath) {
+    await mkdir(dirname(resolve(discoveryPath)), { recursive: true })
+    await writeFile(resolve(discoveryPath), `${JSON.stringify({
+      schemaVersion: 1,
+      generatedAt,
+      reportedByGitHub,
+      repositories: allRepositories,
+    }, null, 2)}\n`, 'utf8')
+  }
+
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
   console.log(`验证状态文件匹配 ${validationRecords.size} 个仓库；当前完整验证 ${catalog.stats.validationStatuses.verified ?? 0} 个`)
   console.log(`README 安装特征匹配 ${installReferences.size} 个仓库；失败或无明确命令不影响目录同步`)
-  console.log(`已同步 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
+  console.log(`源码分类档案${classificationArchive ? '已应用' : '尚未可用'}；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
 }
 
 await sync()

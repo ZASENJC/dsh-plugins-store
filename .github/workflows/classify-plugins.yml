@@ -1,0 +1,219 @@
+name: Classify plugins
+
+on:
+  schedule:
+    - cron: '10 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_full:
+        description: Reclassify every active repository from source evidence
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: plugin-classification-archive
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      classification_changes: ${{ steps.classification.outputs.has_changes }}
+      classification_shards: ${{ steps.classification.outputs.shards }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.force_full || false }}
+    steps:
+      - name: Checkout classification source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve latest discovery and classification artifacts
+        run: |
+          mkdir -p validation-input/previous
+          discovery_found=false
+          sync_run_ids="$(gh run list --workflow sync-catalog.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          for run_id in $sync_run_ids; do
+            artifact_dir="/tmp/dsh-discovery-$run_id"
+            if gh run download "$run_id" --name plugin-discovery-snapshot --dir "$artifact_dir" 2>/dev/null \
+              && test -f "$artifact_dir/discovery.json"; then
+              cp "$artifact_dir/discovery.json" validation-input/discovery.json
+              discovery_found=true
+              break
+            fi
+          done
+          if test "$discovery_found" = false; then
+            cp src/data/catalog.json validation-input/discovery.json
+          fi
+
+          classification_found=false
+          completed_run_ids="$(gh run list --workflow classify-plugins.yml --branch main --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          for run_id in $completed_run_ids; do
+            run_metadata="$(gh run view "$run_id" --json workflowName,headBranch,status,conclusion 2>/dev/null || true)"
+            if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | node -e '
+              const fs = require("node:fs")
+              const metadata = JSON.parse(fs.readFileSync(0, "utf8"))
+              process.exit(metadata.workflowName === "Classify plugins"
+                && metadata.headBranch === "main"
+                && metadata.status === "completed"
+                && ["success", "failure", "cancelled", "timed_out"].includes(metadata.conclusion) ? 0 : 1)
+            '; then
+              continue
+            fi
+            artifact_dir="/tmp/dsh-classification-state-$run_id"
+            if gh run download "$run_id" --name plugin-classification-state --dir "$artifact_dir" 2>/dev/null \
+              && test -f "$artifact_dir/source-classification.json" \
+              && test -f "$artifact_dir/validation-catalog.json"; then
+              cp "$artifact_dir/source-classification.json" validation-input/previous/source-classification.json
+              classification_found=true
+              break
+            fi
+          done
+          if test "$classification_found" = false; then
+            rm -f validation-input/previous/source-classification.json
+          fi
+
+      - name: Plan lightweight source classification
+        id: classification
+        run: |
+          previous_args=()
+          if test -f validation-input/previous/source-classification.json; then
+            previous_args=(--previous validation-input/previous/source-classification.json)
+          fi
+          npm run --silent validate:classify -- \
+            --mode plan \
+            --discovery validation-input/discovery.json \
+            --output validation-input/classification-selection.json \
+            --shard-count 20 \
+            --force-full "$FORCE_FULL" \
+            "${previous_args[@]}" > validation-input/classification-summary.json
+          node -e 'const fs=require("fs"); const summary=JSON.parse(fs.readFileSync("validation-input/classification-summary.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,"has_changes="+String(summary.repositoryCount>0)+"\nshards="+JSON.stringify(summary.shards)+"\n")'
+
+      - name: Upload immutable classification input
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-classification-input
+          path: validation-input/
+          if-no-files-found: error
+          retention-days: 30
+
+  classify:
+    needs: prepare
+    if: needs.prepare.outputs.classification_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: ${{ fromJSON(needs.prepare.outputs.classification_shards) }}
+    steps:
+      - name: Checkout classification source
+        uses: actions/checkout@v4
+
+      - name: Download classification input
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-classification-input
+          path: validation-input
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Classify source structure without scanners or sandbox
+        run: >-
+          npm run validate:classify --
+          --mode run
+          --discovery validation-input/discovery.json
+          --selection validation-input/classification-selection.json
+          --output validation/classification-reports/shard-${{ matrix.shard }}.json
+          --shard-index "${{ matrix.shard }}"
+          --shard-count 20
+
+      - name: Upload source classification shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-source-classification-${{ matrix.shard }}
+          path: validation/classification-reports/
+          if-no-files-found: error
+          retention-days: 30
+
+  classification-archive:
+    needs: [prepare, classify]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout classification source
+        uses: actions/checkout@v4
+
+      - name: Download classification input
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-classification-input
+          path: validation-input
+
+      - name: Download completed classification shards
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: plugin-source-classification-*
+          path: validation/classification-reports
+          merge-multiple: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Merge classification results and write explicit omissions
+        run: |
+          previous_args=()
+          if test -f validation-input/previous/source-classification.json; then
+            previous_args=(--previous validation-input/previous/source-classification.json)
+          fi
+          force_args=()
+          if test "${{ github.event_name == 'workflow_dispatch' && inputs.force_full || false }}" = "true"; then
+            force_args=(--force-full true)
+          fi
+          npm run validate:classify -- \
+            --mode aggregate \
+            --discovery validation-input/discovery.json \
+            --reports validation/classification-reports \
+            --output validation-state/source-classification.json \
+            --validation-catalog validation-state/validation-catalog.json \
+            "${previous_args[@]}" \
+            "${force_args[@]}"
+
+      - name: Upload source classification state for every completed run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-classification-state
+          path: validation-state/
+          if-no-files-found: error
+          retention-days: 30

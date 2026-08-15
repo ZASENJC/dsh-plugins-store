@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { parseValidationReport, type ValidationReport } from '../../src/lib/validation-report'
 import type { ValidationRecord } from '../../src/lib/validation'
 
@@ -22,6 +24,8 @@ export interface ValidationStateTarget {
 export interface ValidationStateEntry {
   repositoryId: number
   pushedAt: string
+  lastDurationMs?: number
+  executionType?: string
 }
 
 export interface ValidationState {
@@ -40,12 +44,18 @@ export interface ValidationSelection {
   target: ValidationStateTarget
   repositoryIds: number[]
   shards: number[]
+  shardPlan?: Array<{
+    repositoryId: number
+    shard: number
+    estimatedCost: number
+  }>
 }
 
 interface CatalogValidationEntry {
   repositoryId: number
   projectType: string
   pushedAt: string
+  sizeKb: number
 }
 
 interface ValidationCatalog {
@@ -93,7 +103,12 @@ function parseCatalog(value: unknown): ValidationCatalog {
     const repositoryId = Number(raw.repositoryId)
     if (ids.has(repositoryId)) throw new Error('Validation catalog repository ID is duplicated')
     ids.add(repositoryId)
-    return { repositoryId, projectType: raw.projectType, pushedAt: raw.pushedAt }
+    return {
+      repositoryId,
+      projectType: raw.projectType,
+      pushedAt: raw.pushedAt,
+      sizeKb: Number.isSafeInteger(raw.sizeKb) && Number(raw.sizeKb) >= 0 ? Number(raw.sizeKb) : 0,
+    }
   })
   return { generatedAt: value.generatedAt, repositories: repositories.sort((a, b) => a.repositoryId - b.repositoryId) }
 }
@@ -108,7 +123,16 @@ function parseEntries(value: unknown): ValidationStateEntry[] {
     const repositoryId = Number(raw.repositoryId)
     if (ids.has(repositoryId)) throw new Error('Validation state repository ID is duplicated')
     ids.add(repositoryId)
-    return { repositoryId, pushedAt: raw.pushedAt }
+    if (raw.lastDurationMs !== undefined
+      && (!Number.isSafeInteger(raw.lastDurationMs) || Number(raw.lastDurationMs) < 0)) {
+      throw new Error('Validation state duration is invalid')
+    }
+    return {
+      repositoryId,
+      pushedAt: raw.pushedAt,
+      ...(raw.lastDurationMs === undefined ? {} : { lastDurationMs: Number(raw.lastDurationMs) }),
+      ...(typeof raw.executionType === 'string' && raw.executionType.length > 0 ? { executionType: raw.executionType } : {}),
+    }
   }).sort((a, b) => a.repositoryId - b.repositoryId)
 }
 
@@ -148,6 +172,21 @@ export function parseValidationSelection(value: unknown): ValidationSelection {
     target: parseTarget(value.target),
     repositoryIds: (value.repositoryIds as number[]).map(Number),
     shards: (value.shards as number[]).map(Number),
+    ...(Array.isArray(value.shardPlan) ? {
+      shardPlan: value.shardPlan.map((raw) => {
+        if (!isRecord(raw)
+          || !Number.isSafeInteger(raw.repositoryId) || Number(raw.repositoryId) <= 0
+          || !Number.isSafeInteger(raw.shard) || Number(raw.shard) < 0
+          || typeof raw.estimatedCost !== 'number' || !Number.isFinite(raw.estimatedCost) || raw.estimatedCost <= 0) {
+          throw new Error('Validation shard plan is invalid')
+        }
+        return {
+          repositoryId: Number(raw.repositoryId),
+          shard: Number(raw.shard),
+          estimatedCost: Number(raw.estimatedCost),
+        }
+      }),
+    } : {}),
   }
 }
 
@@ -185,7 +224,7 @@ export function reconcileValidationState(
   const eligibleIds = new Set(eligible.map(({ repositoryId }) => repositoryId))
   const entries = new Map(previous.entries
     .filter(({ repositoryId }) => eligibleIds.has(repositoryId))
-    .map(({ repositoryId, pushedAt }) => [repositoryId, pushedAt]))
+    .map((entry) => [entry.repositoryId, entry] as const))
   for (const repository of eligible) {
     const record = records.get(repository.repositoryId)
     if (!record
@@ -194,14 +233,20 @@ export function reconcileValidationState(
       || record.dshVersion !== parsedTarget.dshVersion
       || record.platform !== parsedTarget.platform
       || record.validatorVersion !== parsedTarget.validatorVersion) continue
-    entries.set(repository.repositoryId, repository.pushedAt)
+    const previousEntry = entries.get(repository.repositoryId)
+    entries.set(repository.repositoryId, {
+      repositoryId: repository.repositoryId,
+      pushedAt: repository.pushedAt,
+      ...(previousEntry?.lastDurationMs === undefined ? {} : { lastDurationMs: previousEntry.lastDurationMs }),
+      ...(previousEntry?.executionType === undefined ? {} : { executionType: previousEntry.executionType }),
+    })
   }
   return parseValidationState({
     schemaVersion: 1,
     generatedAt: now,
     catalogGeneratedAt: catalog.generatedAt,
     target: parsedTarget,
-    entries: [...entries].map(([repositoryId, pushedAt]) => ({ repositoryId, pushedAt })),
+    entries: [...entries.values()],
   })
 }
 
@@ -222,10 +267,34 @@ export function selectValidationDelta(
     .filter(({ projectType }) => ELIGIBLE_PROJECT_TYPES.has(projectType))
     .filter(({ repositoryId, pushedAt }) => full || previousById.get(repositoryId) !== pushedAt)
     .map(({ repositoryId }) => repositoryId)
+    .sort((left, right) => left - right)
   const selected = new Set(repositoryIds)
-  const shards = [...new Set(catalog.repositories.flatMap((repository, index) => (
-    selected.has(repository.repositoryId) ? [index % shardCount] : []
-  )))].sort((a, b) => a - b)
+  const previousEntries = new Map(previous?.entries.map((entry) => [entry.repositoryId, entry]) ?? [])
+  const selectedRepositories = catalog.repositories
+    .filter((repository) => selected.has(repository.repositoryId))
+    .map((repository) => ({
+      repository,
+      estimatedCost: estimateValidationCost(repository, previousEntries.get(repository.repositoryId)),
+    }))
+  const activeShardCount = Math.min(shardCount, Math.max(1, selectedRepositories.length))
+  const loads = Array.from({ length: activeShardCount }, () => 0)
+  const assignments = new Map<number, { shard: number, estimatedCost: number }>()
+  for (const candidate of [...selectedRepositories].sort((left, right) => (
+    right.estimatedCost - left.estimatedCost
+      || stableRepositoryTie(left.repository.repositoryId, left.repository.pushedAt)
+        - stableRepositoryTie(right.repository.repositoryId, right.repository.pushedAt)
+  ))) {
+    let shard = 0
+    for (let index = 1; index < loads.length; index += 1) {
+      if (loads[index] < loads[shard]) shard = index
+    }
+    loads[shard] += candidate.estimatedCost
+    assignments.set(candidate.repository.repositoryId, { shard, estimatedCost: candidate.estimatedCost })
+  }
+  const shardPlan = [...assignments.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([repositoryId, assignment]) => ({ repositoryId, ...assignment }))
+  const shards = [...new Set(shardPlan.map(({ shard }) => shard))].sort((a, b) => a - b)
   return {
     schemaVersion: 1,
     generatedAt: now,
@@ -234,7 +303,38 @@ export function selectValidationDelta(
     target: parseTarget(target),
     repositoryIds,
     shards,
+    shardPlan,
   }
+}
+
+const EXECUTION_COST_WEIGHT: Readonly<Record<string, number>> = Object.freeze({
+  plugin: 1.2,
+  web: 1.7,
+  channel: 1.8,
+  collection: 0.7,
+  skill: 0.6,
+  unknown: 1,
+  'host-tool': 1.2,
+  command: 1.1,
+  'channel-mcp': 1.8,
+  native: 1.4,
+  'non-plugin': 0.2,
+})
+
+function stableRepositoryTie(repositoryId: number, pushedAt: string): number {
+  return createHash('sha1').update(`${repositoryId}:${pushedAt}`).digest().readUInt32BE(0)
+}
+
+export function estimateValidationCost(
+  repository: Pick<CatalogValidationEntry, 'projectType' | 'sizeKb'>,
+  history?: Pick<ValidationStateEntry, 'lastDurationMs' | 'executionType'>,
+): number {
+  const typeWeight = EXECUTION_COST_WEIGHT[history?.executionType ?? repository.projectType] ?? 1
+  const sizeWeight = 1 + Math.log2(Math.max(0, repository.sizeKb) + 1) / 8
+  const historicalWeight = history?.lastDurationMs && history.lastDurationMs > 0
+    ? Math.min(8, Math.max(0.5, history.lastDurationMs / 10_000))
+    : sizeWeight * typeWeight
+  return Number(Math.max(0.1, historicalWeight * 0.75 + sizeWeight * typeWeight * 0.25).toFixed(6))
 }
 
 function reportTime(report: ValidationReport): number {
@@ -267,10 +367,10 @@ export function buildValidationState(
   const eligible = new Map(catalog.repositories
     .filter(({ projectType }) => ELIGIBLE_PROJECT_TYPES.has(projectType))
     .map((repository) => [repository.repositoryId, repository]))
-  const entries = new Map<number, string>()
+  const entries = new Map<number, ValidationStateEntry>()
   if (selection.mode !== 'full') {
     for (const entry of previous?.entries ?? []) {
-      if (eligible.has(entry.repositoryId)) entries.set(entry.repositoryId, entry.pushedAt)
+      if (eligible.has(entry.repositoryId)) entries.set(entry.repositoryId, entry)
     }
   }
   for (const repositoryId of selection.repositoryIds) {
@@ -278,7 +378,15 @@ export function buildValidationState(
     if (!repository) throw new Error(`Validation selection repository ${repositoryId} is not eligible`)
     const report = terminalReport(rawReports, repositoryId, selection.target)
     if (report && report.repository.sourcePushedAt === repository.pushedAt) {
-      entries.set(repositoryId, repository.pushedAt)
+      const durationMs = report.completedAt === null
+        ? undefined
+        : Math.max(0, Date.parse(report.completedAt) - Date.parse(report.startedAt))
+      entries.set(repositoryId, {
+        repositoryId,
+        pushedAt: repository.pushedAt,
+        ...(durationMs && durationMs > 0 ? { lastDurationMs: durationMs } : {}),
+        ...(durationMs && durationMs > 0 && report.executionType ? { executionType: report.executionType } : {}),
+      })
     }
   }
   return parseValidationState({
@@ -286,6 +394,6 @@ export function buildValidationState(
     generatedAt: now,
     catalogGeneratedAt: catalog.generatedAt,
     target: selection.target,
-    entries: [...entries].map(([repositoryId, pushedAt]) => ({ repositoryId, pushedAt })),
+    entries: [...entries.values()],
   })
 }

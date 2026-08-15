@@ -113,7 +113,7 @@ describe('incremental validation cursor', () => {
     expect(selectValidationDelta(catalog, null, target, 20, '2026-08-14T16:01:00.000Z')).toMatchObject({
       mode: 'full',
       repositoryIds: [1, 2, 4],
-      shards: [0, 1, 3],
+      shards: [0, 1, 2],
     })
     expect(selectValidationDelta(
       catalog,
@@ -124,6 +124,31 @@ describe('incremental validation cursor', () => {
     ).mode).toBe('full')
   })
 
+  it('uses deterministic cost-balanced shard assignments instead of catalog position modulo', () => {
+    const selected = selectValidationDelta({
+      ...catalog,
+      repositories: [
+        { repositoryId: 90, projectType: 'plugin', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 10_000 },
+        { repositoryId: 10, projectType: 'plugin', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 1 },
+        { repositoryId: 30, projectType: 'channel', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 500 },
+        { repositoryId: 20, projectType: 'plugin', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 500 },
+      ],
+    }, null, target, 2, '2026-08-14T16:01:00.000Z')
+
+    expect(selected.shardPlan).toHaveLength(4)
+    expect(new Set(selected.shardPlan?.map(({ shard }) => shard)).size).toBe(2)
+    expect(selected.shardPlan?.map(({ repositoryId }) => repositoryId)).toEqual([10, 20, 30, 90])
+    expect(selectValidationDelta({
+      ...catalog,
+      repositories: [
+        { repositoryId: 20, projectType: 'plugin', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 500 },
+        { repositoryId: 90, projectType: 'plugin', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 10_000 },
+        { repositoryId: 10, projectType: 'plugin', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 1 },
+        { repositoryId: 30, projectType: 'channel', pushedAt: '2026-08-14T10:00:00.000Z', sizeKb: 500 },
+      ],
+    }, null, target, 2, '2026-08-14T16:01:00.000Z').shardPlan).toEqual(selected.shardPlan)
+  })
+
   it('selects only new or pushed repositories and produces no work for an unchanged catalog', () => {
     const previous = state([
       { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
@@ -132,7 +157,7 @@ describe('incremental validation cursor', () => {
     expect(selectValidationDelta(catalog, previous, target, 20, '2026-08-14T16:01:00.000Z')).toMatchObject({
       mode: 'incremental',
       repositoryIds: [2, 4],
-      shards: [1, 3],
+      shards: [0, 1],
     })
 
     const current = state([1, 2, 4].map((repositoryId) => ({
@@ -172,6 +197,27 @@ describe('incremental validation cursor', () => {
     ])
     expect(selectValidationDelta(catalog, next, target, 20, '2026-08-14T17:01:00.000Z').repositoryIds)
       .toEqual([])
+  })
+
+  it('retains the latest duration and execution type as the next shard cost signal', () => {
+    const selection: ValidationSelection = {
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T16:01:00.000Z',
+      mode: 'incremental',
+      catalogGeneratedAt: catalog.generatedAt,
+      target,
+      repositoryIds: [2],
+      shards: [0],
+    }
+    const timed = report(2, 'verified')
+    timed.startedAt = '2026-08-14T15:00:00.000Z'
+    const next = buildValidationState(catalog, null, selection, [timed], '2026-08-14T16:20:00.000Z')
+    expect(next.entries).toEqual([{
+      repositoryId: 2,
+      pushedAt: catalog.repositories[1].pushedAt,
+      lastDurationMs: 70 * 60 * 1000,
+      executionType: 'host-tool',
+    }])
   })
 
   it('does not carry an old cursor through a forced full revalidation', () => {

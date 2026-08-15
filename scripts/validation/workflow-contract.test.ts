@@ -5,10 +5,31 @@ import { describe, expect, it } from 'vitest'
 import { CURRENT_VALIDATION_TARGET } from '../../src/lib/validation'
 
 describe('decoupled incremental validation workflows', () => {
-  it('refreshes catalog every 30 minutes and restores validation state without depending on validation success', async () => {
+  it('keeps classification as an independent upstream workflow', async () => {
+    const classificationWorkflow = await readFile('.github/workflows/classify-plugins.yml', 'utf8')
+
+    expect(classificationWorkflow).toContain('name: Classify plugins')
+    expect(classificationWorkflow).toContain("cron: '10 * * * *'")
+    expect(classificationWorkflow).toMatch(/force_full:[\s\S]*type: boolean/)
+    expect(classificationWorkflow).toContain('validate:classify')
+    expect(classificationWorkflow).toContain('--mode plan')
+    expect(classificationWorkflow).toContain('--mode run')
+    expect(classificationWorkflow).toContain('--mode aggregate')
+    expect(classificationWorkflow).toContain('plugin-classification-state')
+    expect(classificationWorkflow).toContain('validation-catalog.json')
+    expect(classificationWorkflow).toContain('gh run list --workflow sync-catalog.yml')
+    expect(classificationWorkflow).toContain('plugin-discovery-snapshot')
+    expect(classificationWorkflow).not.toContain('validate:candidates')
+    expect(classificationWorkflow).not.toContain('DEPLOY_SSH_KEY')
+    expect(classificationWorkflow).not.toMatch(/\bssh\b/)
+  })
+
+  it('refreshes catalog after successful validation without depending on validation internals', async () => {
     const syncWorkflow = await readFile('.github/workflows/sync-catalog.yml', 'utf8')
 
-    expect(syncWorkflow).toContain("cron: '*/30 * * * *'")
+    expect(syncWorkflow).toContain('workflow_run:')
+    expect(syncWorkflow).toContain('workflows: [Validate plugins]')
+    expect(syncWorkflow).toContain("github.event.workflow_run.conclusion == 'success'")
     expect(syncWorkflow).toContain('plugin-catalog-snapshot')
     expect(syncWorkflow).toContain('plugin-discovery-snapshot')
     expect(syncWorkflow).toContain('plugin-classification-state')
@@ -21,23 +42,30 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).not.toContain('validate:candidates')
     expect(syncWorkflow).not.toMatch(/needs:\s+.*validat/)
     expect(syncWorkflow).toContain('DEPLOY_SSH_KEY')
+    expect(syncWorkflow).toContain('--workflow classify-plugins.yml')
   })
 
-  it('runs hourly full-then-incremental validation without deployment credentials', async () => {
+  it('runs chained validation from the classified catalog without deployment credentials', async () => {
     const workflow = await readFile('.github/workflows/validate-plugins.yml', 'utf8')
 
-    expect(workflow).toContain("cron: '17 * * * *'")
+    expect(workflow).toContain('workflow_run:')
+    expect(workflow).toContain('workflows: [Classify plugins]')
+    expect(workflow).toContain("github.event.workflow_run.conclusion != 'success'")
     expect(workflow).toMatch(/force_full:[\s\S]*type: boolean/)
     expect(workflow).toContain('FORCE_FULL')
     expect(workflow).toMatch(/test "\$FORCE_FULL" != "true"[\s\S]*--previous/)
-    expect(workflow).not.toContain('workflow_run')
-    expect(workflow).toContain('validate:select')
-    expect(workflow).toContain('validate:classify')
+    expect(workflow).toContain('classify-plugins.yml')
     expect(workflow).toContain('plugin-classification-state')
+    expect(workflow).toContain('validation-catalog.json')
+    expect(workflow).toContain('validate:select')
     expect(workflow).toContain('source-classification.json')
     expect(workflow).toContain('if: always()')
     expect(workflow).toContain('validate:shadow')
     expect(workflow).toContain('validate:candidates')
+    expect(workflow).toContain('validate:archive')
+    expect(workflow).toContain('validation-archive:')
+    expect(workflow).toContain('--discovery validation-input/discovery.json')
+    expect(workflow).toContain('--summary validation-state/validation-summary.json')
     expect(workflow).toContain('--selection')
     expect(workflow).toMatch(/validate:select --[\s\S]*--previous-feed validation-input\/previous-validation\.json[\s\S]*--output validation-input\/selection\.json/)
     expect(workflow).toContain('upload-artifact')
@@ -45,8 +73,8 @@ describe('decoupled incremental validation workflows', () => {
     expect(workflow).toContain('contents: read')
     expect(workflow).toContain('max-parallel: 4')
     expect(workflow).toContain('group: plugin-validation-publication')
-    expect(workflow).toContain('fromJSON(needs.prepare.outputs.shards)')
-    expect(workflow).toContain("needs.prepare.outputs.first_run == 'true'")
+    expect(workflow).toContain('fromJSON(needs.select.outputs.shards)')
+    expect(workflow).toContain("needs.select.outputs.first_run == 'true'")
     expect(workflow).toContain('result.reportsWritten !== result.discovered')
     expect(workflow).toContain('tee /tmp/shadow-summary.json')
     expect(workflow).toContain('npm run validate:promote --')
@@ -58,6 +86,22 @@ describe('decoupled incremental validation workflows', () => {
     expect(workflow).not.toMatch(/git\s+(add|commit|push)/)
     expect(workflow).not.toContain('DEPLOY_SSH_KEY')
     expect(workflow).not.toMatch(/\bssh\b/)
+    expect(workflow).not.toContain('validate:classify')
+    expect(workflow).not.toMatch(/^  (classify|classification-archive):/m)
+  })
+
+  it('defines the three pipeline workflow entrypoints', async () => {
+    const workflowNames = [
+      '.github/workflows/classify-plugins.yml',
+      '.github/workflows/validate-plugins.yml',
+      '.github/workflows/sync-catalog.yml',
+    ]
+    const workflows = await Promise.all(workflowNames.map((path) => readFile(path, 'utf8')))
+    expect(workflows.map((workflow) => workflow.match(/^name: (.+)$/m)?.[1])).toEqual([
+      'Classify plugins',
+      'Validate plugins',
+      'Sync catalog',
+    ])
   })
 
   it('keeps the automatic workflow and baseline on the current validator binding', async () => {

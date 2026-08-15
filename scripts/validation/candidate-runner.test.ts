@@ -129,4 +129,16 @@ describe('dynamic validation candidate runner', () => {
       'verified', 'inconclusive', 'verified',
     ])
   })
+
+  it('continues when one report cannot be persisted', async () => {
+    const reports = [structureReport(1, 'host-tool'), structureReport(2, 'host-tool')]
+    const result = await runCandidateBatch(reports, {
+      executeQueued: async (report) => report,
+      onReport: async (report) => {
+        if (report.repository.id === 1) throw new Error('disk full')
+      },
+    })
+    expect(result.reports).toHaveLength(2)
+    expect(result.reports.map(({ repository }) => repository.id)).toEqual([1, 2])
+  })
 })

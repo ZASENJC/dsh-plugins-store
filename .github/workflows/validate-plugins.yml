@@ -1,12 +1,13 @@
 name: Validate plugins
 
 on:
-  schedule:
-    - cron: '17 * * * *'
+  workflow_run:
+    workflows: [Classify plugins]
+    types: [completed]
   workflow_dispatch:
     inputs:
       force_full:
-        description: Revalidate every eligible repository with bounded concurrency
+        description: Revalidate every repository in the classified validation catalog
         required: false
         default: false
         type: boolean
@@ -22,16 +23,21 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    outputs:
-      has_changes: ${{ steps.selection.outputs.has_changes }}
-      first_run: ${{ steps.selection.outputs.first_run }}
-      shards: ${{ steps.selection.outputs.shards }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.force_full || false }}
+      CLASSIFICATION_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
+      CLASSIFICATION_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
+      - name: Stop after a failed classification run
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success'
+        run: |
+          echo "Classification workflow did not succeed: ${{ github.event.workflow_run.conclusion }}"
+          exit 1
+
       - name: Checkout validation source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -42,23 +48,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Resolve latest successful catalog and validation state
+      - name: Resolve latest catalog, discovery, validation, and classification artifacts
         run: |
           mkdir -p validation-input/previous
           catalog_found=false
+          discovery_found=false
           sync_run_ids="$(gh run list --workflow sync-catalog.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
           for run_id in $sync_run_ids; do
-            artifact_dir="/tmp/dsh-catalog-$run_id"
-            if gh run download "$run_id" --name plugin-catalog-snapshot --dir "$artifact_dir" 2>/dev/null \
-              && test -f "$artifact_dir/catalog.json"; then
-              cp "$artifact_dir/catalog.json" validation-input/catalog.json
+            catalog_dir="/tmp/dsh-catalog-$run_id"
+            if test "$catalog_found" = false \
+              && gh run download "$run_id" --name plugin-catalog-snapshot --dir "$catalog_dir" 2>/dev/null \
+              && test -f "$catalog_dir/catalog.json"; then
+              cp "$catalog_dir/catalog.json" validation-input/catalog.json
               catalog_found=true
-              break
             fi
+            discovery_dir="/tmp/dsh-discovery-$run_id"
+            if test "$discovery_found" = false \
+              && gh run download "$run_id" --name plugin-discovery-snapshot --dir "$discovery_dir" 2>/dev/null \
+              && test -f "$discovery_dir/discovery.json"; then
+              cp "$discovery_dir/discovery.json" validation-input/discovery.json
+              discovery_found=true
+            fi
+            if test "$catalog_found" = true && test "$discovery_found" = true; then break; fi
           done
-          if test "$catalog_found" = false; then
-            cp src/data/catalog.json validation-input/catalog.json
-          fi
+          if test "$catalog_found" = false; then cp src/data/catalog.json validation-input/catalog.json; fi
+          if test "$discovery_found" = false; then cp validation-input/catalog.json validation-input/discovery.json; fi
 
           state_found=false
           validation_run_ids="$(gh run list --workflow validate-plugins.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
@@ -79,21 +93,38 @@ jobs:
             cp src/data/validation.json validation-input/previous-validation.json
           fi
 
-      - name: Select full or incremental validation set
-        id: selection
-        run: |
-          previous_args=()
-          if test "$FORCE_FULL" != "true" && test -f validation-input/previous/state.json; then
-            previous_args=(--previous validation-input/previous/state.json)
+          classification_found=false
+          if test -n "$CLASSIFICATION_RUN_ID"; then
+            completed_run_ids="$CLASSIFICATION_RUN_ID"
+          else
+            completed_run_ids="$(gh run list --workflow classify-plugins.yml --branch "$CLASSIFICATION_BRANCH" --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
           fi
-          npm run --silent validate:select -- \
-            --catalog validation-input/catalog.json \
-            --baseline validation/baseline.json \
-            --previous-feed validation-input/previous-validation.json \
-            --output validation-input/selection.json \
-            --shard-count 20 \
-            "${previous_args[@]}" > validation-input/selection-summary.json
-          node -e 'const fs=require("fs"); const summary=JSON.parse(fs.readFileSync("validation-input/selection-summary.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,"has_changes="+String(summary.repositoryCount>0)+"\nfirst_run="+String(summary.firstRun)+"\nshards="+JSON.stringify(summary.shards)+"\n")'
+          for run_id in $completed_run_ids; do
+            run_metadata="$(gh run view "$run_id" --json workflowName,headBranch,status,conclusion 2>/dev/null || true)"
+            if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | EXPECTED_BRANCH="$CLASSIFICATION_BRANCH" node -e '
+              const fs = require("node:fs")
+              const metadata = JSON.parse(fs.readFileSync(0, "utf8"))
+              process.exit(metadata.workflowName === "Classify plugins"
+                && metadata.headBranch === process.env.EXPECTED_BRANCH
+                && metadata.status === "completed"
+                && ["success", "failure", "cancelled", "timed_out"].includes(metadata.conclusion) ? 0 : 1)
+            '; then
+              continue
+            fi
+            artifact_dir="/tmp/dsh-classification-state-$run_id"
+            if gh run download "$run_id" --name plugin-classification-state --dir "$artifact_dir" 2>/dev/null \
+              && test -f "$artifact_dir/source-classification.json" \
+              && test -f "$artifact_dir/validation-catalog.json"; then
+              cp "$artifact_dir/source-classification.json" validation-input/source-classification.json
+              cp "$artifact_dir/validation-catalog.json" validation-input/validation-catalog.json
+              classification_found=true
+              break
+            fi
+          done
+          if test "$classification_found" = false; then
+            echo 'No completed classified validation catalog is available; validation is deferred.' >&2
+            exit 1
+          fi
 
       - name: Upload immutable validation input
         uses: actions/upload-artifact@v4
@@ -103,13 +134,15 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  baseline:
+  select:
     needs: prepare
-    if: needs.prepare.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
+    outputs:
+      has_changes: ${{ steps.selection.outputs.has_changes }}
+      first_run: ${{ steps.selection.outputs.first_run }}
+      shards: ${{ steps.selection.outputs.shards }}
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.force_full || false }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v4
@@ -119,6 +152,57 @@ jobs:
         with:
           name: plugin-validation-input
           path: validation-input
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Select full or incremental validation set from classified catalog
+        id: selection
+        run: |
+          previous_args=()
+          if test "$FORCE_FULL" != "true" && test -f validation-input/previous/state.json; then
+            previous_args=(--previous validation-input/previous/state.json)
+          fi
+          npm run --silent validate:select -- \
+            --catalog validation-input/validation-catalog.json \
+            --baseline validation/baseline.json \
+            --previous-feed validation-input/previous-validation.json \
+            --output validation-input/selection.json \
+            --shard-count 20 \
+            "${previous_args[@]}" > validation-input/selection-summary.json
+          node -e 'const fs=require("fs"); const summary=JSON.parse(fs.readFileSync("validation-input/selection-summary.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,"has_changes="+String(summary.repositoryCount>0)+"\nfirst_run="+String(summary.firstRun)+"\nshards="+JSON.stringify(summary.shards)+"\n")'
+
+      - name: Upload classified validation selection
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-validation-selection
+          path: validation-input/selection.json
+          if-no-files-found: error
+          retention-days: 30
+
+  baseline:
+    needs: select
+    if: needs.select.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout validation source
+        uses: actions/checkout@v4
+
+      - name: Download validation input and selection
+        uses: actions/download-artifact@v4
+        with:
+          pattern: plugin-validation-*
+          path: validation-input
+          merge-multiple: true
 
       - name: Restore catalog snapshot
         run: cp validation-input/catalog.json src/data/catalog.json
@@ -133,14 +217,14 @@ jobs:
         run: npm ci
 
       - name: Run initial 20-target canary serially
-        if: needs.prepare.outputs.first_run == 'true'
+        if: needs.select.outputs.first_run == 'true'
         run: >-
           npm run validate:baseline --
           --output validation/reports/canary
           --limit 0
 
       - name: Reuse compatible canary evidence
-        if: needs.prepare.outputs.first_run != 'true'
+        if: needs.select.outputs.first_run != 'true'
         run: |
           mkdir -p validation/reports/canary
           cp -R validation-input/previous/canary/. validation/reports/canary/
@@ -161,15 +245,15 @@ jobs:
           retention-days: 30
 
   validate:
-    needs: [prepare, baseline]
-    if: needs.prepare.outputs.has_changes == 'true'
+    needs: [select, baseline]
+    if: needs.select.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 4
       matrix:
-        shard: ${{ fromJSON(needs.prepare.outputs.shards) }}
+        shard: ${{ fromJSON(needs.select.outputs.shards) }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DSH_VALIDATION_VERSION: 0.1.0-rc.6
@@ -178,11 +262,12 @@ jobs:
       - name: Checkout validation source
         uses: actions/checkout@v4
 
-      - name: Download validation input
+      - name: Download validation input and selection
         uses: actions/download-artifact@v4
         with:
-          name: plugin-validation-input
+          pattern: plugin-validation-*
           path: validation-input
+          merge-multiple: true
 
       - name: Restore catalog snapshot
         run: cp validation-input/catalog.json src/data/catalog.json
@@ -200,11 +285,12 @@ jobs:
         run: |
           npm run --silent validate:shadow -- \
             --output validation/reports/structure \
+            --discovery validation-input/discovery.json \
             --selection validation-input/selection.json \
             --shard-index "${{ matrix.shard }}" \
             --shard-count 20 \
             --limit 0 | tee /tmp/shadow-summary.json
-          node -e "const result=require('/tmp/shadow-summary.json'); if(result.loadFailures.length || result.reportsWritten !== result.discovered){console.error('P1 shard is incomplete'); process.exit(1)}"
+          node -e "const result=require('/tmp/shadow-summary.json'); if(result.reportsWritten > result.discovered){console.error('P1 reports exceed discovery count'); process.exit(1)}; if(result.loadFailures.length || result.reportsWritten !== result.discovered){console.warn('P1 shard completed with retryable snapshot omissions', JSON.stringify({discovered:result.discovered,reportsWritten:result.reportsWritten,loadFailures:result.loadFailures.map(({repositoryId,code})=>({repositoryId,code}))}))}"
 
       - name: Run selected sandbox candidates serially
         run: >-
@@ -222,19 +308,20 @@ jobs:
           retention-days: 30
 
   promote:
-    needs: [prepare, baseline, validate]
-    if: needs.prepare.outputs.has_changes == 'true' && needs.baseline.result == 'success' && needs.validate.result == 'success'
+    needs: [select, baseline, validate]
+    if: needs.select.outputs.has_changes == 'true' && needs.baseline.result == 'success' && needs.validate.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v4
 
-      - name: Download validation input
+      - name: Download validation input and artifacts
         uses: actions/download-artifact@v4
         with:
-          name: plugin-validation-input
-          path: validation-input
+          pattern: plugin-validation-*
+          path: validation-artifacts
+          merge-multiple: true
 
       - name: Download current canary reports
         uses: actions/download-artifact@v4
@@ -263,16 +350,16 @@ jobs:
           npm run validate:promote --
           --reports validation-artifacts/candidates
           --gate-reports validation-artifacts/canary
-          --previous-feed validation-input/previous-validation.json
+          --previous-feed validation-artifacts/previous-validation.json
           --output validation-state/validation.json
           --publish
 
       - name: Advance validation cursor after completed evidence
         run: >-
           npm run validate:state --
-          --catalog validation-input/catalog.json
-          --previous validation-input/previous/state.json
-          --selection validation-input/selection.json
+          --catalog validation-artifacts/validation-catalog.json
+          --previous validation-artifacts/previous/state.json
+          --selection validation-artifacts/selection.json
           --reports validation-artifacts/candidates
           --output validation-state/state.json
 
@@ -284,14 +371,102 @@ jobs:
       - name: Upload successful validation state
         uses: actions/upload-artifact@v4
         with:
+          name: plugin-validation-publication
+          path: validation-state/
+          if-no-files-found: error
+          retention-days: 30
+
+  validation-archive:
+    needs: [select, validate, promote]
+    if: always() && needs.select.result == 'success' && needs.select.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout validation source
+        uses: actions/checkout@v4
+
+      - name: Download immutable validation input and selection
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-validation-input
+          path: validation-input
+
+      - name: Download classified validation selection
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-validation-selection
+          path: validation-input
+
+      - name: Download completed candidate reports
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: plugin-validation-candidates-*
+          path: validation-reports/candidates
+          merge-multiple: true
+
+      - name: Download published feed and cursor when promotion succeeded
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-validation-publication
+          path: validation-publication
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Merge observed validation outcomes into the central archive
+        continue-on-error: true
+        run: >-
+          npm run validate:archive --
+          --classification validation-input/source-classification.json
+          --discovery validation-input/discovery.json
+          --selection validation-input/selection.json
+          --reports validation-reports/candidates
+          --output validation-state/source-classification.json
+          --validation-catalog validation-state/validation-catalog.json
+          --summary validation-state/validation-summary.json
+
+      - name: Retain a retryable base archive if validation aggregation failed
+        run: |
+          mkdir -p validation-state
+          if test ! -f validation-state/source-classification.json; then cp validation-input/source-classification.json validation-state/source-classification.json; fi
+          if test ! -f validation-state/validation-catalog.json && test -f validation-input/validation-catalog.json; then cp validation-input/validation-catalog.json validation-state/validation-catalog.json; fi
+
+      - name: Advance cursor from every observed terminal report
+        continue-on-error: true
+        run: >-
+          npm run validate:state --
+          --catalog validation-state/validation-catalog.json
+          --previous validation-input/previous/state.json
+          --selection validation-input/selection.json
+          --reports validation-reports/candidates
+          --output validation-state/state.json
+
+      - name: Preserve previous feed and canary when promotion did not publish
+        run: |
+          if test -f validation-publication/validation.json; then cp validation-publication/validation.json validation-state/validation.json; else cp validation-input/previous-validation.json validation-state/validation.json; fi
+          mkdir -p validation-state/canary
+          if find validation-publication/canary -type f -name '*.json' -print -quit 2>/dev/null | grep -q .; then cp -R validation-publication/canary/. validation-state/canary/; else cp -R validation-input/previous/canary/. validation-state/canary/ 2>/dev/null || true; fi
+
+      - name: Upload central validation state even when candidate shards fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
           name: plugin-validation-state
           path: validation-state/
           if-no-files-found: error
           retention-days: 30
 
   checkpoint:
-    needs: prepare
-    if: needs.prepare.outputs.has_changes == 'false'
+    needs: select
+    if: needs.select.outputs.has_changes == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Download validation input
@@ -306,6 +481,7 @@ jobs:
           cp validation-input/previous/state.json validation-state/state.json
           cp validation-input/previous-validation.json validation-state/validation.json
           cp -R validation-input/previous/canary/. validation-state/canary/
+          cp validation-input/source-classification.json validation-state/source-classification.json
 
       - name: Upload unchanged validation state
         uses: actions/upload-artifact@v4

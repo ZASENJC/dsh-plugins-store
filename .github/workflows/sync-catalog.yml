@@ -1,8 +1,9 @@
 name: Sync catalog
 
 on:
-  schedule:
-    - cron: '*/30 * * * *'
+  workflow_run:
+    workflows: [Validate plugins]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -15,10 +16,16 @@ concurrency:
 
 jobs:
   sync:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    env:
+      VALIDATION_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
+      VALIDATION_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -35,14 +42,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           restored=false
-          run_ids="$(gh run list --workflow validate-plugins.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          if test -n "$VALIDATION_RUN_ID"; then
+            run_ids="$VALIDATION_RUN_ID"
+          else
+            run_ids="$(gh run list --workflow validate-plugins.yml --branch "$VALIDATION_BRANCH" --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          fi
           for run_id in $run_ids; do
             run_metadata="$(gh run view "$run_id" --json workflowName,headBranch,status,conclusion 2>/dev/null || true)"
-            if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | node -e '
+            if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | EXPECTED_BRANCH="$VALIDATION_BRANCH" node -e '
               const fs = require("node:fs")
               const metadata = JSON.parse(fs.readFileSync(0, "utf8"))
               process.exit(metadata.workflowName === "Validate plugins"
-                && metadata.headBranch === "main"
+                && metadata.headBranch === process.env.EXPECTED_BRANCH
                 && metadata.status === "completed"
                 && metadata.conclusion === "success" ? 0 : 1)
             '; then
@@ -62,16 +73,65 @@ jobs:
             echo "No prior validation artifact is available; catalog refresh will use the checked-in feed."
           fi
 
+      - name: Restore latest completed source classification archive
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          restored=false
+          for workflow_name in validate-plugins.yml classify-plugins.yml; do
+            if test "$workflow_name" = "validate-plugins.yml"; then
+              if test -n "$VALIDATION_RUN_ID"; then run_ids="$VALIDATION_RUN_ID"; else run_ids="$(gh run list --workflow validate-plugins.yml --branch "$VALIDATION_BRANCH" --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"; fi
+              artifact_name=plugin-validation-state
+            else
+              run_ids="$(gh run list --workflow classify-plugins.yml --branch "$VALIDATION_BRANCH" --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+              artifact_name=plugin-classification-state
+            fi
+            for run_id in $run_ids; do
+              run_metadata="$(gh run view "$run_id" --json workflowName,headBranch,status,conclusion 2>/dev/null || true)"
+              if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | EXPECTED_BRANCH="$VALIDATION_BRANCH" node -e '
+                const fs = require("node:fs")
+                const metadata = JSON.parse(fs.readFileSync(0, "utf8"))
+                process.exit(metadata.headBranch === process.env.EXPECTED_BRANCH
+                  && metadata.status === "completed"
+                  && ["success", "failure", "cancelled", "timed_out"].includes(metadata.conclusion) ? 0 : 1)
+              '; then
+                continue
+              fi
+              artifact_dir="classification-restore/$run_id"
+              if gh run download "$run_id" --name "$artifact_name" --dir "$artifact_dir" 2>/dev/null \
+                && test -f "$artifact_dir/source-classification.json" \
+                && node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$artifact_dir/source-classification.json"; then
+                cp "$artifact_dir/source-classification.json" src/data/source-classification.json
+                restored=true
+                break 2
+              fi
+            done
+          done
+          if test "$restored" = false; then
+            echo "No completed source classification archive is available; catalog refresh will use topic classification."
+          fi
+
       - name: Sync GitHub Topic
         run: npm run sync
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLASSIFICATION_ARCHIVE_PATH: ${{ github.workspace }}/src/data/source-classification.json
+          DISCOVERY_OUTPUT_PATH: ${{ github.workspace }}/validation/discovery.json
 
       - name: Upload immutable catalog snapshot
         uses: actions/upload-artifact@v4
         with:
           name: plugin-catalog-snapshot
           path: src/data/catalog.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload immutable discovery snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-discovery-snapshot
+          path: validation/discovery.json
           if-no-files-found: error
           retention-days: 30
 

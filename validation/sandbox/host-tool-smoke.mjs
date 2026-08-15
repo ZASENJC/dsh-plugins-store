@@ -59,4 +59,18 @@ const apply = typeof module.apply === 'function'
       : null
 if (!apply) throw new Error('Plugin does not export an apply function')
 
-process.stdout.write(`${JSON.stringify({ smokeMode, packageName, entrypoint, apply: true })}\n`)
+// Execute the installed entrypoint with a side-effect-free capability stub. The
+// real DSH profile has already proved installation and activation above; this
+// call catches plugins that cannot initialize against the host plugin contract
+// without exposing host files, credentials, or a Docker socket.
+const noop = (..._args) => noop
+const context = new Proxy(noop, {
+  get: (_target, property) => property === 'logger' ? noop : noop,
+  apply: () => noop,
+})
+await Promise.race([
+  Promise.resolve(apply(context, {})),
+  new Promise((_, reject) => setTimeout(() => reject(new Error('Plugin apply timed out')), 30_000)),
+])
+
+process.stdout.write(`${JSON.stringify({ smokeMode, packageName, entrypoint, apply: true, invoked: true })}\n`)
