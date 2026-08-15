@@ -168,4 +168,39 @@ describe('GitHub catalog discovery filter', () => {
 
     expect(new Set(result.repositories.map(({ id }) => id))).toEqual(new Set([1, 2, 3, 4, 5]))
   })
+
+  it('uses historical date partitions without relying on created sort ordering', async () => {
+    const rows = Array.from({ length: 4 }, (_, index) => repository({
+      id: index + 1,
+      stargazers_count: 1,
+      created_at: `2026-01-0${index + 1}T00:00:00Z`,
+    }))
+    const requests: Array<{ partition: SearchPartition; sort: string }> = []
+    const fetcher = async (
+      page: number,
+      partition: SearchPartition,
+      request: { sort: 'stars' | 'created'; order: 'asc' | 'desc' },
+    ) => {
+      requests.push({ partition, sort: request.sort })
+      const matching = rows.filter((row) => {
+        const createdDay = row.created_at.slice(0, 10)
+        return (partition.createdStart === undefined || createdDay >= partition.createdStart)
+          && (partition.createdEnd === undefined || createdDay <= partition.createdEnd)
+      })
+      const pageSize = 2
+      return {
+        total_count: matching.length,
+        incomplete_results: false,
+        items: matching.slice((page - 1) * pageSize, page * pageSize),
+      }
+    }
+
+    const result = await fetchAllSearchRepositories(fetcher, {
+      maxResultsPerQuery: 3,
+      pageSize: 2,
+    })
+
+    expect(result.repositories.map(({ id }) => id)).toEqual([1, 2, 3, 4])
+    expect(requests.every(({ sort }) => sort === 'stars')).toBe(true)
+  })
 })
