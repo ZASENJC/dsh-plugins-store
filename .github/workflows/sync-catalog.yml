@@ -23,12 +23,12 @@ jobs:
       VALIDATION_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -120,7 +120,7 @@ jobs:
           DISCOVERY_OUTPUT_PATH: ${{ github.workspace }}/validation/discovery.json
 
       - name: Upload immutable catalog snapshot
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-catalog-snapshot
           path: src/data/catalog.json
@@ -128,7 +128,7 @@ jobs:
           retention-days: 30
 
       - name: Upload immutable discovery snapshot
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-discovery-snapshot
           path: validation/discovery.json

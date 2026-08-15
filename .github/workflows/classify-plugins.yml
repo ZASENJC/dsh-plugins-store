@@ -30,10 +30,10 @@ jobs:
       FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.force_full || false }}
     steps:
       - name: Checkout classification source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -103,7 +103,7 @@ jobs:
           node -e 'const fs=require("fs"); const summary=JSON.parse(fs.readFileSync("validation-input/classification-summary.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,"has_changes="+String(summary.repositoryCount>0)+"\nshards="+JSON.stringify(summary.shards)+"\n")'
 
       - name: Upload immutable classification input
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-classification-input
           path: validation-input/
@@ -122,16 +122,16 @@ jobs:
         shard: ${{ fromJSON(needs.prepare.outputs.classification_shards) }}
     steps:
       - name: Checkout classification source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download classification input
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-classification-input
           path: validation-input
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -151,7 +151,7 @@ jobs:
 
       - name: Upload source classification shard
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-source-classification-${{ matrix.shard }}
           path: validation/classification-reports/
@@ -165,24 +165,24 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout classification source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download classification input
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-classification-input
           path: validation-input
 
       - name: Download completed classification shards
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: plugin-source-classification-*
           path: validation/classification-reports
           merge-multiple: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -211,7 +211,7 @@ jobs:
 
       - name: Upload source classification state for every completed run
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-classification-state
           path: validation-state/

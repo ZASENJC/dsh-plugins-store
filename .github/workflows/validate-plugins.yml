@@ -35,12 +35,12 @@ jobs:
           exit 1
 
       - name: Checkout validation source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -127,7 +127,7 @@ jobs:
           fi
 
       - name: Upload immutable validation input
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-validation-input
           path: validation-input/
@@ -145,16 +145,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout validation source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download validation input
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-validation-input
           path: validation-input
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -179,7 +179,7 @@ jobs:
           node -e 'const fs=require("fs"); const summary=JSON.parse(fs.readFileSync("validation-input/selection-summary.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,"has_changes="+String(summary.repositoryCount>0)+"\nfirst_run="+String(summary.firstRun)+"\nshards="+JSON.stringify(summary.shards)+"\n")'
 
       - name: Upload classified validation selection
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-validation-selection
           path: validation-input/selection.json
@@ -195,10 +195,10 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout validation source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download validation input and selection
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: plugin-validation-*
           path: validation-input
@@ -208,7 +208,7 @@ jobs:
         run: cp validation-input/catalog.json src/data/catalog.json
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -237,7 +237,7 @@ jobs:
 
       - name: Upload current canary reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-validation-canary-current
           path: validation/reports/canary/
@@ -260,10 +260,10 @@ jobs:
       VALIDATOR_VERSION: 0.1.2
     steps:
       - name: Checkout validation source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download validation input and selection
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: plugin-validation-*
           path: validation-input
@@ -273,7 +273,7 @@ jobs:
         run: cp validation-input/catalog.json src/data/catalog.json
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -300,7 +300,7 @@ jobs:
 
       - name: Upload sanitized structure and runtime reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-validation-candidates-${{ matrix.shard }}
           path: validation/reports/
@@ -314,30 +314,30 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout validation source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download validation input and artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: plugin-validation-*
           path: validation-artifacts
           merge-multiple: true
 
       - name: Download current canary reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-validation-canary-current
           path: validation-artifacts/canary
 
       - name: Download candidate reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: plugin-validation-candidates-*
           path: validation-artifacts/candidates
           merge-multiple: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -369,7 +369,7 @@ jobs:
           cp -R validation-artifacts/canary/. validation-state/canary/
 
       - name: Upload successful validation state
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-validation-publication
           path: validation-state/
@@ -383,23 +383,23 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout validation source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download immutable validation input and selection
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-validation-input
           path: validation-input
 
       - name: Download classified validation selection
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-validation-selection
           path: validation-input
 
       - name: Download completed candidate reports
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: plugin-validation-candidates-*
           path: validation-reports/candidates
@@ -407,13 +407,13 @@ jobs:
 
       - name: Download published feed and cursor when promotion succeeded
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-validation-publication
           path: validation-publication
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -457,7 +457,7 @@ jobs:
 
       - name: Upload central validation state even when candidate shards fail
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-validation-state
           path: validation-state/
@@ -470,7 +470,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download validation input
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: plugin-validation-input
           path: validation-input
@@ -484,7 +484,7 @@ jobs:
           cp validation-input/source-classification.json validation-state/source-classification.json
 
       - name: Upload unchanged validation state
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: plugin-validation-state
           path: validation-state/

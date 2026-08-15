@@ -81,7 +81,7 @@ describe('decoupled incremental validation workflows', () => {
     expect(workflow).toContain('--gate-reports')
     expect(workflow).toContain('--previous-feed')
     expect(workflow).toContain('--publish')
-    expect(workflow).toMatch(/- name: Upload current canary reports\s+if: always\(\)\s+uses: actions\/upload-artifact@v4/)
+    expect(workflow).toMatch(/- name: Upload current canary reports\s+if: always\(\)\s+uses: actions\/upload-artifact@v6/)
     expect(workflow).not.toMatch(/issues:\s*write/)
     expect(workflow).not.toMatch(/git\s+(add|commit|push)/)
     expect(workflow).not.toContain('DEPLOY_SSH_KEY')
