@@ -9,10 +9,11 @@ const detailSource = readFileSync(
 )
 
 describe('plugin detail local DSH installation', () => {
-  it('offers a local DSH handoff only for installable project types', () => {
-    expect(detailSource).toContain('buildLocalDshInstallUrl(repository.fullName)')
+  it('offers a local DSH handoff only for recognized executable README references', () => {
+    expect(detailSource).toContain('buildLocalDshInstallUrl(repository.id)')
     expect(detailSource).toContain('href={localDshInstallUrl}')
     expect(detailSource).toContain('在 DSH 中安装')
-    expect(detailSource).toContain('showInstallReference &&')
+    expect(detailSource).toContain('hasInstallReference &&')
+    expect(detailSource).toContain('repository.install?.status === \'recognized\'')
   })
 })

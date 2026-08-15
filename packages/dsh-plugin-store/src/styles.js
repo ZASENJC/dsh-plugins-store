@@ -179,19 +179,20 @@ export const styles = String.raw`
 }
 
 .dps-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
 .dps-card {
   position: relative;
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 174px;
+  min-height: 0;
   overflow: hidden;
   padding: 14px;
   border: 1px solid var(--dsw-alias-border-l1);
@@ -234,6 +235,10 @@ export const styles = String.raw`
   gap: 10px;
 }
 
+.dps-card-head {
+  flex: 1 1 240px;
+}
+
 .dps-card-title {
   flex: 1 1 auto;
   min-width: 0;
@@ -254,6 +259,7 @@ export const styles = String.raw`
 }
 
 .dps-card-repo {
+  flex: 0 1 180px;
   margin: 0;
   overflow: hidden;
   color: var(--dsw-alias-label-tertiary);
@@ -264,6 +270,7 @@ export const styles = String.raw`
 }
 
 .dps-card-description {
+  flex: 2 1 260px;
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
@@ -277,6 +284,7 @@ export const styles = String.raw`
 }
 
 .dps-badges {
+  flex: 2 1 240px;
   flex-wrap: wrap;
   gap: 5px;
 }
@@ -320,7 +328,8 @@ export const styles = String.raw`
 
 .dps-badge[data-kind='validation'][data-status='expired'],
 .dps-badge[data-kind='validation'][data-status='inconclusive'],
-.dps-badge[data-kind='validation'][data-status='sandbox-pending'] {
+.dps-badge[data-kind='validation'][data-status='sandbox-pending'],
+.dps-badge[data-kind='validation'][data-status='security-review'] {
   color: #d89450;
   background: color-mix(in srgb, #d89450 14%, transparent);
 }
@@ -370,6 +379,20 @@ export const styles = String.raw`
   flex: 0 0 auto;
   min-width: 0;
   gap: 2px;
+}
+
+.dps-card-foot {
+  flex: 1 1 100%;
+}
+
+.dps-validation-reason {
+  flex: 1 1 100%;
+  min-width: 0;
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
 }
 
 .dps-install-button {
@@ -502,6 +525,27 @@ body > :has(> .dps-risk-modal) {
   font-weight: 600;
 }
 
+.dps-risk-version {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+}
+
+.dps-risk-version select {
+  min-width: 0;
+  max-width: 100%;
+  height: 28px;
+  border: 1px solid var(--dsw-alias-border-l1);
+  border-radius: 5px;
+  padding: 0 7px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-bg-base);
+  font: inherit;
+}
+
 .dps-risk-repository code,
 .dps-install-output {
   margin: 0;
@@ -539,6 +583,13 @@ body > :has(> .dps-risk-modal) {
 
 .dps-install-status[data-kind='error'] {
   color: var(--dsw-alias-state-error-primary, #df6d6d);
+}
+
+.dps-install-analysis {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .dps-install-output {
@@ -592,9 +643,12 @@ body > :has(> .dps-risk-modal) {
     grid-column: 1 / -1;
   }
 
-  .dps-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  .dps-card-repo,
+  .dps-card-description,
+  .dps-badges,
+  .dps-card-head { flex-basis: 100%; }
+
+  .dps-risk-version { grid-template-columns: 1fr; gap: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

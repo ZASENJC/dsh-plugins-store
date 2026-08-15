@@ -209,6 +209,16 @@ function getEvidence(record: ValidationRecord | undefined, key: 'reportUrl' | 'i
   return record?.sandbox[key] ?? record?.structure[key] ?? null
 }
 
+function buildExpiryReason(record: ValidationRecord, repositoryPushedAt: string): string {
+  const reasons: string[] = []
+  if (record.sourcePushedAt !== repositoryPushedAt) reasons.push('仓库源码已更新')
+  const targetChanged = record.dshVersion !== CURRENT_VALIDATION_TARGET.dshVersion
+    || record.platform !== CURRENT_VALIDATION_TARGET.platform
+    || record.validatorVersion !== CURRENT_VALIDATION_TARGET.validatorVersion
+  if (targetChanged) reasons.push('验证目标已变化')
+  return reasons.join('；') || '验证绑定已失效'
+}
+
 export function buildValidationStatus({
   projectType,
   repositoryPushedAt,
@@ -233,6 +243,7 @@ export function buildValidationStatus({
   let overall: ValidationOverall
   let level: ValidationStatus['level'] = 1
   let stages = defaultStages
+  let reason: string | null = null
   if (!identified) {
     overall = 'unrecognized'
   } else if (!eligible) {
@@ -241,6 +252,7 @@ export function buildValidationStatus({
   } else if (record) {
     stages = { ...defaultStages, structure: record.structure, sandbox: record.sandbox }
     overall = resolveOverall(record)
+    reason = getEvidence(record, 'reason')
     level = record.structure.status === 'passed' ? 3 : 2
     if (record.sandbox.status === 'passed') level = 4
     if (overall === 'verified' && record.sourcePushedAt !== repositoryPushedAt) overall = 'expired'
@@ -249,6 +261,7 @@ export function buildValidationStatus({
       || record.platform !== CURRENT_VALIDATION_TARGET.platform
       || record.validatorVersion !== CURRENT_VALIDATION_TARGET.validatorVersion
     )) overall = 'expired'
+    if (overall === 'expired') reason = buildExpiryReason(record, repositoryPushedAt)
   } else if (legacyVerificationUrl) {
     overall = 'recorded'
     level = 4
@@ -276,7 +289,7 @@ export function buildValidationStatus({
     validatorVersion: record?.validatorVersion ?? null,
     reportUrl: getEvidence(record, 'reportUrl') ?? legacyVerificationUrl,
     issueUrl: getEvidence(record, 'issueUrl'),
-    reason: getEvidence(record, 'reason'),
+    reason,
     stages,
   }
 }

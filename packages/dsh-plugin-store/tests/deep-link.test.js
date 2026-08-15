@@ -6,13 +6,13 @@ describe('local DSH install request', () => {
   it('consumes a fragment request that survives the DSH startup router', () => {
     const replaceState = vi.fn()
 
-    const fullName = consumeLocalInstallRequest({
-      href: 'http://127.0.0.1:3080/?mode=code#view=chat&dsh-plugin-install=owner%2Fplugin',
+    const target = consumeLocalInstallRequest({
+      href: 'http://127.0.0.1:3080/?mode=code#view=chat&dsh-plugin-id=github%3A1',
       historyState: { retained: true },
       replaceState,
     })
 
-    expect(fullName).toBe('owner/plugin')
+    expect(target).toEqual({ repositoryId: 'github:1' })
     expect(replaceState).toHaveBeenCalledWith(
       { retained: true },
       '',
@@ -23,13 +23,13 @@ describe('local DSH install request', () => {
   it('returns a safe repository target and removes only the consumed query parameter', () => {
     const replaceState = vi.fn()
 
-    const fullName = consumeLocalInstallRequest({
-      href: 'http://127.0.0.1:3080/?mode=code&dsh-plugin-install=owner%2Fplugin#session',
+    const target = consumeLocalInstallRequest({
+      href: 'http://127.0.0.1:3080/?mode=code&dsh-plugin-id=github%3A2#session',
       historyState: { retained: true },
       replaceState,
     })
 
-    expect(fullName).toBe('owner/plugin')
+    expect(target).toEqual({ repositoryId: 'github:2' })
     expect(replaceState).toHaveBeenCalledWith(
       { retained: true },
       '',
@@ -38,14 +38,24 @@ describe('local DSH install request', () => {
   })
 
   it.each([
-    'owner',
-    'owner/plugin/extra',
+    'owner plugin',
     'owner/plugin;unsafe',
-  ])('consumes but rejects an unsafe repository target: %s', (fullName) => {
+    '../owner/plugin',
+  ])('consumes but rejects an unsafe catalog ID: %s', (repositoryId) => {
     const replaceState = vi.fn()
-    const href = `http://127.0.0.1:3080/?dsh-plugin-install=${encodeURIComponent(fullName)}`
+    const href = `http://127.0.0.1:3080/?dsh-plugin-id=${encodeURIComponent(repositoryId)}`
 
     expect(consumeLocalInstallRequest({ href, replaceState })).toBeNull()
+    expect(replaceState).toHaveBeenCalledWith(undefined, '', '/')
+  })
+
+  it('rejects a request without a catalog ID', () => {
+    const replaceState = vi.fn()
+
+    expect(consumeLocalInstallRequest({
+      href: 'http://127.0.0.1:3080/?dsh-plugin-id=owner%20plugin',
+      replaceState,
+    })).toBeNull()
     expect(replaceState).toHaveBeenCalledWith(undefined, '', '/')
   })
 

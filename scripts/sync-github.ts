@@ -7,10 +7,12 @@ import {
   VERIFIED_REPOSITORY_OVERRIDES,
   type GitHubRepository,
 } from '../src/lib/catalog'
+import { classifyRepository } from '../src/lib/classification'
 import {
   extractAwesomeRepositoryNames,
   extractVerifiedRepositoryNames,
 } from '../src/lib/github-content'
+import { extractInstallReference, type InstallReference } from '../src/lib/install-reference'
 import { parseValidationFeed } from '../src/lib/validation'
 
 const SEARCH_URL = 'https://api.github.com/search/repositories'
@@ -20,6 +22,8 @@ const VERIFY_REPOSITORY = 'qing3a/dsh-plugin-verify'
 const PAGE_SIZE = 100
 const MAX_SEARCH_RESULTS = 1_000
 const MAX_SEARCH_PASSES = 3
+const README_CONCURRENCY = 8
+const README_TIMEOUT_MS = 12_000
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputPath = resolve(root, 'src/data/catalog.json')
 const validationPath = resolve(root, 'src/data/validation.json')
@@ -46,6 +50,53 @@ async function fetchRenderedReadme(fullName: string): Promise<Response> {
   return fetch(`${API_URL}/repos/${repositoryPath}/readme`, {
     headers: getHeaders('application/vnd.github.html+json'),
   })
+}
+
+function canHaveInstallReference(repository: GitHubRepository): boolean {
+  const classification = classifyRepository({
+    fullName: repository.full_name,
+    name: repository.name,
+    description: repository.description ?? '',
+    topics: repository.topics ?? [],
+  })
+  return new Set(['plugin', 'skill', 'collection', 'channel']).has(classification.projectType)
+}
+
+async function fetchRawReadme(repository: GitHubRepository): Promise<string | null> {
+  const repositoryPath = repository.full_name.split('/').map(encodeURIComponent).join('/')
+  const branch = encodeURIComponent(repository.default_branch || 'main')
+  for (const filename of ['README.md', 'README', 'readme.md']) {
+    try {
+      const response = await fetch(
+        `https://raw.githubusercontent.com/${repositoryPath}/${branch}/${filename}`,
+        { signal: AbortSignal.timeout(README_TIMEOUT_MS) },
+      )
+      if (response.ok) return response.text()
+    } catch {
+      // README evidence is best-effort and must never block catalog publication.
+    }
+  }
+  return null
+}
+
+async function fetchInstallReferences(repositories: GitHubRepository[]): Promise<ReadonlyMap<number, InstallReference>> {
+  const candidates = repositories.filter(canHaveInstallReference)
+  const references = new Map<number, InstallReference>()
+  let cursor = 0
+
+  async function worker() {
+    while (cursor < candidates.length) {
+      const repository = candidates[cursor]
+      cursor += 1
+      const readme = await fetchRawReadme(repository)
+      if (readme === null) continue
+      const reference = extractInstallReference(readme)
+      if (reference.status !== 'unrecognized') references.set(repository.id, reference)
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(README_CONCURRENCY, candidates.length) }, () => worker()))
+  return references
 }
 
 async function fetchPage(page: number): Promise<SearchResponse> {
@@ -107,6 +158,7 @@ async function sync() {
   }
   const awesomeRepositoryNames = extractAwesomeRepositoryNames(await awesomeResponse.text())
   const verifiedRepositoryNames = extractVerifiedRepositoryNames(await verifyResponse.text())
+  const installReferences = await fetchInstallReferences(repositories)
   const generatedAt = new Date().toISOString()
   const catalog = buildCatalog(
     repositories,
@@ -115,6 +167,7 @@ async function sync() {
     awesomeRepositoryNames,
     verifiedRepositoryNames,
     validationRecords,
+    installReferences,
   )
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
@@ -125,6 +178,7 @@ async function sync() {
   console.log(`Awesome 有效收录 ${awesomeRepositoryNames.size} 个仓库名；商店匹配 ${catalog.repositories.filter((repository) => repository.awesomeListed).length} 个`)
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
   console.log(`验证状态文件匹配 ${validationRecords.size} 个仓库；当前完整验证 ${catalog.stats.validationStatuses.verified ?? 0} 个`)
+  console.log(`README 安装特征匹配 ${installReferences.size} 个仓库；失败或无明确命令不影响目录同步`)
   console.log(`已同步 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}${warning}`)
 }
 

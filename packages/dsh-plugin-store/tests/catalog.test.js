@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 
 import {
   CatalogStore,
+  DEFAULT_CATALOG_URLS,
   buildInstallCommand,
+  buildInstallPlan,
   filterCatalogRepositories,
   formatCompactNumber,
 } from '../src/catalog.js'
@@ -20,6 +22,17 @@ const repositories = [
     pushedAt: '2026-08-14T00:00:00Z',
     verified: true,
     validation: { overall: 'verified', label: '已验证', sourceSha: 'a'.repeat(40) },
+    install: {
+      status: 'recognized',
+      candidate: {
+        source: 'github',
+        target: 'owner/verified-ui',
+        command: `dsh plugin --profile web add github:owner/verified-ui#${'a'.repeat(40)}`,
+        args: ['plugin', '--profile', 'web', 'add', `github:owner/verified-ui#${'a'.repeat(40)}`],
+        executable: true,
+        evidence: { source: 'readme', pattern: 'dsh-plugin-add', heading: 'Install' },
+      },
+    },
   },
   {
     repositoryId: 2,
@@ -105,14 +118,71 @@ describe('plugin catalog filtering', () => {
     }).map(({ repositoryId }) => repositoryId)).toEqual([1])
   })
 
-  it('only offers the existing reference command for install-shaped project types', () => {
+  it('only offers a pinned command for currently verified install-shaped project types', () => {
     expect(buildInstallCommand(repositories[0])).toBe(
       `dsh plugin --profile web add github:owner/verified-ui#${'a'.repeat(40)}`,
     )
-    expect(buildInstallCommand(repositories[1])).toBe(
-      'dsh plugin --profile web add github:owner/search-skill',
-    )
+    expect(buildInstallPlan(repositories[0])).toMatchObject({
+      source: 'github',
+      target: 'owner/verified-ui',
+      args: ['plugin', '--profile', 'web', 'add', `github:owner/verified-ui#${'a'.repeat(40)}`],
+    })
+    expect(buildInstallCommand(repositories[1])).toBeNull()
     expect(buildInstallCommand(repositories[2])).toBeNull()
+  })
+
+  it('never manufactures an unpinned GitHub command', () => {
+    const plan = buildInstallPlan(repositories[0])
+    expect(plan?.args[4]).toBe(`github:owner/verified-ui#${'a'.repeat(40)}`)
+    expect(plan?.command).not.toBe('dsh plugin --profile web add github:owner/verified-ui')
+    expect(buildInstallPlan({
+      ...repositories[0],
+      install: {
+        status: 'recognized',
+        candidate: {
+          ...repositories[0].install.candidate,
+          target: 'owner/other-repository',
+        },
+      },
+    })).toBeNull()
+  })
+
+  it('shows an npm README command while withholding host execution when it is display-only', () => {
+    const npmRepository = {
+      ...repositories[0],
+      repositoryId: 5,
+      fullName: 'owner/npm-plugin',
+      install: {
+        status: 'recognized',
+        candidate: {
+          source: 'npm',
+          target: 'dsh-example',
+          command: 'npm install dsh-example',
+          args: [],
+          executable: false,
+          evidence: { source: 'readme', pattern: 'package-manager-add', heading: 'Install' },
+        },
+      },
+    }
+
+    expect(buildInstallCommand(npmRepository)).toBe('npm install dsh-example')
+    expect(buildInstallPlan(npmRepository)).toBeNull()
+  })
+
+  it('does not fall back to a repository full name without README evidence', () => {
+    expect(buildInstallCommand({
+      ...repositories[0],
+      install: undefined,
+    })).toBeNull()
+  })
+
+  it('rejects a verified catalog row without a complete source SHA', () => {
+    const repository = {
+      ...repositories[0],
+      validation: { overall: 'verified', sourceSha: 'main' },
+    }
+    expect(buildInstallCommand(repository)).toBe(repositories[0].install.candidate.command)
+    expect(buildInstallPlan(repository)).toBeNull()
   })
 
   it('uses deterministic name and recommended tie breakers for stable mounted views', () => {
@@ -152,32 +222,24 @@ describe('plugin catalog filtering', () => {
 })
 
 describe('remote catalog state', () => {
-  it('falls back to the secondary public source and shares one successful snapshot', async () => {
-    const fetcher = vi.fn()
-      .mockResolvedValueOnce({ ok: false, status: 404 })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          schemaVersion: 1,
-          generatedAt: '2026-08-14T00:00:00Z',
-          stats: { fetched: 3, verified: 1 },
-          repositories,
-        }),
-      })
-    const store = new CatalogStore({
-      fetcher,
-      urls: ['https://primary.example/catalog.json', 'https://fallback.example/catalog.json'],
-    })
+  it('uses only the primary market API', async () => {
+    expect(DEFAULT_CATALOG_URLS).toEqual(['https://dsh.aitreez.com/catalog.json'])
+    const fetcher = vi.fn().mockResolvedValue({ ok: false, status: 503 })
+    const store = new CatalogStore({ fetcher })
     const listener = vi.fn()
     const unsubscribe = store.subscribe(listener)
 
     await store.load()
 
-    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://dsh.aitreez.com/catalog.json',
+      { headers: { Accept: 'application/json' } },
+    )
     expect(store.getSnapshot()).toMatchObject({
-      status: 'ready',
-      catalog: { repositories },
-      error: null,
+      status: 'error',
+      catalog: null,
+      error: '目录请求失败 (503)',
     })
     expect(listener).toHaveBeenCalled()
     unsubscribe()
@@ -199,14 +261,10 @@ describe('remote catalog state', () => {
   })
 
   it('rejects malformed responses and reports non-Error failures without trusting them', async () => {
-    const fetcher = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => null })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ schemaVersion: 2, repositories }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ schemaVersion: 1 }) })
-      .mockRejectedValueOnce('network unavailable')
+    const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => null })
     const store = new CatalogStore({
       fetcher,
-      urls: ['one', 'two', 'three', 'four'],
+      urls: ['one'],
     })
 
     await store.load()
@@ -214,7 +272,7 @@ describe('remote catalog state', () => {
     expect(store.getSnapshot()).toMatchObject({
       status: 'error',
       catalog: null,
-      error: 'network unavailable',
+      error: '目录响应格式无效',
     })
     expect(() => new CatalogStore({ fetcher: null })).toThrow('当前环境不支持目录请求')
   })

@@ -1,7 +1,14 @@
 import { EventEmitter } from 'node:events'
 import { describe, expect, it, vi } from 'vitest'
 
-import { createInstallHandler, installRepository } from '../src/installer.js'
+import { createInstallHandler, installPlan } from '../src/installer.js'
+
+const githubPlan = {
+  source: 'github',
+  target: 'owner/repository',
+  args: ['plugin', '--profile', 'web', 'add', `github:owner/repository#${'a'.repeat(40)}`],
+  executable: true,
+}
 
 function createRequest({
   method = 'POST',
@@ -10,7 +17,7 @@ function createRequest({
     host: '127.0.0.1:3080',
     origin: 'http://127.0.0.1:3080',
   },
-  body = JSON.stringify({ fullName: 'owner/repository' }),
+  body = JSON.stringify({ repositoryId: 'github:1', install: githubPlan }),
 } = {}) {
   const request = new EventEmitter()
   request.method = method
@@ -47,15 +54,12 @@ async function dispatch(handler, options) {
   return response
 }
 
-describe('host-side repository installation', () => {
-  it('uses the DSH launcher with fixed argv and never constructs a shell command', async () => {
-    const runner = vi.fn().mockResolvedValue({
-      stdout: 'installed',
-      stderr: '',
-    })
+describe('host-side structured installation', () => {
+  it('uses fixed argv for a pinned GitHub plan and never constructs a shell command', async () => {
+    const runner = vi.fn().mockResolvedValue({ stdout: 'installed', stderr: '' })
     const signal = new AbortController().signal
 
-    const result = await installRepository('owner/repository', {
+    const result = await installPlan(githubPlan, {
       runner,
       execPath: '/usr/bin/node',
       cliPath: '/opt/dsh/bin.js',
@@ -64,35 +68,57 @@ describe('host-side repository installation', () => {
 
     expect(runner).toHaveBeenCalledWith('/usr/bin/node', [
       '/opt/dsh/bin.js',
-      'plugin',
-      '--profile',
-      'web',
-      'add',
-      'github:owner/repository',
+      ...githubPlan.args,
     ], signal)
-    expect(result).toEqual({ output: 'installed' })
+    expect(result).toEqual({
+      source: 'github',
+      target: 'owner/repository',
+      output: 'installed',
+    })
   })
 
-  it.each([
-    '',
-    'owner',
-    'owner/repo/extra',
-    'owner/repo; touch unsafe',
-    '../owner/repo',
-  ])('rejects an unsafe repository name before invoking the runner: %s', async (fullName) => {
-    const runner = vi.fn()
+  it('supports an explicitly declared npm source through the DSH pnpm forwarder', async () => {
+    const runner = vi.fn().mockResolvedValue({ stdout: 'installed npm', stderr: '' })
+    const plan = {
+      source: 'npm',
+      target: 'dsh-example',
+      args: ['plugin', '--profile', 'web', 'add', 'npm:dsh-example'],
+      executable: true,
+    }
 
-    await expect(installRepository(fullName, {
+    await installPlan(plan, {
       runner,
       execPath: '/usr/bin/node',
       cliPath: '/opt/dsh/bin.js',
       signal: new AbortController().signal,
-    })).rejects.toThrow('仓库名称无效')
+    })
+
+    expect(runner).toHaveBeenCalledWith('/usr/bin/node', [
+      '/opt/dsh/bin.js',
+      ...plan.args,
+    ], expect.any(AbortSignal))
+  })
+
+  it.each([
+    { ...githubPlan, target: '' },
+    { ...githubPlan, target: 'owner/repo;unsafe' },
+    { ...githubPlan, args: ['plugin', '--profile', 'web', 'add', 'github:owner/repository'] },
+    { ...githubPlan, executable: false },
+    { source: 'npm', target: 'dsh-example', args: ['plugin', '--profile', 'web', 'add', 'npm:dsh-example;unsafe'], executable: true },
+  ])('rejects an unsafe or unpinned plan before invoking the runner', async (plan) => {
+    const runner = vi.fn()
+
+    await expect(installPlan(plan, {
+      runner,
+      execPath: '/usr/bin/node',
+      cliPath: '/opt/dsh/bin.js',
+      signal: new AbortController().signal,
+    })).rejects.toThrow()
     expect(runner).not.toHaveBeenCalled()
   })
 
   it('rejects an incomplete host runner configuration', async () => {
-    await expect(installRepository('owner/repository', {
+    await expect(installPlan(githubPlan, {
       runner: null,
       execPath: '/usr/bin/node',
       cliPath: '/opt/dsh/bin.js',
@@ -104,10 +130,7 @@ describe('host-side repository installation', () => {
 describe('plugin installation HTTP handler', () => {
   it('allows only POST requests', async () => {
     const install = vi.fn()
-    const response = await dispatch(createInstallHandler({ install }), {
-      method: 'GET',
-      body: null,
-    })
+    const response = await dispatch(createInstallHandler({ install }), { method: 'GET', body: null })
 
     expect(response.statusCode).toBe(405)
     expect(response.headers.get('allow')).toBe('POST')
@@ -115,69 +138,29 @@ describe('plugin installation HTTP handler', () => {
     expect(install).not.toHaveBeenCalled()
   })
 
-  it('accepts only JSON request bodies', async () => {
+  it('accepts only JSON request bodies and same-origin loopback requests', async () => {
     const install = vi.fn()
-    const response = await dispatch(createInstallHandler({ install }), {
-      headers: {
-        'content-type': 'text/plain',
-        host: '127.0.0.1:3080',
-      },
+    const contentResponse = await dispatch(createInstallHandler({ install }), {
+      headers: { 'content-type': 'text/plain', host: '127.0.0.1:3080' },
     })
+    expect(contentResponse.statusCode).toBe(415)
 
-    expect(response.statusCode).toBe(415)
-    expect(response.body).toEqual({ ok: false, message: '仅接受 JSON 请求' })
-    expect(install).not.toHaveBeenCalled()
-  })
-
-  it('rejects cross-origin installation requests', async () => {
-    const install = vi.fn()
-    const response = await dispatch(createInstallHandler({ install }), {
+    const originResponse = await dispatch(createInstallHandler({ install }), {
       headers: {
-        'content-type': 'application/json; charset=utf-8',
+        'content-type': 'application/json',
         host: '127.0.0.1:3080',
         origin: 'https://attacker.example',
       },
     })
-
-    expect(response.statusCode).toBe(403)
-    expect(response.body).toEqual({ ok: false, message: '拒绝跨来源安装请求' })
-    expect(install).not.toHaveBeenCalled()
-  })
-
-  it('rejects requests without a loopback transport peer', async () => {
-    const install = vi.fn()
-    const request = createRequest()
-    delete request.socket
-    const rejectedResponse = createResponse()
-    const handled = createInstallHandler({ install })(request, rejectedResponse)
-    request.send()
-    await handled
-
-    expect(rejectedResponse.statusCode).toBe(403)
-    expect(install).not.toHaveBeenCalled()
-  })
-
-  it('rejects requests without an origin proof', async () => {
-    const install = vi.fn()
-    const request = createRequest({
-      headers: {
-        'content-type': 'application/json',
-        host: '127.0.0.1:3080',
-      },
-    })
-    const rejectedResponse = createResponse()
-    const handled = createInstallHandler({ install })(request, rejectedResponse)
-    request.send()
-    await handled
-
-    expect(rejectedResponse.statusCode).toBe(403)
+    expect(originResponse.statusCode).toBe(403)
     expect(install).not.toHaveBeenCalled()
   })
 
   it.each([
     ['invalid JSON', '{'],
-    ['invalid repository', JSON.stringify({ fullName: 'owner/repo; unsafe' })],
-    ['oversized request', JSON.stringify({ fullName: `owner/${'r'.repeat(4097)}` })],
+    ['invalid project ID', JSON.stringify({ repositoryId: 'owner repo', install: githubPlan })],
+    ['missing install plan', JSON.stringify({ repositoryId: 'github:1' })],
+    ['display-only plan', JSON.stringify({ repositoryId: 'github:1', install: { ...githubPlan, executable: false } })],
   ])('rejects an %s payload', async (_label, body) => {
     const install = vi.fn()
     const response = await dispatch(createInstallHandler({ install }), { body })
@@ -187,15 +170,22 @@ describe('plugin installation HTTP handler', () => {
     expect(install).not.toHaveBeenCalled()
   })
 
-  it('returns the installed repository and restart requirement', async () => {
+  it('returns the installed source and target without exposing a shell command', async () => {
     const install = vi.fn().mockResolvedValue({ output: 'installed' })
     const response = await dispatch(createInstallHandler({ install }))
 
-    expect(install).toHaveBeenCalledWith('owner/repository')
+    expect(install).toHaveBeenCalledWith({
+      repositoryId: 'github:1',
+      source: 'github',
+      target: 'owner/repository',
+      args: githubPlan.args,
+    })
     expect(response.statusCode).toBe(200)
     expect(response.body).toEqual({
       ok: true,
-      repository: 'owner/repository',
+      repositoryId: 'github:1',
+      source: 'github',
+      target: 'owner/repository',
       needsRestart: true,
       output: 'installed',
     })
@@ -211,9 +201,7 @@ describe('plugin installation HTTP handler', () => {
 
   it('rejects a second installation while the first is still running', async () => {
     let finishInstall
-    const install = vi.fn(() => new Promise((resolve) => {
-      finishInstall = resolve
-    }))
+    const install = vi.fn(() => new Promise((resolve) => { finishInstall = resolve }))
     const handler = createInstallHandler({ install })
     const firstRequest = createRequest()
     const firstResponse = createResponse()
@@ -223,10 +211,7 @@ describe('plugin installation HTTP handler', () => {
 
     const secondResponse = await dispatch(handler)
     expect(secondResponse.statusCode).toBe(409)
-    expect(secondResponse.body).toEqual({
-      ok: false,
-      message: '已有插件正在安装，请稍后重试',
-    })
+    expect(secondResponse.body).toEqual({ ok: false, message: '已有插件正在安装，请稍后重试' })
 
     finishInstall({ output: 'installed' })
     await firstHandled

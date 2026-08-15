@@ -16,26 +16,30 @@ import {
   PROJECT_TYPE_LABELS,
   VALIDATION_STATUS_IDS,
   buildInstallCommand,
+  buildInstallPlan,
   filterCatalogRepositories,
   formatCompactNumber,
 } from './catalog.js'
+import { sendInstallFailureToAgent } from './agent-analysis.js'
 
 const PAGE_SIZE = 24
 
-function buildExternalInstallTarget(fullName) {
-  if (fullName === null) return null
-  return {
-    repositoryId: `external:${fullName}`,
-    fullName,
-    projectType: 'plugin',
-  }
+function buildExternalInstallTarget(request, repositories) {
+  const repositoryId = typeof request === 'string' ? request : request?.repositoryId
+  if (typeof repositoryId !== 'string') return null
+  const byId = repositories.find((repository) => (
+    String(repository.id ?? `github:${repository.repositoryId}`) === repositoryId
+  ))
+  return byId !== undefined && buildInstallPlan(byId) !== null ? byId : null
 }
 
 function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
   const command = buildInstallCommand(repository)
+  const plan = buildInstallPlan(repository)
   const detailUrl = `https://dsh.aitreez.com/plugins/${repository.repositoryId}`
   const validationState = repository.validation?.overall
     ?? (repository.verified ? 'recorded' : 'check-pending')
+  const validationReason = repository.validation?.reason
 
   return (
     <article className="dps-card">
@@ -55,6 +59,9 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
       </div>
       <p className="dps-card-repo" title={repository.fullName}>{repository.fullName}</p>
       <p className="dps-card-description">{repository.description}</p>
+      {validationReason && (validationState === 'expired' || validationState === 'security-review') && (
+        <p className="dps-validation-reason">{validationReason}</p>
+      )}
       <div className="dps-badges">
         <span className="dps-badge" data-kind="validation" data-status={validationState}>
           {t(`store.validation.${validationState}`)}
@@ -70,17 +77,19 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
         </div>
         {command !== null && (
           <div className="dps-card-actions">
-            <Button
-              className="dps-install-button"
-              size="sm"
-              variant="outline"
-              type="button"
-              disabled={installed}
-              onClick={() => onInstall(repository)}
-            >
-              {installed ? <IconCheckOutline16 size={14} /> : <IconDownloadOutline16 size={14} />}
-              <span>{installed ? t('store.installed') : t('store.install')}</span>
-            </Button>
+            {plan !== null && (
+              <Button
+                className="dps-install-button"
+                size="sm"
+                variant="outline"
+                type="button"
+                disabled={installed}
+                onClick={() => onInstall(repository)}
+              >
+                {installed ? <IconCheckOutline16 size={14} /> : <IconDownloadOutline16 size={14} />}
+                <span>{installed ? t('store.installed') : t('store.install')}</span>
+              </Button>
+            )}
             <button
               className="dps-icon-button"
               type="button"
@@ -97,16 +106,22 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
   )
 }
 
-function InstallRiskModal({ target, onClose, onInstalled, t }) {
+function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, t }) {
   const [acknowledged, setAcknowledged] = React.useState(false)
   const [phase, setPhase] = React.useState('idle')
   const [message, setMessage] = React.useState('')
+  const [analysisPhase, setAnalysisPhase] = React.useState('idle')
 
   React.useEffect(() => {
     setAcknowledged(false)
     setPhase('idle')
     setMessage('')
+    setAnalysisPhase('idle')
   }, [target?.repositoryId])
+
+  const plan = target === null ? null : buildInstallPlan(target)
+  const command = plan?.command ?? (target === null ? '' : buildInstallCommand(target))
+  const finished = phase === 'success'
 
   const close = () => {
     if (phase !== 'installing') onClose()
@@ -114,13 +129,17 @@ function InstallRiskModal({ target, onClose, onInstalled, t }) {
 
   const install = async () => {
     if (target === null || !acknowledged || phase === 'installing') return
+    if (plan === null) return
     setPhase('installing')
     setMessage('')
     try {
       const response = await fetch('/api/dsh-plugin-store/install', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName: target.fullName }),
+        body: JSON.stringify({
+          repositoryId: target.id ?? `github:${target.repositoryId}`,
+          install: plan,
+        }),
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok || body.ok !== true) {
@@ -135,8 +154,23 @@ function InstallRiskModal({ target, onClose, onInstalled, t }) {
     }
   }
 
-  const command = target === null ? '' : buildInstallCommand(target)
-  const finished = phase === 'success'
+  const analyzeWithAgent = async () => {
+    if (target === null || phase !== 'error' || analysisPhase === 'sending' || analysisPhase === 'sent') return
+    setAnalysisPhase('sending')
+    try {
+      await sendInstallFailureToAgent({
+        sessions,
+        workspaces,
+        fullName: target.fullName,
+        install: plan,
+        error: message,
+      })
+      setAnalysisPhase('sent')
+    } catch (error) {
+      setAnalysisPhase('error')
+      setMessage((current) => `${current}\n${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
 
   return (
     <Modal
@@ -191,6 +225,11 @@ function InstallRiskModal({ target, onClose, onInstalled, t }) {
                 <span>{message}</span>
               </p>
             )}
+            {phase === 'error' && (
+              <p className="dps-install-analysis" role="status">
+                {analysisPhase === 'sent' ? t('store.analyzeSent') : analysisPhase === 'sending' ? t('store.analyzing') : analysisPhase === 'error' ? t('store.analyzeFailed') : t('store.analyzeHint')}
+              </p>
+            )}
             {phase === 'success' && message && <pre className="dps-install-output">{message}</pre>}
           </div>
           <footer className="dps-risk-actions">
@@ -201,11 +240,22 @@ function InstallRiskModal({ target, onClose, onInstalled, t }) {
                 <Button size="sm" variant="outline" type="button" disabled={phase === 'installing'} onClick={close}>
                   {t('store.cancel')}
                 </Button>
+                {phase === 'error' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    disabled={analysisPhase === 'sending' || analysisPhase === 'sent'}
+                    onClick={analyzeWithAgent}
+                  >
+                    {analysisPhase === 'sent' ? t('store.analyzeSent') : t('store.analyzeWithAgent')}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="primary"
                   type="button"
-                  disabled={!acknowledged || phase === 'installing'}
+                  disabled={!acknowledged || plan === null || phase === 'installing'}
                   onClick={install}
                 >
                   {phase === 'installing' ? t('store.installing') : t('store.confirmInstall')}
@@ -222,8 +272,10 @@ function InstallRiskModal({ target, onClose, onInstalled, t }) {
 export function StoreView({
   catalogStore,
   mode,
-  requestedInstallFullName = null,
+  requestedInstallTarget = null,
   onInstallRequestConsumed,
+  sessions,
+  workspaces,
   t,
 }) {
   const snapshot = React.useSyncExternalStore(
@@ -237,9 +289,7 @@ export function StoreView({
   const [verifiedOnly, setVerifiedOnly] = React.useState(false)
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE)
   const [copiedId, setCopiedId] = React.useState(null)
-  const [installTarget, setInstallTarget] = React.useState(
-    () => buildExternalInstallTarget(requestedInstallFullName),
-  )
+  const [installTarget, setInstallTarget] = React.useState(null)
   const [installedIds, setInstalledIds] = React.useState(() => new Set())
 
   React.useEffect(() => {
@@ -250,12 +300,12 @@ export function StoreView({
     setVisibleCount(PAGE_SIZE)
   }, [query, category, validation, sort, verifiedOnly])
 
-  React.useEffect(() => {
-    const target = buildExternalInstallTarget(requestedInstallFullName)
-    if (target !== null) setInstallTarget(target)
-  }, [requestedInstallFullName])
-
   const repositories = snapshot.catalog?.repositories ?? []
+  React.useEffect(() => {
+    const target = buildExternalInstallTarget(requestedInstallTarget, repositories)
+    if (target !== null) setInstallTarget(target)
+  }, [requestedInstallTarget, repositories])
+
   const filtered = React.useMemo(() => filterCatalogRepositories(repositories, {
     query,
     category,
@@ -407,13 +457,15 @@ export function StoreView({
         target={installTarget}
         onClose={closeInstallTarget}
         onInstalled={(repositoryId) => setInstalledIds((current) => new Set(current).add(repositoryId))}
+        sessions={sessions}
+        workspaces={workspaces}
         t={t}
       />
     </>
   )
 }
 
-export function StoreModal({ catalogStore, dialogController, open, installRequest, t }) {
+export function StoreModal({ catalogStore, dialogController, open, installRequest, sessions, workspaces, t }) {
   return (
     <Modal
       open={open}
@@ -439,8 +491,10 @@ export function StoreModal({ catalogStore, dialogController, open, installReques
         <StoreView
           catalogStore={catalogStore}
           mode="dialog"
-          requestedInstallFullName={installRequest}
+          requestedInstallTarget={installRequest}
           onInstallRequestConsumed={dialogController.consumeInstallRequest}
+          sessions={sessions}
+          workspaces={workspaces}
           t={t}
         />
       </div>
@@ -448,7 +502,7 @@ export function StoreModal({ catalogStore, dialogController, open, installReques
   )
 }
 
-export function StoreOverlay({ dialogController, catalogStore, t }) {
+export function StoreOverlay({ dialogController, catalogStore, sessions, workspaces, t }) {
   const dialog = React.useSyncExternalStore(
     dialogController.subscribe,
     dialogController.getSnapshot,
@@ -460,6 +514,8 @@ export function StoreOverlay({ dialogController, catalogStore, t }) {
       dialogController={dialogController}
       open={dialog.open}
       installRequest={dialog.installRequest}
+      sessions={sessions}
+      workspaces={workspaces}
       t={t}
     />
   )
@@ -479,6 +535,6 @@ export function StoreHeaderAction({ dialogController, t }) {
   )
 }
 
-export function StoreSettingsTab({ catalogStore, t }) {
-  return <StoreView catalogStore={catalogStore} mode="settings" t={t} />
+export function StoreSettingsTab({ catalogStore, sessions, workspaces, t }) {
+  return <StoreView catalogStore={catalogStore} mode="settings" sessions={sessions} workspaces={workspaces} t={t} />
 }

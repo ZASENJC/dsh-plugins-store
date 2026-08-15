@@ -1,6 +1,5 @@
 export const DEFAULT_CATALOG_URLS = Object.freeze([
   'https://dsh.aitreez.com/catalog.json',
-  'https://raw.githubusercontent.com/ZASENJC/dsh-plugins-store/main/src/data/catalog.json',
 ])
 
 export const CATEGORY_LABELS = Object.freeze({
@@ -38,6 +37,7 @@ export const VALIDATION_STATUS_IDS = Object.freeze([
   'sandbox-running',
   'sandbox-failed',
   'verified',
+  'security-review',
   'expired',
   'recorded',
   'inconclusive',
@@ -45,14 +45,69 @@ export const VALIDATION_STATUS_IDS = Object.freeze([
 ])
 
 const INSTALLABLE_TYPES = new Set(['plugin', 'skill', 'collection', 'channel'])
+const REPOSITORY_FULL_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})\/[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})$/
+const NPM_PACKAGE = /^(?:@[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})\/)?[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})(?:@[A-Za-z0-9^~<>=*+._-][A-Za-z0-9^~<>=*+._-]{0,127})?$/
+
+function getInstallCandidate(repository) {
+  if (!INSTALLABLE_TYPES.has(repository.projectType)) return null
+  if (repository.install?.status !== 'recognized') return null
+  return repository.install.candidate ?? null
+}
 
 export function buildInstallCommand(repository) {
-  if (!INSTALLABLE_TYPES.has(repository.projectType)) return null
-  const sourceSha = repository.validation?.overall === 'verified'
-    && /^[a-f0-9]{40}$/i.test(repository.validation.sourceSha ?? '')
-    ? `#${repository.validation.sourceSha}`
-    : ''
-  return `dsh plugin --profile web add github:${repository.fullName}${sourceSha}`
+  const plan = buildInstallPlan(repository)
+  if (plan !== null) return plan.command
+  const candidate = getInstallCandidate(repository)
+  return typeof candidate?.command === 'string' ? candidate.command : null
+}
+
+function readDshInstallArgs(candidate) {
+  if (!Array.isArray(candidate?.args)
+    || candidate.args.length !== 5
+    || candidate.args[0] !== 'plugin'
+    || candidate.args[1] !== '--profile'
+    || candidate.args[2] !== 'web'
+    || candidate.args[3] !== 'add'
+    || typeof candidate.args[4] !== 'string') return null
+  return [...candidate.args]
+}
+
+function buildCandidatePlan(repository) {
+  const candidate = getInstallCandidate(repository)
+  if (candidate === null || candidate.executable !== true) return null
+  if (repository.validation?.overall !== 'verified' || !Array.isArray(candidate.args)) return null
+  if (typeof candidate.target !== 'string' || typeof repository.fullName !== 'string') return null
+  if (!/^[a-f0-9]{40}$/i.test(String(repository.validation.sourceSha ?? ''))) return null
+
+  const args = readDshInstallArgs(candidate)
+  if (args === null) return null
+
+  if (candidate.source === 'github') {
+    const match = /^github:([^#]+)#([a-f0-9]{40})$/i.exec(args[4])
+    if (!match || !REPOSITORY_FULL_NAME.test(match[1])
+      || match[1].toLowerCase() !== String(repository.fullName).toLowerCase()
+      || match[2].toLowerCase() !== String(repository.validation.sourceSha ?? '').toLowerCase()
+      || candidate.target.toLowerCase() !== repository.fullName.toLowerCase()) return null
+  } else if (candidate.source === 'npm') {
+    const specifier = args[4].startsWith('npm:') ? args[4].slice(4) : args[4]
+    if (!NPM_PACKAGE.test(specifier) || specifier !== candidate.target) return null
+  } else {
+    return null
+  }
+
+  return {
+    source: candidate.source,
+    target: candidate.target,
+    command: candidate.source === 'github'
+      ? `dsh plugin --profile web add ${args[4]}`
+      : candidate.command,
+    args,
+    executable: true,
+  }
+}
+
+export function buildInstallPlan(repository) {
+  return buildCandidatePlan(repository)
 }
 
 function normalizedSearchText(repository) {
@@ -123,7 +178,7 @@ export class CatalogStore {
   constructor({ fetcher = globalThis.fetch?.bind(globalThis), urls = DEFAULT_CATALOG_URLS } = {}) {
     if (typeof fetcher !== 'function') throw new Error('当前环境不支持目录请求')
     this.fetcher = fetcher
-    this.urls = [...urls]
+    this.url = urls[0] ?? DEFAULT_CATALOG_URLS[0]
     this.listeners = new Set()
     this.pending = null
     this.snapshot = Object.freeze({
@@ -169,19 +224,11 @@ export class CatalogStore {
   }
 
   async fetchCatalog() {
-    let lastError = new Error('没有可用的目录数据源')
-    for (const url of this.urls) {
-      try {
-        const response = await this.fetcher(url, {
-          headers: { Accept: 'application/json' },
-        })
-        if (!response.ok) throw new Error(`目录请求失败 (${response.status})`)
-        return validateCatalog(await response.json())
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error))
-      }
-    }
-    throw lastError
+    const response = await this.fetcher(this.url, {
+      headers: { Accept: 'application/json' },
+    })
+    if (!response.ok) throw new Error(`目录请求失败 (${response.status})`)
+    return validateCatalog(await response.json())
   }
 
   publish(next) {

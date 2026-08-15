@@ -1,17 +1,17 @@
-const REPOSITORY_FULL_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})\/[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})$/
+const CATALOG_ID = /^[A-Za-z0-9][A-Za-z0-9:_./-]{0,127}$/
 
 export const DEFAULT_LOCAL_DSH_ORIGIN = 'http://127.0.0.1:3080'
-export const DSH_PLUGIN_INSTALL_PARAM = 'dsh-plugin-install'
+export const DSH_PLUGIN_INSTALL_PARAM = 'dsh-plugin-id'
 
 export function buildLocalDshInstallUrl(
-  fullName: string,
+  repositoryId: string,
   origin = DEFAULT_LOCAL_DSH_ORIGIN,
 ): string {
-  if (!REPOSITORY_FULL_NAME.test(fullName)) throw new Error('仓库名称无效')
+  if (!CATALOG_ID.test(repositoryId)) throw new Error('目录项目 ID 无效')
 
   const url = new URL('/', origin)
   const fragment = new URLSearchParams()
-  fragment.set(DSH_PLUGIN_INSTALL_PARAM, fullName)
+  fragment.set(DSH_PLUGIN_INSTALL_PARAM, repositoryId)
   url.hash = fragment.toString()
   return url.toString()
 }

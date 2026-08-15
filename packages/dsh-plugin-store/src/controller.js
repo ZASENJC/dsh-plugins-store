@@ -15,8 +15,8 @@ export class StoreDialogController {
     this.set({ open: true })
   }
 
-  openInstall(fullName) {
-    this.set({ open: true, installRequest: fullName })
+  openInstall(repositoryId) {
+    this.set({ open: true, installRequest: repositoryId })
   }
 
   consumeInstallRequest = () => {

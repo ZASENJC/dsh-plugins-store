@@ -10,6 +10,7 @@ import {
   mixRecommendedEntries,
   sortCatalogEntries,
 } from './catalog'
+import { extractInstallReference } from './install-reference'
 
 const githubRepository = {
   id: 1333496313,
@@ -48,6 +49,39 @@ describe('catalog data', () => {
     expect(entry.projectType).toBe('channel')
     expect(entry.category).toBe('communication')
     expect(entry.status).toEqual({ discovery: 'topic-listed', verification: 'not-verified' })
+  })
+
+  it('stores README-derived installation evidence separately from repository identity', () => {
+    const reference = extractInstallReference(`
+## Install
+
+\`\`\`sh
+dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
+\`\`\`
+`)
+    const entry = createCatalogEntry(
+      githubRepository,
+      new Set(),
+      new Set(),
+      {
+        repositoryId: githubRepository.id,
+        sourceSha: 'a'.repeat(40),
+        sourcePushedAt: githubRepository.pushed_at,
+        updatedAt: '2026-08-14T00:00:00Z',
+        structure: { status: 'passed' },
+        sandbox: { status: 'passed' },
+      },
+      reference,
+    )
+
+    expect(entry.install).toMatchObject({
+      status: 'recognized',
+      candidate: {
+        source: 'github',
+        target: 'PlutoKeating/dsh-lark-bot',
+        executable: false,
+      },
+    })
   })
 
   it('matches verified plugins by exact full repository name without accepting same-name forks', () => {

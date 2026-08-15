@@ -1,9 +1,52 @@
+const REPOSITORY_ID = /^[A-Za-z0-9][A-Za-z0-9:_./-]{0,127}$/
 const REPOSITORY_FULL_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})\/[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})$/
+const NPM_PACKAGE = /^(?:@[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})\/)?[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})(?:@[A-Za-z0-9^~<>=*+._-][A-Za-z0-9^~<>=*+._-]{0,127})?$/
+const SOURCE_SHA = /^[a-f0-9]{40}$/i
 const MAX_BODY_BYTES = 4096
 
-function assertRepositoryFullName(fullName) {
-  if (typeof fullName !== 'string' || !REPOSITORY_FULL_NAME.test(fullName)) {
-    throw new Error('仓库名称无效')
+function assertInstallPlan(plan) {
+  if (plan === null || typeof plan !== 'object' || plan.executable !== true) {
+    throw new Error('安装计划不可执行')
+  }
+  if (plan.source !== 'github' && plan.source !== 'npm') {
+    throw new Error('安装来源无效')
+  }
+  if (typeof plan.target !== 'string') throw new Error('安装目标无效')
+  if (!Array.isArray(plan.args)
+    || plan.args.length !== 5
+    || plan.args[0] !== 'plugin'
+    || plan.args[1] !== '--profile'
+    || plan.args[2] !== 'web'
+    || plan.args[3] !== 'add'
+    || typeof plan.args[4] !== 'string') {
+    throw new Error('安装参数无效')
+  }
+
+  const specifier = plan.args[4]
+  if (plan.source === 'github') {
+    const pinned = /^github:([^#]+)#([a-f0-9]{40})$/i.exec(specifier)
+    if (!pinned || !SOURCE_SHA.test(pinned[2])
+      || !REPOSITORY_FULL_NAME.test(pinned[1])
+      || pinned[1].toLowerCase() !== plan.target.toLowerCase()) {
+      throw new Error('GitHub 安装目标未固定到已验证 SHA')
+    }
+  } else {
+    const packageName = specifier.startsWith('npm:') ? specifier.slice(4) : specifier
+    if (!NPM_PACKAGE.test(packageName) || packageName !== plan.target) {
+      throw new Error('npm 安装目标无效')
+    }
+  }
+
+  return {
+    source: plan.source,
+    target: plan.target,
+    args: [...plan.args],
+  }
+}
+
+function assertRepositoryId(repositoryId) {
+  if (typeof repositoryId !== 'string' || !REPOSITORY_ID.test(repositoryId)) {
+    throw new Error('目录项目 ID 无效')
   }
 }
 
@@ -55,7 +98,6 @@ function isLocalHost(value) {
 }
 
 function isAuthorizedRequest(request) {
-  // The endpoint runs inside DSH Web and must never become a LAN installation proxy.
   if (!isLoopbackAddress(request.socket?.remoteAddress)) return false
   if (!isLocalHost(request.headers.host)) return false
 
@@ -68,31 +110,28 @@ function isAuthorizedRequest(request) {
   }
 }
 
-export async function installRepository(fullName, {
+export async function installPlan(plan, {
   runner,
   execPath,
   cliPath,
   signal,
 }) {
-  assertRepositoryFullName(fullName)
+  const safePlan = assertInstallPlan(plan)
   if (typeof runner !== 'function' || !execPath || !cliPath) {
     throw new Error('DSH 安装器不可用')
   }
 
-  const { stdout, stderr } = await runner(execPath, [
-    cliPath,
-    'plugin',
-    '--profile',
-    'web',
-    'add',
-    `github:${fullName}`,
-  ], signal)
+  const { stdout, stderr } = await runner(execPath, [cliPath, ...safePlan.args], signal)
   const output = [stdout, stderr]
     .map((value) => value.trim())
     .filter(Boolean)
     .join('\n')
 
-  return { output: output.slice(-8000) }
+  return {
+    source: safePlan.source,
+    target: safePlan.target,
+    output: output.slice(-8000),
+  }
 }
 
 export function createInstallHandler({ install }) {
@@ -113,11 +152,14 @@ export function createInstallHandler({ install }) {
       return
     }
 
-    let fullName
+    let repositoryId
+    let plan
     try {
       const body = await readJsonBody(request)
-      fullName = body?.fullName
-      assertRepositoryFullName(fullName)
+      repositoryId = body?.repositoryId
+      plan = body?.install
+      assertRepositoryId(repositoryId)
+      plan = assertInstallPlan(plan)
     } catch (error) {
       sendJson(response, 400, {
         ok: false,
@@ -133,10 +175,12 @@ export function createInstallHandler({ install }) {
 
     installing = true
     try {
-      const result = await install(fullName)
+      const result = await install({ repositoryId, ...plan })
       sendJson(response, 200, {
         ok: true,
-        repository: fullName,
+        repositoryId,
+        source: plan.source,
+        target: plan.target,
         needsRestart: true,
         output: result.output,
       })

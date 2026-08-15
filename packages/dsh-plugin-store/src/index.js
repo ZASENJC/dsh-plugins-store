@@ -1,5 +1,5 @@
 import { runNativeCommand } from '@deepseek-ai/dsh-native-command'
-import { createInstallHandler, installRepository } from './installer.js'
+import { createInstallHandler, installPlan } from './installer.js'
 
 export const name = 'dsh-plugin-store'
 export const inject = ['commands', 'webServer']
@@ -19,11 +19,11 @@ export function apply(ctx) {
     kind: 'exact',
     path: INSTALL_PATH,
     handler: createInstallHandler({
-      install: (fullName) => installRepository(fullName, {
-          runner: runNativeCommand,
-          execPath: process.execPath,
-          cliPath: process.argv[1],
-          signal: new AbortController().signal,
+      install: (plan) => installPlan(plan, {
+        runner: runNativeCommand,
+        execPath: process.execPath,
+        cliPath: process.argv[1],
+        signal: new AbortController().signal,
       }),
     }),
   })

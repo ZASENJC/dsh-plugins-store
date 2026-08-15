@@ -143,6 +143,7 @@ describe('validation ladder', () => {
       overall: 'expired',
       label: '需重新验证',
       verified: false,
+      reason: expect.stringContaining('仓库源码已更新'),
     })
   })
 
@@ -165,6 +166,7 @@ describe('validation ladder', () => {
     expect(buildValidationStatus({ ...baseInput, record })).toMatchObject({
       overall: 'expired',
       verified: false,
+      reason: expect.stringContaining('验证目标已变化'),
     })
   })
 

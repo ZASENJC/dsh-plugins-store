@@ -17,6 +17,10 @@ import {
   type ValidationRecord,
   type ValidationStatus,
 } from './validation'
+import {
+  resolveCatalogInstallReference,
+  type InstallReference,
+} from './install-reference'
 
 export const VERIFICATION_DIRECTORY_URL = 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95'
 export const VERIFIED_REPOSITORY_OVERRIDES: ReadonlyMap<string, string> = new Map([
@@ -86,6 +90,7 @@ export interface CatalogEntry {
   verified: boolean
   verificationUrl: string | null
   validation: ValidationStatus
+  install?: InstallReference
   status: {
     discovery: 'topic-listed'
     verification: 'verified' | 'not-verified'
@@ -131,6 +136,7 @@ export function createCatalogEntry(
   awesomeRepositoryNames: ReadonlySet<string> = new Set(),
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
   validationRecord?: ValidationRecord,
+  installReference?: InstallReference,
 ): CatalogEntry {
   const topicClassification = classifyRepository({
     fullName: repository.full_name,
@@ -166,6 +172,13 @@ export function createCatalogEntry(
     legacyVerificationUrl: verificationUrl,
   })
   const verified = validation.verified
+
+  const install = installReference
+    ? resolveCatalogInstallReference(installReference, {
+        fullName: repository.full_name,
+        validation,
+      })
+    : undefined
 
   return {
     id: `github:${repository.id}`,
@@ -204,6 +217,7 @@ export function createCatalogEntry(
     verified,
     verificationUrl,
     validation,
+    ...(install ? { install } : {}),
     status: {
       discovery: 'topic-listed',
       verification: verified ? 'verified' : 'not-verified',
@@ -218,6 +232,7 @@ export function buildCatalog(
   awesomeRepositoryNames: ReadonlySet<string> = new Set(),
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
   validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
+  installReferences: ReadonlyMap<number, InstallReference> = new Map(),
 ): Catalog {
   const uniqueRepositories = new Map<number, GitHubRepository>()
   for (const repository of repositories) {
@@ -236,6 +251,7 @@ export function buildCatalog(
       normalizedAwesomeNames,
       normalizedVerifiedNames,
       validationRecords.get(repository.id),
+      installReferences.get(repository.id),
     )),
     'recommended',
     generatedAt,

@@ -7,6 +7,7 @@ const packagePath = fileURLToPath(new URL('../package.json', import.meta.url))
 const clientPath = fileURLToPath(new URL('../src/client.jsx', import.meta.url))
 const componentsPath = fileURLToPath(new URL('../src/components.jsx', import.meta.url))
 const stylesPath = fileURLToPath(new URL('../src/styles.js', import.meta.url))
+const localesPath = fileURLToPath(new URL('../src/locales.js', import.meta.url))
 
 describe('installable DSH plugin package', () => {
   it('declares both host and web client entries plus the official UI dependencies', () => {
@@ -27,6 +28,7 @@ describe('installable DSH plugin package', () => {
       },
     })
     expect(manifest.dsh.client.inject).toEqual(expect.arrayContaining([
+      '@deepseek-ai/dsh-client-runtime',
       '@deepseek-ai/dsh-client-ui-commands',
       '@deepseek-ai/dsh-client-ui-conversation',
       '@deepseek-ai/dsh-client-ui-settings-plugins',
@@ -46,6 +48,8 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain("ctx.slots.inject('shell.overlay'")
     expect(source).toContain('StoreOverlay')
     expect(source).toContain('conversation.session.header.utilities')
+    expect(source).toContain('workspaces: ctx.workspaces')
+    expect(source).toContain('ctx.sessions')
     expect(source).toContain('settings.plugins.tab')
     expect(source).toContain('commandName === \'store\'')
   })
@@ -60,9 +64,9 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain('function StoreOverlay')
     expect(source).toContain('function StoreSettingsTab')
     expect(source).toContain('function InstallRiskModal')
-    expect(source).toContain('requestedInstallFullName')
+    expect(source).toContain('requestedInstallTarget')
     expect(source).toContain('onInstallRequestConsumed')
-    expect(source).toMatch(/React\.useState\(\s*\(\) => buildExternalInstallTarget\(requestedInstallFullName\)/)
+    expect(source).toContain('const [installTarget, setInstallTarget] = React.useState(null)')
     expect(source).toContain('onClose={closeInstallTarget}')
     expect(source.match(/<StoreView/g)).toHaveLength(2)
     expect(source.match(/<StoreModal/g)).toHaveLength(1)
@@ -71,6 +75,12 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain("t('store.riskAcknowledge')")
     expect(source).toContain('repository.validation')
     expect(source).toContain("t('store.validation')")
+    expect(source).toContain("t('store.analyzeWithAgent')")
+    expect(source).toContain('buildInstallPlan')
+    expect(source).toContain('buildInstallPlan(target)')
+    expect(source).not.toContain('store.installVersion')
+    expect(source).not.toContain('store.installLatest')
+    expect(source).not.toContain('installMode')
     expect(source).not.toMatch(/child_process|execFile|spawn\(/)
   })
 
@@ -83,6 +93,13 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain('flex: 1 1 auto')
     expect(source).toContain(".dps-badge[data-kind='validation']")
     expect(source).toContain('body > :has(> .dps-risk-modal)')
+  })
+
+  it('keeps validation labels and the security-review warning state aligned with the web store', () => {
+    const source = readFileSync(localesPath, 'utf8')
+    expect(source).toContain("'store.validation.security-review'")
+    expect(source).toContain("'store.validation.expired': '需重新验证'")
+    expect(readFileSync(stylesPath, 'utf8')).toContain("data-status='security-review'")
   })
 
   it('opens Store details from the card while keeping only install and copy actions', () => {

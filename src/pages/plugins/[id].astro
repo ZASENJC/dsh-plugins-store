@@ -48,12 +48,15 @@ const classificationPrefixKey = sourceClassificationActive
   ? 'detail.classificationSourcePrefix'
   : 'detail.classificationPrefix'
 const installableTypes = new Set(['plugin', 'skill', 'collection', 'channel'])
-const showInstallReference = installableTypes.has(repository.projectType)
-const installRef = repository.validation.verified && repository.validation.sourceSha
-  ? `#${repository.validation.sourceSha}`
-  : ''
-const installCommand = `dsh plugin --profile web add github:${repository.fullName}${installRef}`
-const localDshInstallUrl = buildLocalDshInstallUrl(repository.fullName)
+const installCandidate = installableTypes.has(repository.projectType)
+  && repository.install?.status === 'recognized'
+  ? repository.install.candidate ?? null
+  : null
+const hasInstallReference = installCandidate !== null
+const installCommand = installCandidate?.command ?? null
+const localDshInstallUrl = installCandidate?.executable === true
+  ? buildLocalDshInstallUrl(repository.id)
+  : null
 const validationStageStatusLabels = {
   pending: '等待处理',
   running: '正在执行',
@@ -281,7 +284,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
           </p>
         </section>
 
-        {showInstallReference && (
+        {hasInstallReference && (
           <section class="detail-section install-section">
             <div class="install-heading">
               <div><p class="mono-label">INSTALL REFERENCE</p><h2 data-i18n="detail.installReference">安装参考</h2></div>
@@ -306,25 +309,27 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
               </button>
             </div>
             <div class="install-actions">
-              <a
-                class="primary-button install-dsh-button"
-                href={localDshInstallUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`在本机 DSH 中安装 ${repository.fullName}`}
-                data-i18n-aria-label="detail.installLocalAria"
-                data-i18n-param-name={repository.fullName}
-              >
-                <Download size={17} stroke-width={1.6} />
-                <span data-i18n="detail.installLocal">在 DSH 中安装</span>
-                <ArrowUpRight size={15} stroke-width={1.6} />
-              </a>
+              {localDshInstallUrl && (
+                <a
+                  class="primary-button install-dsh-button"
+                  href={localDshInstallUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`在本机 DSH 中安装 ${repository.fullName}`}
+                  data-i18n-aria-label="detail.installLocalAria"
+                  data-i18n-param-name={repository.fullName}
+                >
+                  <Download size={17} stroke-width={1.6} />
+                  <span data-i18n="detail.installLocal">在 DSH 中安装</span>
+                  <ArrowUpRight size={15} stroke-width={1.6} />
+                </a>
+              )}
             </div>
             <p>
-              <span data-i18n={repository.validation.verified ? 'detail.installVerifiedNote' : 'detail.installUnverifiedNote'}>
-                {repository.validation.verified
-                  ? '该命令已固定到通过当前验证的 commit；验证仍不等同安全审计或官方背书。'
-                  : '该命令指向仓库当前默认分支；尚无绑定当前 commit 的完整验证结果。'}
+              <span data-i18n={installCandidate?.executable === true ? 'detail.installVerifiedNote' : 'detail.installUnverifiedNote'}>
+                {installCandidate?.executable === true
+                  ? '该命令已固定到通过当前验证的来源；验证仍不等同安全审计或官方背书。'
+                  : '该命令来自 README 的明确安装特征，仅作为参考，不会由 DSH host 自动执行。'}
               </span>
             </p>
           </section>
