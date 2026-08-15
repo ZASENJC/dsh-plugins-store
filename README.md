@@ -27,7 +27,7 @@
   </a>
 </p>
 
-面向 DeepSeek Harness 生态的 DSH 插件市场，自动收录并整理 GitHub [`dsh-plugin`](https://github.com/topics/dsh-plugin) Topic 项目，提供搜索、分类、排序和标签聚合浏览。
+面向 DeepSeek Harness 生态的 DSH 插件市场，自动收录并整理同时带有 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 与 `deepseek-harness` Topic 的项目，提供搜索、分类、排序和标签聚合浏览。
 
 [访问 DSH 插件市场（DeepSeek Harness 插件目录）](https://dsh.aitreez.com/)
 
@@ -46,7 +46,7 @@
 
 ## 功能
 
-- 自动收录公开的 `dsh-plugin` Topic 仓库
+- 自动收录同时带有 `dsh-plugin` 与 `deepseek-harness` Topic 的公开仓库，并排除归档仓库、Fork 和宿主应用
 - 根据 GitHub Topics 识别项目类型和功能分类
 - 支持名称、作者、描述和标签搜索
 - 支持分类、项目类型和更新时间等筛选排序
@@ -59,7 +59,7 @@
 
 项目分类优先使用仓库公开的 GitHub Topics，并与站内词典和词根规则比对。标签不足时，项目会保留为“其他”或“待识别”，不会根据名称强行推断。
 
-收录仅表示仓库出现在 `dsh-plugin` Topic，不代表项目已经通过安装、兼容性、安全性或质量验证。目录同步模块只读取公开仓库元数据，不执行第三方代码；可选 DSH Web 插件只会在用户阅读风险提示并明确确认后发起安装。
+收录仅表示仓库同时出现在 `dsh-plugin` 与 `deepseek-harness` Topic，且未被识别为归档仓库、Fork 或宿主应用，不代表项目已经通过安装、兼容性、安全性或质量验证。目录同步模块只读取公开仓库元数据，不执行第三方代码；可选 DSH Web 插件只会在用户阅读风险提示并明确确认后发起安装。
 
 独立验证流程会下载固定 SHA，并在无商店密钥、非 root、资源受限、执行阶段断网的一次性 Linux 沙箱中完成扫描、安装、基础加载和烟测。只有绑定当前仓库 ID、SHA、DSH 版本、平台和验证器版本的通过结果才显示“已验证”；该标记不等于完整安全审计或官方背书。
 
@@ -113,7 +113,7 @@ const verifiedPlugins = catalog.repositories.filter((repository) =>
 | --- | --- |
 | `schemaVersion` | 目录数据结构版本，当前为 `1` |
 | `generatedAt` | 本次目录生成时间，ISO 8601 格式 |
-| `source` | 收录来源，目前为 GitHub `dsh-plugin` Topic |
+| `source` | 收录来源，目前为 GitHub `dsh-plugin` 与 `deepseek-harness` Topic 交集 |
 | `stats` | 收录数量及分类、项目类型、验证状态统计 |
 | `repositories` | 仓库列表 |
 | `repositories[].repositoryId` | GitHub 数字仓库 ID，作为稳定身份标识 |

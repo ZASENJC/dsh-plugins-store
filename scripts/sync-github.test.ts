@@ -53,6 +53,15 @@ describe('GitHub catalog discovery filter', () => {
     expect(result).toEqual([kept])
   })
 
+  it('excludes repositories missing either required ecosystem topic', () => {
+    const result = filterEligibleRepositories([
+      repository({ id: 5, topics: ['dsh-plugin'] }),
+      repository({ id: 6, topics: ['deepseek-harness'] }),
+    ])
+
+    expect(result).toEqual([])
+  })
+
   it('excludes the host application even when it has both ecosystem topics', () => {
     const result = filterEligibleRepositories([
       repository({

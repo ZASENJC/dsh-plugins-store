@@ -14,12 +14,17 @@ import {
 } from '../src/lib/github-content'
 import { extractInstallReference, type InstallReference } from '../src/lib/install-reference'
 import { parseValidationFeed } from '../src/lib/validation'
+import {
+  buildSearchQuery,
+  filterEligibleRepositories,
+  SEARCH_PAGE_SIZE,
+  type SearchRepository,
+} from '../src/lib/github-discovery'
 
 const SEARCH_URL = 'https://api.github.com/search/repositories'
 const API_URL = 'https://api.github.com'
 const AWESOME_REPOSITORY = 'AdamPlatin123/awesome-dsh-plugins'
 const VERIFY_REPOSITORY = 'qing3a/dsh-plugin-verify'
-const PAGE_SIZE = 100
 const MAX_SEARCH_RESULTS = 1_000
 const MAX_SEARCH_PASSES = 3
 const README_CONCURRENCY = 8
@@ -31,7 +36,7 @@ const validationPath = resolve(root, 'src/data/validation.json')
 interface SearchResponse {
   total_count: number
   incomplete_results: boolean
-  items: GitHubRepository[]
+  items: SearchRepository[]
 }
 
 function getHeaders(accept = 'application/vnd.github+json'): HeadersInit {
@@ -100,13 +105,7 @@ async function fetchInstallReferences(repositories: GitHubRepository[]): Promise
 }
 
 async function fetchPage(page: number): Promise<SearchResponse> {
-  const query = new URLSearchParams({
-    q: 'topic:dsh-plugin',
-    sort: 'stars',
-    order: 'desc',
-    per_page: String(PAGE_SIZE),
-    page: String(page),
-  })
+  const query = buildSearchQuery(page)
   const response = await fetch(`${SEARCH_URL}?${query}`, { headers: getHeaders() })
   if (!response.ok) {
     const remaining = response.headers.get('x-ratelimit-remaining')
@@ -124,7 +123,7 @@ async function fetchRepositories() {
     const firstPage = await fetchPage(1)
     reportedByGitHub = Math.max(reportedByGitHub, firstPage.total_count)
     availableCount = Math.min(reportedByGitHub, MAX_SEARCH_RESULTS)
-    const pageCount = Math.ceil(availableCount / PAGE_SIZE)
+    const pageCount = Math.ceil(availableCount / SEARCH_PAGE_SIZE)
     let incompleteResults = firstPage.incomplete_results
 
     for (const repository of firstPage.items) repositories.set(repository.id, repository)
@@ -135,7 +134,10 @@ async function fetchRepositories() {
     }
 
     if (!incompleteResults && repositories.size >= availableCount) {
-      return { repositories: [...repositories.values()], reportedByGitHub }
+      return {
+        repositories: filterEligibleRepositories([...repositories.values()]),
+        reportedByGitHub,
+      }
     }
 
     console.warn(`GitHub Search 第 ${attempt} 轮仅取得 ${repositories.size}/${availableCount} 个唯一仓库，正在合并重试`)
