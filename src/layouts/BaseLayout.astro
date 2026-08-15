@@ -1,4 +1,5 @@
 ---
+import { Moon, Sun } from '@lucide/astro'
 import { Github } from 'simple-icons-astro'
 
 import { DEFAULT_LOCALE, dictionaries, LOCALE_STORAGE_KEY, SUPPORTED_LOCALES } from '../lib/i18n'
@@ -31,12 +32,20 @@ const cloudflareAnalyticsConfig = import.meta.env.PROD
   ? JSON.stringify({ token: 'cefc4fa1bb984a789124d58b900f13b8' })
   : null
 const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u003c')
+const THEME_STORAGE_KEY = 'dsh-theme'
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+    <script is:inline define:vars={{ THEME_STORAGE_KEY }}>
+      try {
+        if (localStorage.getItem(THEME_STORAGE_KEY) === 'light') {
+          document.documentElement.dataset.theme = 'light'
+        }
+      } catch {}
+    </script>
     <meta name="description" content={description} />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -105,6 +114,21 @@ const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u00
               aria-pressed="false"
             ><span class="language-option__glyph" aria-hidden="true">あ</span></button>
           </div>
+          <button
+            id="theme-toggle"
+            class="icon-button theme-toggle"
+            type="button"
+            data-theme-toggle
+            data-theme="dark"
+            aria-label="切换到浅色模式"
+            title="切换到浅色模式"
+            data-i18n-aria-label="theme.switchToLight"
+            data-i18n-title="theme.switchToLight"
+            aria-pressed="false"
+          >
+            <Sun class="theme-toggle__sun" size={17} stroke-width={1.8} aria-hidden="true" />
+            <Moon class="theme-toggle__moon" size={17} stroke-width={1.8} aria-hidden="true" />
+          </button>
           <a
             class="icon-button"
             href="https://github.com/ZASENJC/dsh-plugins-store"
@@ -156,7 +180,7 @@ const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u00
       </div>
     </footer>
     <script id="site-i18n-data" type="application/json" set:html={serializedDictionaries} is:inline></script>
-    <script is:inline define:vars={{ DEFAULT_LOCALE, LOCALE_STORAGE_KEY, SUPPORTED_LOCALES }}>
+    <script is:inline define:vars={{ DEFAULT_LOCALE, LOCALE_STORAGE_KEY, SUPPORTED_LOCALES, THEME_STORAGE_KEY }}>
       const dictionaries = JSON.parse(document.getElementById('site-i18n-data').textContent)
       const languageButtons = Array.from(document.querySelectorAll('[data-locale]'))
       let currentLocale = DEFAULT_LOCALE
@@ -287,6 +311,38 @@ const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u00
       let savedLocale = DEFAULT_LOCALE
       try { savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY) || DEFAULT_LOCALE } catch {}
       setLocale(savedLocale, false)
+
+      const themeToggle = document.getElementById('theme-toggle')
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]')
+      const updateThemeControl = (theme) => {
+        const labelKey = theme === 'light' ? 'theme.switchToDark' : 'theme.switchToLight'
+        themeToggle?.setAttribute('data-i18n-aria-label', labelKey)
+        themeToggle?.setAttribute('data-i18n-title', labelKey)
+        themeToggle?.setAttribute('aria-label', t(labelKey))
+        themeToggle?.setAttribute('title', t(labelKey))
+      }
+
+      const applyTheme = (theme, persist = true) => {
+        const nextTheme = theme === 'light' ? 'light' : 'dark'
+        document.documentElement.dataset.theme = nextTheme
+        themeToggle?.setAttribute('data-theme', nextTheme)
+        themeToggle?.setAttribute('aria-pressed', String(nextTheme === 'light'))
+        themeColorMeta?.setAttribute('content', nextTheme === 'light' ? '#f6f7f8' : '#0a0a0a')
+        updateThemeControl(nextTheme)
+        if (persist) {
+          try { localStorage.setItem(THEME_STORAGE_KEY, nextTheme) } catch {}
+        }
+      }
+
+      themeToggle?.addEventListener('click', () => {
+        applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')
+      })
+      document.addEventListener('dsh:locale-change', () => {
+        updateThemeControl(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark')
+      })
+      let savedTheme = 'dark'
+      try { savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark' } catch {}
+      applyTheme(savedTheme, false)
     </script>
   </body>
 </html>
@@ -296,8 +352,8 @@ const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u00
     position: sticky;
     z-index: 20;
     top: 0;
-    border-bottom: 1px solid rgba(33, 35, 39, 0.86);
-    background: rgba(10, 10, 10, 0.94);
+    border-bottom: 1px solid var(--header-border);
+    background: var(--header-background);
     backdrop-filter: blur(14px);
   }
 
@@ -369,6 +425,18 @@ const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u00
     font-size: 13px;
     font-weight: 600;
     line-height: 1;
+  }
+
+  .theme-toggle__moon {
+    display: none;
+  }
+
+  .theme-toggle[data-theme='light'] .theme-toggle__sun {
+    display: none;
+  }
+
+  .theme-toggle[data-theme='light'] .theme-toggle__moon {
+    display: block;
   }
 
   .site-footer {
