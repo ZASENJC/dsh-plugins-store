@@ -42,7 +42,7 @@ describe('validation artifact verification', () => {
     await expect(verifyValidationArtifact(directory)).resolves.toBeUndefined()
   })
 
-  it('rejects records bound to a different validation target', async () => {
+  it('accepts historical records bound to an older validation target', async () => {
     const directory = await writeArtifact({
       schemaVersion: 1,
       generatedAt: '2026-01-01T00:00:00.000Z',
@@ -59,6 +59,6 @@ describe('validation artifact verification', () => {
       }],
     })
 
-    await expect(verifyValidationArtifact(directory)).rejects.toThrow('not bound')
+    await expect(verifyValidationArtifact(directory)).resolves.toBeUndefined()
   })
 })
