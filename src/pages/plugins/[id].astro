@@ -363,13 +363,6 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
                 : <span data-i18n={`validation.status.${repository.validation.overall}`}>{repository.validation.label}</span>}
             </dd>
           </div>
-          <div>
-            <dt>awesome-dsh-plugins</dt>
-            <dd
-              class:list={{ 'status-listed': repository.awesomeListed }}
-              data-i18n={repository.awesomeListed ? 'detail.listed' : 'detail.notListed'}
-            >{repository.awesomeListed ? '已收录' : '未收录'}</dd>
-          </div>
         </dl>
         <p class="facts-note" data-i18n="detail.factsNote">只有绑定当前 commit 的完整实机结果显示为“已验证”；其他标识仅代表对应步骤的记录。</p>
       </aside>
@@ -674,7 +667,6 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   .repository-facts .status-verified, .repository-facts .status-verified a { color: #9fdda9; }
   .repository-facts .status-verified a { display: inline-flex; align-items: center; gap: 5px; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; }
   .repository-facts .status-verified a:hover { text-decoration-color: currentColor; }
-  .repository-facts .status-listed { color: #9fdda9; }
   .facts-note { margin-top: 12px; color: var(--mute); font-size: 11px; line-height: 18px; }
   .related-section { border-top: 1px solid var(--hairline); padding-block: 56px 64px; }
   .related-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }

@@ -86,7 +86,6 @@ export interface CatalogEntry {
   classificationSource: 'topics' | 'source'
   classificationSignals: string[]
   defaultBranch: string
-  awesomeListed: boolean
   verified: boolean
   verificationUrl: string | null
   validation: ValidationStatus
@@ -133,7 +132,6 @@ function usableSourceClassification(
 
 export function createCatalogEntry(
   repository: GitHubRepository,
-  awesomeRepositoryNames: ReadonlySet<string> = new Set(),
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
   validationRecord?: ValidationRecord,
   installReference?: InstallReference,
@@ -213,7 +211,6 @@ export function createCatalogEntry(
     classificationSource: useSourceType || useSourceCategory ? 'source' : 'topics',
     classificationSignals: sourceClassification?.matchedSignals ?? [],
     defaultBranch: repository.default_branch || 'main',
-    awesomeListed: awesomeRepositoryNames.has(repository.name.toLowerCase()),
     verified,
     verificationUrl,
     validation,
@@ -229,7 +226,6 @@ export function buildCatalog(
   repositories: GitHubRepository[],
   generatedAt = new Date().toISOString(),
   reportedByGitHub = repositories.length,
-  awesomeRepositoryNames: ReadonlySet<string> = new Set(),
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
   validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
   installReferences: ReadonlyMap<number, InstallReference> = new Map(),
@@ -239,16 +235,12 @@ export function buildCatalog(
     if (!uniqueRepositories.has(repository.id)) uniqueRepositories.set(repository.id, repository)
   }
 
-  const normalizedAwesomeNames = new Set(
-    [...awesomeRepositoryNames].map((name) => name.toLowerCase()),
-  )
   const normalizedVerifiedNames = new Set(
     [...verifiedRepositoryNames].map((name) => name.toLowerCase()),
   )
   const entries = sortCatalogEntries(
     [...uniqueRepositories.values()].map((repository) => createCatalogEntry(
       repository,
-      normalizedAwesomeNames,
       normalizedVerifiedNames,
       validationRecords.get(repository.id),
       installReferences.get(repository.id),

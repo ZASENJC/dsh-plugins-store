@@ -1,7 +1,5 @@
 import { load } from 'cheerio'
 
-const AWESOME_LISTED_STATUSES = new Set(['兼容', '关注', '需适配', '待调研'])
-
 function getRepositoryPath(href: string): [string, string] | null {
   try {
     const url = new URL(href)
@@ -14,27 +12,6 @@ function getRepositoryPath(href: string): [string, string] | null {
   } catch {
     return null
   }
-}
-
-function getRepositoryName(href: string): string | null {
-  return getRepositoryPath(href)?.[1].toLowerCase() ?? null
-}
-
-export function extractAwesomeRepositoryNames(html: string): Set<string> {
-  const $ = load(html)
-  const names = new Set<string>()
-
-  $('tr').each((_, row) => {
-    const cells = $(row).find('td')
-    if (cells.length < 3 || !AWESOME_LISTED_STATUSES.has(cells.eq(2).text().trim())) return
-
-    const href = cells.eq(0).find('a[href]').first().attr('href')
-    if (!href) return
-    const name = getRepositoryName(href)
-    if (name) names.add(name)
-  })
-
-  return names
 }
 
 export function extractVerifiedRepositoryNames(html: string): Set<string> {

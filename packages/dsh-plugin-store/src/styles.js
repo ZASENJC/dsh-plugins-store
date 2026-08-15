@@ -339,11 +339,6 @@ export const styles = String.raw`
   background: color-mix(in srgb, #8d8bce 14%, transparent);
 }
 
-.dps-badge[data-kind='awesome'] {
-  color: #d89450;
-  background: color-mix(in srgb, #d89450 14%, transparent);
-}
-
 .dps-stars {
   flex: 0 0 auto;
   color: var(--dsw-alias-label-tertiary);

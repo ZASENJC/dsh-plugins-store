@@ -66,7 +66,6 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
         <span className="dps-badge" data-kind="validation" data-status={validationState}>
           {t(`store.validation.${validationState}`)}
         </span>
-        {repository.awesomeListed && <span className="dps-badge" data-kind="awesome">{t('store.awesome')}</span>}
         <span className="dps-badge">{CATEGORY_LABELS[repository.category] ?? CATEGORY_LABELS.other}</span>
         <span className="dps-badge">{PROJECT_TYPE_LABELS[repository.projectType] ?? repository.projectType}</span>
       </div>

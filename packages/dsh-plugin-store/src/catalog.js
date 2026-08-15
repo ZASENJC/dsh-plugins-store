@@ -120,8 +120,8 @@ function normalizedSearchText(repository) {
 }
 
 function compareRecommended(left, right) {
-  const leftPriority = Number(left.verified) * 2 + Number(left.awesomeListed)
-  const rightPriority = Number(right.verified) * 2 + Number(right.awesomeListed)
+  const leftPriority = Number(left.verified) * 2
+  const rightPriority = Number(right.verified) * 2
   return rightPriority - leftPriority
     || right.stars - left.stars
     || left.fullName.localeCompare(right.fullName)

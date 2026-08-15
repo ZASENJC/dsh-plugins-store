@@ -195,13 +195,11 @@ describe('plugin catalog filtering', () => {
         topics: undefined,
         stars: 20,
         verified: true,
-        awesomeListed: true,
       },
       {
         ...repositories[0],
         name: 'Same name',
         fullName: 'a/same',
-        awesomeListed: true,
       },
     ]
 

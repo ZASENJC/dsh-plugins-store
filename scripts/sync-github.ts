@@ -8,10 +8,7 @@ import {
   type GitHubRepository,
 } from '../src/lib/catalog'
 import { classifyRepository } from '../src/lib/classification'
-import {
-  extractAwesomeRepositoryNames,
-  extractVerifiedRepositoryNames,
-} from '../src/lib/github-content'
+import { extractVerifiedRepositoryNames } from '../src/lib/github-content'
 import { extractInstallReference, type InstallReference } from '../src/lib/install-reference'
 import { parseValidationFeed } from '../src/lib/validation'
 import {
@@ -24,7 +21,6 @@ import {
 
 const SEARCH_URL = 'https://api.github.com/search/repositories'
 const API_URL = 'https://api.github.com'
-const AWESOME_REPOSITORY = 'AdamPlatin123/awesome-dsh-plugins'
 const VERIFY_REPOSITORY = 'qing3a/dsh-plugin-verify'
 const README_CONCURRENCY = 8
 const README_TIMEOUT_MS = 12_000
@@ -132,16 +128,10 @@ async function fetchRepositories() {
 async function sync() {
   const { repositories, reportedByGitHub } = await fetchRepositories()
   const validationRecords = parseValidationFeed(JSON.parse(await readFile(validationPath, 'utf8')))
-  const [awesomeResponse, verifyResponse] = await Promise.all([
-    fetchRenderedReadme(AWESOME_REPOSITORY),
-    fetchRenderedReadme(VERIFY_REPOSITORY),
-  ])
-  if (!awesomeResponse.ok || !verifyResponse.ok) {
-    throw new Error(
-      `目录清单请求失败：Awesome ${awesomeResponse.status}，Verify ${verifyResponse.status}`,
-    )
+  const verifyResponse = await fetchRenderedReadme(VERIFY_REPOSITORY)
+  if (!verifyResponse.ok) {
+    throw new Error(`验证目录请求失败：Verify ${verifyResponse.status}`)
   }
-  const awesomeRepositoryNames = extractAwesomeRepositoryNames(await awesomeResponse.text())
   const verifiedRepositoryNames = extractVerifiedRepositoryNames(await verifyResponse.text())
   const installReferences = await fetchInstallReferences(repositories)
   const generatedAt = new Date().toISOString()
@@ -149,7 +139,6 @@ async function sync() {
     repositories,
     generatedAt,
     reportedByGitHub,
-    awesomeRepositoryNames,
     verifiedRepositoryNames,
     validationRecords,
     installReferences,
@@ -157,7 +146,6 @@ async function sync() {
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
 
-  console.log(`Awesome 有效收录 ${awesomeRepositoryNames.size} 个仓库名；商店匹配 ${catalog.repositories.filter((repository) => repository.awesomeListed).length} 个`)
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
   console.log(`验证状态文件匹配 ${validationRecords.size} 个仓库；当前完整验证 ${catalog.stats.validationStatuses.verified ?? 0} 个`)
   console.log(`README 安装特征匹配 ${installReferences.size} 个仓库；失败或无明确命令不影响目录同步`)

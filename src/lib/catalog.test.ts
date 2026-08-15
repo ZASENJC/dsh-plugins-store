@@ -55,7 +55,7 @@ describe('catalog data', () => {
   it('does not expose the removed external curation state', () => {
     const entry = createCatalogEntry(githubRepository)
 
-    expect(entry).not.toHaveProperty('awesomeListed')
+    expect(Object.keys(entry)).not.toContain(['awesome', 'Listed'].join(''))
   })
 
   it('stores README-derived installation evidence separately from repository identity', () => {
@@ -68,7 +68,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
 `)
     const entry = createCatalogEntry(
       githubRepository,
-      new Set(),
       new Set(),
       {
         repositoryId: githubRepository.id,
@@ -101,7 +100,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
 `)
     const entry = createCatalogEntry(
       githubRepository,
-      new Set(),
       new Set(),
       {
         repositoryId: githubRepository.id,
@@ -156,7 +154,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       [verified, sameNameFork],
       '2026-08-14T00:00:00.000Z',
       2,
-      new Set(),
       new Set(['owner/verified-plugin']),
     )
 
@@ -228,7 +225,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       '2026-08-14T09:05:00.000Z',
       1,
       new Set(),
-      new Set(),
       validationRecords,
     )
 
@@ -251,7 +247,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       [{ ...githubRepository, id: 77, projectType: undefined } as never],
       '2026-08-14T09:05:00.000Z',
       1,
-      new Set(),
       new Set(),
       new Map([[77, {
         repositoryId: 77,
@@ -288,7 +283,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       '2026-08-14T09:05:00.000Z',
       1,
       new Set(),
-      new Set(),
       new Map([[githubRepository.id, {
         repositoryId: githubRepository.id,
         sourceSha: 'b'.repeat(40),
@@ -316,37 +310,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       category: 'communication',
       classificationSource: 'topics',
     })
-  })
-
-  it('matches awesome mirrors by exact repository name', () => {
-    const popular = {
-      ...githubRepository,
-      id: 1,
-      name: 'popular-plugin',
-      full_name: 'owner/popular-plugin',
-      stargazers_count: 10_000,
-      pushed_at: '2026-08-14T00:00:00Z',
-    }
-    const awesomeMirror = {
-      ...githubRepository,
-      id: 2,
-      name: 'DSH-Live-Stats',
-      full_name: 'original-owner/DSH-Live-Stats',
-      stargazers_count: 1,
-      pushed_at: '2025-01-01T00:00:00Z',
-    }
-    const catalog = buildCatalog(
-      [popular, awesomeMirror],
-      '2026-08-14T00:00:00.000Z',
-      2,
-      new Set(['dsh-live-stats']),
-    )
-
-    expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 2)).toMatchObject({
-      fullName: 'original-owner/DSH-Live-Stats',
-      awesomeListed: true,
-    })
-    expect(catalog.repositories.find(({ repositoryId }) => repositoryId === 1)?.awesomeListed).toBe(false)
   })
 
   it('interleaves two verified projects with one high-star discovery project', () => {
@@ -396,7 +359,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       [ordinaryPopular, ordinaryNext, unverifiedHigh, verifiedTie, unverifiedNext, verifiedLast],
       '2026-08-14T00:00:00.000Z',
       6,
-      new Set(['unverified-high', 'unverified-next']),
       new Set(),
       new Map([
         [24, {
@@ -466,7 +428,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       '2026-08-15T00:00:00.000Z',
       entries.length,
       new Set(),
-      new Set(),
       new Map(entries.slice(0, 4).map((entry) => [entry.id, {
         repositoryId: entry.id,
         sourceSha: 'a'.repeat(40),
@@ -497,11 +458,11 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       stargazers_count: 10_000,
       pushed_at: '2026-08-15T00:00:00Z',
     }
-    const awesomeOlder = {
+    const middleOlder = {
       ...githubRepository,
       id: 32,
-      name: 'middle-awesome',
-      full_name: 'owner/middle-awesome',
+      name: 'middle-older',
+      full_name: 'owner/middle-older',
       stargazers_count: 1,
       pushed_at: '2025-01-01T00:00:00Z',
     }
@@ -514,10 +475,9 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       pushed_at: '2026-08-14T00:00:00Z',
     }
     const catalog = buildCatalog(
-      [ordinaryPopular, awesomeOlder, ordinaryAlpha],
+      [ordinaryPopular, middleOlder, ordinaryAlpha],
       '2026-08-14T00:00:00.000Z',
       3,
-      new Set(['middle-awesome']),
     )
 
     expect(sortCatalogEntries(catalog.repositories, 'stars')[0].fullName).toBe('owner/zulu-popular')
@@ -551,7 +511,6 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       [ordinaryTie, unverifiedTie, verifiedTie],
       '2026-08-14T00:00:00.000Z',
       3,
-      new Set(),
       new Set(),
       new Map([[43, {
         repositoryId: 43,
