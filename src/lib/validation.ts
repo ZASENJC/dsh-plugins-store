@@ -3,7 +3,7 @@ import type { ProjectType } from './classification'
 export const CURRENT_VALIDATION_TARGET = Object.freeze({
   dshVersion: '0.1.0-rc.6',
   platform: 'linux-x64',
-  validatorVersion: '0.1.0',
+  validatorVersion: '0.1.1',
 } as const)
 
 export const VALIDATION_STAGE_DEFINITIONS = Object.freeze([

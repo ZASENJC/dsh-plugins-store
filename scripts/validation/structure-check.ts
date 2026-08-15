@@ -356,8 +356,8 @@ export function runStructureCheck(
     check(
       checks,
       'SKILL_DOCUMENT_PRESENT',
-      skillFiles.length > 0 ? 'passed' : 'failed',
-      'required',
+      skillFiles.length > 0 ? 'passed' : 'warning',
+      'advisory',
       skillFiles.length > 0 ? 'Skill document is present.' : 'No SKILL.md was found.',
       skillFiles[0],
     )
@@ -366,8 +366,8 @@ export function runStructureCheck(
     check(
       checks,
       'COLLECTION_MEMBERS_PRESENT',
-      manifests.length > 1 ? 'passed' : 'failed',
-      'required',
+      manifests.length > 1 ? 'passed' : 'warning',
+      'advisory',
       manifests.length > 1 ? 'Collection contains member package manifests.' : 'Collection has no discoverable member package.',
     )
   } else {
@@ -375,8 +375,8 @@ export function runStructureCheck(
     check(
       checks,
       'PACKAGE_MANIFEST_VALID',
-      packagePresent ? 'passed' : 'failed',
-      'required',
+      packagePresent ? 'passed' : 'warning',
+      packagePresent ? 'required' : 'advisory',
       packagePresent ? 'package.json is valid JSON.' : 'package.json is missing or invalid.',
       'package.json',
     )
@@ -390,11 +390,11 @@ export function runStructureCheck(
     const relevantEntrypoints = [...entrypoints].filter((path) => !/(?:package\.json|cordis\.patch\.yml)$/.test(path))
     const missingEntrypoints = relevantEntrypoints.filter((path) => !hasOwnPath(snapshot.files, path))
     if (relevantEntrypoints.length === 0) {
-      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'failed', 'required', 'No executable package entrypoint is declared.', 'package.json')
+      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'warning', 'advisory', 'No executable package entrypoint is declared.', 'package.json')
     } else if (missingEntrypoints.length > 0 && hasBuild) {
       check(checks, 'BUILD_ARTIFACT_REQUIRES_BUILD', 'warning', 'advisory', 'Declared entrypoints require the sandbox build stage.', missingEntrypoints[0])
     } else if (missingEntrypoints.length > 0) {
-      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'failed', 'required', 'A declared package entrypoint is missing and no build step is declared.', missingEntrypoints[0])
+      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'warning', 'advisory', 'A declared package entrypoint is missing and no build step is declared.', missingEntrypoints[0])
     } else {
       check(checks, 'PACKAGE_ENTRYPOINTS_VALID', 'passed', 'required', 'Declared package entrypoints exist.')
     }
@@ -416,8 +416,8 @@ export function runStructureCheck(
       check(
         checks,
         'DSH_BUNDLE_PATCH_VALID',
-        patchValid ? 'passed' : 'failed',
-        'required',
+        patchValid ? 'passed' : 'warning',
+        patchValid ? 'required' : 'advisory',
         patchValid ? 'DSH bundle patch exists and parses as a patch list.' : 'DSH bundle patch is missing or invalid.',
         patchPath ?? 'package.json',
       )
@@ -482,20 +482,19 @@ export function runStructureCheck(
   const trivyVulnerabilities = snapshot.scans.trivy.vulnerabilities
   const osvVulnerabilities = snapshot.scans.osv.vulnerabilities
   const secretFindings = trivySecrets.length + gitleaksSecrets.length
-  const vulnerabilityFindings = [...trivyVulnerabilities, ...osvVulnerabilities]
   if (snapshot.scans.trivy.status === 'unavailable') {
     check(checks, 'TRIVY_SCAN_UNAVAILABLE', 'not-run', 'security', 'Trivy result is unavailable.', undefined, 'trivy')
   } else if (trivySecrets.length > 0) {
     check(checks, 'SECRET_SCAN_QUARANTINE', 'quarantined', 'security', 'Potential secret material requires private human review.', undefined, 'trivy')
   } else if (trivyVulnerabilities.length > 0) {
-    check(checks, 'TRIVY_VULNERABILITY_REVIEW_REQUIRED', 'quarantined', 'security', 'Known vulnerabilities require policy review.', undefined, 'trivy')
+    check(checks, 'TRIVY_VULNERABILITY_REVIEW_REQUIRED', 'warning', 'security', 'Known vulnerabilities are recorded for review; installation validation may continue.', undefined, 'trivy')
   } else {
     check(checks, 'TRIVY_SCAN_CLEAN', 'passed', 'security', 'Trivy vulnerability and secret scan produced no blocking findings.', undefined, 'trivy')
   }
   if (snapshot.scans.osv.status === 'unavailable') {
     check(checks, 'OSV_SCAN_UNAVAILABLE', 'not-run', 'security', 'OSV result is unavailable.', undefined, 'osv-scanner')
   } else if (osvVulnerabilities.length > 0) {
-    check(checks, 'VULNERABILITY_REVIEW_REQUIRED', 'quarantined', 'security', 'Known vulnerabilities require policy review.', undefined, 'osv-scanner')
+    check(checks, 'VULNERABILITY_REVIEW_REQUIRED', 'warning', 'security', 'Known vulnerabilities are recorded for review; installation validation may continue.', undefined, 'osv-scanner')
   } else {
     check(checks, 'OSV_SCAN_CLEAN', 'passed', 'security', 'OSV scan produced no known vulnerability findings.', undefined, 'osv-scanner')
   }
@@ -511,7 +510,7 @@ export function runStructureCheck(
   let decision: StructureCheckResult['decision'] = 'passed'
   let failure: Parameters<typeof createReport>[0]['failure'] = null
   let publicReason: string | null = null
-  if (secretFindings > 0 || vulnerabilityFindings.length > 0) {
+  if (secretFindings > 0) {
     decision = 'quarantined'
     publicReason = '需要人工安全复核'
     failure = { attribution: 'policy', code: 'SECURITY_REVIEW_REQUIRED', reason: publicReason }

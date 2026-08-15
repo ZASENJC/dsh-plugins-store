@@ -54,7 +54,7 @@ export interface SandboxExecutionSummary {
   code: string
 }
 
-const VALIDATOR_IMAGE = 'dsh-plugin-validator:0.1.0'
+const VALIDATOR_IMAGE = 'dsh-plugin-validator:0.1.1'
 
 function dependencyInstallCommand(sourceDirectory: string): string[] {
   if (existsSync(join(sourceDirectory, 'package-lock.json'))
@@ -64,7 +64,7 @@ function dependencyInstallCommand(sourceDirectory: string): string[] {
   if (existsSync(join(sourceDirectory, 'pnpm-lock.yaml'))) {
     return ['pnpm', 'install', '--frozen-lockfile', '--ignore-scripts']
   }
-  return ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']
+  return ['pnpm', 'install', '--ignore-scripts', '--no-frozen-lockfile']
 }
 
 function runArgs({

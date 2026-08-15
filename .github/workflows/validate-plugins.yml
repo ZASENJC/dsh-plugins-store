@@ -173,7 +173,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DSH_VALIDATION_VERSION: 0.1.0-rc.6
-      VALIDATOR_VERSION: 0.1.0
+      VALIDATOR_VERSION: 0.1.1
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v4

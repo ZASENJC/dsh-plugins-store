@@ -61,7 +61,7 @@ describe('P2 restricted Linux sandbox command plan', () => {
     expect(installDependencies.phase).toBe('acquisition')
     expect(installDependencies.network).toBe('bridge')
     expect(installDependencies.command.args).toEqual(expect.arrayContaining([
-      'npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false',
+      'pnpm', 'install', '--ignore-scripts', '--no-frozen-lockfile',
     ]))
     expect(installDependencies.command.args).toContain('dsh-plugin-validator:0.1.1')
 
@@ -123,7 +123,7 @@ describe('P2 restricted Linux sandbox command plan', () => {
     expect(installDependencies.command.args.slice(-expectedCommand.length)).toEqual(expectedCommand)
   })
 
-  it('uses script-disabled npm install when no supported root lockfile exists', () => {
+  it('uses script-disabled pnpm acquisition when no lockfile exists so offline DSH installation shares its store', () => {
     const sourceDirectory = join(tmpdir(), `dsh-no-lock-${process.pid}-${temporaryDirectories.length}`)
     mkdirSync(sourceDirectory, { recursive: true })
     writeFileSync(join(sourceDirectory, 'package.json'), '{}\n')
@@ -137,8 +137,8 @@ describe('P2 restricted Linux sandbox command plan', () => {
     })
 
     const installDependencies = plan.steps.find(({ id }) => id === 'install-dependencies')!
-    expect(installDependencies.command.args.slice(-6)).toEqual([
-      'npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false',
+    expect(installDependencies.command.args.slice(-4)).toEqual([
+      'pnpm', 'install', '--ignore-scripts', '--no-frozen-lockfile',
     ])
   })
 })

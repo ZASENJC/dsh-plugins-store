@@ -47,7 +47,10 @@ export function planCandidate(rawReport: ValidationReport): CandidatePlan {
   }
 
   const route = routeValidator(report.executionType)
-  if (report.executionType === 'host-tool' || report.executionType === 'command') {
+  if (report.executionType === 'host-tool'
+    || report.executionType === 'command'
+    || report.executionType === 'web'
+    || report.executionType === 'channel-mcp') {
     return { disposition: 'queue', validator: 'linux-headless', smokeMode: 'loader' }
   }
   if (route.disposition === 'inconclusive') {

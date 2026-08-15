@@ -88,7 +88,7 @@ function parseOptions(args: string[]): BaselineCliOptions {
 export async function buildValidatorImage(): Promise<void> {
   await execFileAsync('docker', [
     'build', '--platform=linux/amd64',
-    '--tag', 'dsh-plugin-validator:0.1.0',
+    '--tag', 'dsh-plugin-validator:0.1.1',
     '--file', join(root, 'validation/sandbox/Dockerfile'),
     root,
   ], { maxBuffer: 32 * 1024 * 1024 })
