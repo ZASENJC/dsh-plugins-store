@@ -129,6 +129,7 @@ describe('GitHub catalog discovery filter', () => {
 
     expect(result.reportedByGitHub).toBe(5)
     expect(result.repositories.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5])
+    expect(result.allRepositories.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5])
     expect(calls.some(({ partition }) => partition.createdStart === '2026-01-01')).toBe(true)
     expect(calls.some(({ partition }) => partition.createdStart === '2026-01-02')).toBe(true)
   })

@@ -11,6 +11,7 @@ import {
   mixRecommendedEntries,
   sortCatalogEntries,
 } from './catalog'
+import type { SourceClassificationArchive } from './source-classification-archive'
 import { extractInstallReference } from './install-reference'
 
 const githubRepository = {
@@ -309,6 +310,56 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       projectType: 'channel',
       category: 'communication',
       classificationSource: 'topics',
+    })
+  })
+
+  it('uses the current classification archive to exclude unrelated repositories and expose source signals', () => {
+    const archive: SourceClassificationArchive = {
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T09:00:00Z',
+      mode: 'full',
+      classifierVersion: '0.1.0',
+      records: [{
+        repositoryId: githubRepository.id,
+        fullName: githubRepository.full_name,
+        sourcePushedAt: githubRepository.pushed_at,
+        sourceSha: 'a'.repeat(40),
+        disposition: 'include',
+        classification: {
+          sourceSha: 'a'.repeat(40),
+          classifierVersion: '0.1.0',
+          projectType: 'plugin',
+          category: 'model-mcp',
+          categories: ['model-mcp'],
+          matchedSignals: ['package.json:dsh'],
+          confidence: 'high',
+        },
+      }, {
+        repositoryId: 88,
+        fullName: 'owner/host-app',
+        sourcePushedAt: githubRepository.pushed_at,
+        sourceSha: 'c'.repeat(40),
+        disposition: 'exclude',
+        exclusionReason: 'source project type is application',
+      }],
+    }
+    const excluded = { ...githubRepository, id: 88, full_name: 'owner/host-app' }
+    const catalog = buildCatalog(
+      [githubRepository, excluded],
+      '2026-08-16T09:05:00Z',
+      2,
+      new Set(),
+      new Map(),
+      new Map(),
+      archive,
+    )
+
+    expect(catalog.repositories.map(({ repositoryId }) => repositoryId)).toEqual([githubRepository.id])
+    expect(catalog.repositories[0]).toMatchObject({
+      classificationSource: 'source',
+      classificationSignals: ['package.json:dsh'],
+      projectType: 'plugin',
+      category: 'model-mcp',
     })
   })
 
