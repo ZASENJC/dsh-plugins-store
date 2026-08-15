@@ -70,6 +70,13 @@ export function planCandidate(rawReport: ValidationReport): CandidatePlan {
   }
 }
 
+export function needsLinuxValidatorImage(rawReports: ValidationReport[]): boolean {
+  return rawReports.some((report) => {
+    const plan = planCandidate(report)
+    return plan.disposition === 'queue' && plan.validator === 'linux-headless'
+  })
+}
+
 function markInconclusive(
   structureReport: ValidationReport,
   code: string,

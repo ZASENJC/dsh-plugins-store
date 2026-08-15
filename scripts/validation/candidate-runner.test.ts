@@ -5,7 +5,11 @@ import {
   type ExecutionType,
   type ValidationReport,
 } from '../../src/lib/validation-report'
-import { planCandidate, runCandidateBatch } from './candidate-runner'
+import {
+  needsLinuxValidatorImage,
+  planCandidate,
+  runCandidateBatch,
+} from './candidate-runner'
 
 function structureReport(repositoryId: number, executionType: ExecutionType): ValidationReport {
   const at = `2026-08-14T15:${String(repositoryId).padStart(2, '0')}:00.000Z`
@@ -87,6 +91,17 @@ describe('dynamic validation candidate runner', () => {
       disposition: 'inconclusive',
       code: 'EXTERNAL_CREDENTIALS_REQUIRED',
     })
+  })
+
+  it('builds the Linux validator for shards containing only generic Web or Channel candidates', () => {
+    expect(needsLinuxValidatorImage([
+      structureReport(3, 'web'),
+      structureReport(4, 'channel-mcp'),
+    ])).toBe(true)
+    expect(needsLinuxValidatorImage([
+      structureReport(5, 'skill'),
+      structureReport(6, 'collection'),
+    ])).toBe(false)
   })
 
   it('executes one candidate at a time and continues after an infrastructure failure', async () => {

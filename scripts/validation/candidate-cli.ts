@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url'
 
 import { downloadPinnedArchive, extractPinnedArchive } from './archive-downloader'
 import { buildValidatorImage } from './baseline-cli'
-import { runCandidateBatch } from './candidate-runner'
+import { needsLinuxValidatorImage, runCandidateBatch } from './candidate-runner'
 import { buildLinuxSandboxPlan } from './linux-sandbox'
 import { readReports } from './promotion-cli'
 import { executeLinuxSandboxPlan } from './sandbox-runner'
@@ -45,9 +45,7 @@ export async function runCandidateCli(args = process.argv.slice(2)): Promise<voi
   const reports = (await readReports(options.reportsPath))
     .filter(({ currentStatus }) => currentStatus === 'structure_passed')
     .sort((left, right) => left.repository.id - right.repository.id)
-  if (!options.skipImageBuild && reports.some(({ executionType }) => (
-    executionType === 'host-tool' || executionType === 'command'
-  ))) await buildValidatorImage()
+  if (!options.skipImageBuild && needsLinuxValidatorImage(reports)) await buildValidatorImage()
 
   const result = await runCandidateBatch(reports, {
     executeQueued: async (report, plan) => {
