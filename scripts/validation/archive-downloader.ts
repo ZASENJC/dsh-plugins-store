@@ -6,6 +6,7 @@ import { promisify } from 'node:util'
 const execFileAsync = promisify(execFile)
 const CODELOAD_URL = 'https://codeload.github.com'
 const MAX_ARCHIVE_BYTES = 250 * 1024 * 1024
+const DOWNLOAD_TIMEOUT_MS = 120_000
 const EXTRACTION_IMAGE = 'alpine:3.22.1'
 
 export interface ArchiveExtractionCommand {
@@ -56,6 +57,37 @@ async function defaultWriteArchive(path: string, data: Uint8Array): Promise<void
   await writeFile(path, data, { flag: 'wx' })
 }
 
+async function readResponseBytes(response: Response): Promise<Uint8Array> {
+  if (!response.body) throw new Error('GitHub archive response has no body')
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      const chunk = value ?? new Uint8Array()
+      total += chunk.byteLength
+      if (total > MAX_ARCHIVE_BYTES) {
+        await reader.cancel()
+        throw new Error('GitHub archive exceeds validation size limit')
+      }
+      chunks.push(chunk)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  const data = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    data.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return data
+}
+
 export async function downloadPinnedArchive({
   repositoryId,
   repositoryFullName,
@@ -79,18 +111,44 @@ export async function downloadPinnedArchive({
   }
   if (!/^[a-f0-9]{40}$/i.test(sourceSha)) throw new Error('Repository source SHA is invalid')
   const encodedName = nameParts.map(encodeURIComponent).join('/')
-  const response = await fetchImpl(`${CODELOAD_URL}/${encodedName}/tar.gz/${sourceSha}`, {
-    redirect: 'follow',
-    headers: {
-      'User-Agent': 'dsh-plugin-store-validator',
-    },
-  })
-  if (!response.ok) throw new Error(`GitHub archive request failed: ${response.status}`)
-  const declaredSize = Number(response.headers.get('content-length') ?? 0)
-  if (declaredSize > MAX_ARCHIVE_BYTES) throw new Error('GitHub archive exceeds validation size limit')
-  const data = new Uint8Array(await response.arrayBuffer())
-  if (data.byteLength > MAX_ARCHIVE_BYTES) throw new Error('GitHub archive exceeds validation size limit')
-  await writeArchive(destinationPath, data)
+  const controller = new AbortController()
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  try {
+    const operation = (async () => {
+      const response = await fetchImpl(`${CODELOAD_URL}/${encodedName}/tar.gz/${sourceSha}`, {
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'dsh-plugin-store-validator',
+        },
+      })
+      if (!response.ok) throw new Error(`GitHub archive request failed: ${response.status}`)
+      const contentLength = response.headers.get('content-length')
+      if (contentLength !== null) {
+        const declaredSize = Number(contentLength)
+        if (!Number.isSafeInteger(declaredSize) || declaredSize < 0 || declaredSize > MAX_ARCHIVE_BYTES) {
+          throw new Error('GitHub archive exceeds validation size limit')
+        }
+      }
+      const data = await readResponseBytes(response)
+      if (controller.signal.aborted) throw new Error('GitHub archive download timed out')
+      await writeArchive(destinationPath, data)
+    })()
+    await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          controller.abort()
+          reject(new Error('GitHub archive download timed out'))
+        }, DOWNLOAD_TIMEOUT_MS)
+      }),
+    ])
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error('GitHub archive download timed out')
+    throw error
+  } finally {
+    if (timeout) clearTimeout(timeout)
+  }
 }
 
 export async function extractPinnedArchive(

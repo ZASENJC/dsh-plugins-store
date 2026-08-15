@@ -1,13 +1,13 @@
-import { execFile } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { chmod, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { promisify } from 'node:util'
 
 import type { ScannerSecret, ScannerVulnerability } from './structure-check'
 
-const execFileAsync = promisify(execFile)
+const MAX_SCANNER_OUTPUT_BYTES = 16 * 1024 * 1024
+const SCANNER_TIMEOUT_MS = 120_000
 
 export const SCANNER_IMAGES = Object.freeze({
   trivy: 'aquasec/trivy:0.74.0',
@@ -38,7 +38,14 @@ export interface ScannerCommand {
   outputPath: string
 }
 
-type Executor = (file: string, args: string[]) => Promise<string>
+export interface ScannerExecutionResult {
+  stdout: string
+  exitCode: number | null
+  timedOut: boolean
+  truncated: boolean
+}
+
+type Executor = (file: string, args: string[]) => Promise<string | ScannerExecutionResult>
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -176,9 +183,44 @@ export function parseGitleaksReport(value: unknown): ScannerResults['gitleaks'] 
   return { status: secrets.length > 0 ? 'findings' : 'passed', secrets }
 }
 
-async function defaultExecutor(file: string, args: string[]): Promise<string> {
-  const { stdout } = await execFileAsync(file, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
-  return stdout
+async function defaultExecutor(file: string, args: string[]): Promise<ScannerExecutionResult> {
+  return new Promise((resolve) => {
+    const child = spawn(file, args, { stdio: ['ignore', 'pipe', 'ignore'] })
+    const chunks: Buffer[] = []
+    let outputBytes = 0
+    let timedOut = false
+    let truncated = false
+    let settled = false
+    const timer = setTimeout(() => {
+      timedOut = true
+      child.kill('SIGKILL')
+    }, SCANNER_TIMEOUT_MS)
+
+    const finish = (exitCode: number | null) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      resolve({
+        stdout: Buffer.concat(chunks).toString('utf8'),
+        exitCode,
+        timedOut,
+        truncated,
+      })
+    }
+
+    child.stdout.on('data', (chunk: Buffer) => {
+      if (truncated) return
+      outputBytes += chunk.byteLength
+      if (outputBytes > MAX_SCANNER_OUTPUT_BYTES) {
+        truncated = true
+        child.kill('SIGKILL')
+        return
+      }
+      chunks.push(chunk)
+    })
+    child.on('error', () => finish(null))
+    child.on('close', (exitCode) => finish(exitCode))
+  })
 }
 
 function parseJson(output: string): unknown {
@@ -190,6 +232,38 @@ function structuredOutputFromError(error: unknown): string | null {
   return typeof record?.stdout === 'string' && record.stdout.trim() !== ''
     ? record.stdout
     : null
+}
+
+function hasScannerFindings(tool: keyof ScannerResults, value: ScannerResults[keyof ScannerResults]): boolean {
+  if (tool === 'trivy' && 'vulnerabilities' in value && 'secrets' in value) {
+    return value.vulnerabilities.length > 0 || value.secrets.length > 0
+  }
+  if (tool === 'osv' && 'vulnerabilities' in value) return value.vulnerabilities.length > 0
+  if (tool === 'gitleaks' && 'secrets' in value) return value.secrets.length > 0
+  return false
+}
+
+async function executeScannerWithTimeout(
+  executor: Executor,
+  file: string,
+  args: string[],
+): Promise<string | ScannerExecutionResult> {
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      executor(file, args),
+      new Promise<ScannerExecutionResult>((resolve) => {
+        timeout = setTimeout(() => resolve({
+          stdout: '',
+          exitCode: null,
+          timedOut: true,
+          truncated: false,
+        }), SCANNER_TIMEOUT_MS)
+      }),
+    ])
+  } finally {
+    if (timeout) clearTimeout(timeout)
+  }
 }
 
 export async function runScannerCommands(
@@ -210,9 +284,17 @@ export async function runScannerCommands(
   }
   for (const command of commands) {
     let parsed: unknown
+    let nonZeroExit = false
     try {
-      parsed = parseJson(await executor(command.file, command.args))
+      const execution = await executeScannerWithTimeout(executor, command.file, command.args)
+      if (typeof execution === 'string') {
+        parsed = parseJson(execution)
+      } else {
+        nonZeroExit = execution.exitCode !== 0 || execution.timedOut || execution.truncated
+        parsed = parseJson(execution.stdout)
+      }
     } catch (error) {
+      nonZeroExit = true
       const output = structuredOutputFromError(error)
       if (output === null) continue
       try {
@@ -222,9 +304,18 @@ export async function runScannerCommands(
       }
       // Unavailable is an infrastructure result; never turn it into a plugin failure.
     }
-    if (command.tool === 'trivy') result.trivy = parseTrivyReport(parsed)
-    else if (command.tool === 'osv') result.osv = parseOsvReport(parsed)
-    else result.gitleaks = parseGitleaksReport(parsed)
+    // A scanner that exits non-zero without findings is an infrastructure failure,
+    // never a clean result. Structured findings remain useful and are preserved.
+    if (command.tool === 'trivy') {
+      const parsedResult = parseTrivyReport(parsed)
+      if (!nonZeroExit || hasScannerFindings(command.tool, parsedResult)) result.trivy = parsedResult
+    } else if (command.tool === 'osv') {
+      const parsedResult = parseOsvReport(parsed)
+      if (!nonZeroExit || hasScannerFindings(command.tool, parsedResult)) result.osv = parsedResult
+    } else {
+      const parsedResult = parseGitleaksReport(parsed)
+      if (!nonZeroExit || hasScannerFindings(command.tool, parsedResult)) result.gitleaks = parsedResult
+    }
   }
   return result
 }

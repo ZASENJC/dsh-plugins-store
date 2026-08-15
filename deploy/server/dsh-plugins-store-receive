@@ -6,6 +6,9 @@ export LC_ALL=C
 readonly APP_DIR="/opt/dsh-plugins-store"
 readonly RELEASES_DIR="${APP_DIR}/releases"
 readonly CURRENT_LINK="${APP_DIR}/current"
+readonly MAX_ARCHIVE_BYTES=$((128 * 1024 * 1024))
+readonly MAX_EXTRACTED_BYTES=$((512 * 1024 * 1024))
+readonly MAX_ARCHIVE_ENTRIES=10000
 
 read -r action commit_sha extra <<< "${SSH_ORIGINAL_COMMAND:-}"
 if [[ "${action:-}" != "deploy" || ! "${commit_sha:-}" =~ ^[0-9a-f]{40}$ || -n "${extra:-}" ]]; then
@@ -29,12 +32,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Limit a compromised deployment key to a 128 MiB incoming archive.
-ulimit -f 262144
+# Limit a compromised deployment key to a bounded compressed archive.
+ulimit -f $((MAX_ARCHIVE_BYTES / 512))
 timeout 120 cat > "${archive_path}"
 
+archive_size="$(wc -c < "${archive_path}")"
+if (( archive_size > MAX_ARCHIVE_BYTES )); then
+  echo "Rejected oversized archive" >&2
+  exit 65
+fi
+
 tar -tzf "${archive_path}" > "${archive_names_path}"
-tar -tvzf "${archive_path}" > "${archive_verbose_path}"
+tar -tvzf "${archive_path}" --numeric-owner > "${archive_verbose_path}"
 
 if grep -Eq '(^/|(^|/)\.\.(/|$))' "${archive_names_path}"; then
   echo "Rejected unsafe archive path" >&2
@@ -43,6 +52,33 @@ fi
 
 if awk 'substr($1, 1, 1) != "-" && substr($1, 1, 1) != "d" { bad = 1 } END { exit bad ? 0 : 1 }' "${archive_verbose_path}"; then
   echo "Rejected non-file archive entry" >&2
+  exit 65
+fi
+
+archive_stats="$(awk -v max_entries="${MAX_ARCHIVE_ENTRIES}" -v max_bytes="${MAX_EXTRACTED_BYTES}" '
+  BEGIN { entries = 0; total = 0; invalid = 0; over = 0 }
+  {
+    entries++
+    if ($2 ~ /^[0-9]+\/[0-9]+$/ && $3 ~ /^[0-9]+$/) size = $3
+    else if ($2 ~ /^[0-9]+$/ && $5 ~ /^[0-9]+$/) size = $5
+    else { invalid = 1; next }
+    {
+      total += size
+      if (entries > max_entries || total > max_bytes) over = 1
+    }
+  }
+  END {
+    if (invalid) exit 2
+    if (over) exit 3
+    printf "%d %d\n", entries, total
+  }
+' "${archive_verbose_path}")" || {
+  echo "Rejected archive extraction quota" >&2
+  exit 65
+}
+read -r archive_entries extracted_bytes <<< "${archive_stats}"
+if (( archive_entries > MAX_ARCHIVE_ENTRIES || extracted_bytes > MAX_EXTRACTED_BYTES )); then
+  echo "Rejected archive extraction quota" >&2
   exit 65
 fi
 

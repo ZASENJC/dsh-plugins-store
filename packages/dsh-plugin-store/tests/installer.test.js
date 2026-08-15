@@ -8,12 +8,14 @@ function createRequest({
   headers = {
     'content-type': 'application/json',
     host: '127.0.0.1:3080',
+    origin: 'http://127.0.0.1:3080',
   },
   body = JSON.stringify({ fullName: 'owner/repository' }),
 } = {}) {
   const request = new EventEmitter()
   request.method = method
   request.headers = headers
+  request.socket = { remoteAddress: '127.0.0.1' }
   request.send = () => {
     if (body !== null) request.emit('data', Buffer.from(body))
     request.emit('end')
@@ -139,6 +141,36 @@ describe('plugin installation HTTP handler', () => {
 
     expect(response.statusCode).toBe(403)
     expect(response.body).toEqual({ ok: false, message: '拒绝跨来源安装请求' })
+    expect(install).not.toHaveBeenCalled()
+  })
+
+  it('rejects requests without a loopback transport peer', async () => {
+    const install = vi.fn()
+    const request = createRequest()
+    delete request.socket
+    const rejectedResponse = createResponse()
+    const handled = createInstallHandler({ install })(request, rejectedResponse)
+    request.send()
+    await handled
+
+    expect(rejectedResponse.statusCode).toBe(403)
+    expect(install).not.toHaveBeenCalled()
+  })
+
+  it('rejects requests without an origin proof', async () => {
+    const install = vi.fn()
+    const request = createRequest({
+      headers: {
+        'content-type': 'application/json',
+        host: '127.0.0.1:3080',
+      },
+    })
+    const rejectedResponse = createResponse()
+    const handled = createInstallHandler({ install })(request, rejectedResponse)
+    request.send()
+    await handled
+
+    expect(rejectedResponse.statusCode).toBe(403)
     expect(install).not.toHaveBeenCalled()
   })
 

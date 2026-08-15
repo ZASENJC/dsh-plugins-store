@@ -37,9 +37,22 @@ jobs:
           restored=false
           run_ids="$(gh run list --workflow validate-plugins.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
           for run_id in $run_ids; do
+            run_metadata="$(gh run view "$run_id" --json workflowName,headBranch,status,conclusion 2>/dev/null || true)"
+            if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | node -e '
+              const fs = require("node:fs")
+              const metadata = JSON.parse(fs.readFileSync(0, "utf8"))
+              process.exit(metadata.workflowName === "Validate plugins"
+                && metadata.headBranch === "main"
+                && metadata.status === "completed"
+                && metadata.conclusion === "success" ? 0 : 1)
+            '; then
+              continue
+            fi
             artifact_dir="validation-restore/$run_id"
             if gh run download "$run_id" --name plugin-validation-state --dir "$artifact_dir" 2>/dev/null \
-              && test -f "$artifact_dir/validation.json"; then
+              && test -f "$artifact_dir/validation.json" \
+              && test -f "$artifact_dir/state.json" \
+              && npm run validate:artifact -- "$artifact_dir"; then
               cp "$artifact_dir/validation.json" src/data/validation.json
               restored=true
               break

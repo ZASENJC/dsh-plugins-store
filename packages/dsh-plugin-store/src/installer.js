@@ -38,9 +38,29 @@ function readJsonBody(request) {
   })
 }
 
-function isSameOrigin(request) {
+function isLoopbackAddress(address) {
+  if (typeof address !== 'string') return false
+  const normalized = address.replace(/^::ffff:/i, '')
+  return normalized === '::1' || normalized === '127.0.0.1' || normalized === '0:0:0:0:0:0:0:1'
+}
+
+function isLocalHost(value) {
+  if (typeof value !== 'string') return false
+  try {
+    const hostname = new URL(`http://${value}`).hostname
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1'
+  } catch {
+    return false
+  }
+}
+
+function isAuthorizedRequest(request) {
+  // The endpoint runs inside DSH Web and must never become a LAN installation proxy.
+  if (!isLoopbackAddress(request.socket?.remoteAddress)) return false
+  if (!isLocalHost(request.headers.host)) return false
+
   const origin = request.headers.origin
-  if (origin === undefined) return true
+  if (typeof origin !== 'string' || origin.length === 0) return false
   try {
     return new URL(origin).host === request.headers.host
   } catch {
@@ -88,7 +108,7 @@ export function createInstallHandler({ install }) {
       sendJson(response, 415, { ok: false, message: '仅接受 JSON 请求' })
       return
     }
-    if (!isSameOrigin(request)) {
+    if (!isAuthorizedRequest(request)) {
       sendJson(response, 403, { ok: false, message: '拒绝跨来源安装请求' })
       return
     }

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, realpath } from 'node:fs/promises'
 import { resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -38,7 +38,18 @@ const entrypoint = typeof manifest.main === 'string'
     : exported?.default
 if (typeof entrypoint !== 'string') throw new Error('Plugin has no importable entrypoint')
 
-const module = await import(pathToFileURL(resolve(installedRoot, entrypoint)).href)
+const nodeModulesRootReal = await realpath(nodeModulesRoot)
+const installedRootReal = await realpath(installedRoot)
+if (!installedRootReal.startsWith(`${nodeModulesRootReal}${sep}`)) {
+  throw new Error('Installed plugin escapes node_modules boundary')
+}
+const entrypointPath = resolve(installedRootReal, entrypoint)
+const entrypointReal = await realpath(entrypointPath)
+if (!entrypointReal.startsWith(`${installedRootReal}${sep}`)) {
+  throw new Error('Plugin entrypoint escapes installed plugin boundary')
+}
+
+const module = await import(pathToFileURL(entrypointReal).href)
 const apply = typeof module.apply === 'function'
   ? module.apply
   : typeof module.default?.apply === 'function'

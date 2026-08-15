@@ -90,4 +90,19 @@ describe('pinned scanner adapters', () => {
       vulnerabilities: [{ id: 'GHSA-fixture', path: 'package-lock.json' }],
     })
   })
+
+  it('fails closed when a scanner exits non-zero with an empty report', async () => {
+    const executor = vi.fn(async (_file: string, args: string[]) => {
+      const image = args.find((value) => value.includes(':v') || value.includes('/trivy:')) ?? ''
+      if (image.includes('osv-scanner')) {
+        return { stdout: JSON.stringify({ results: [] }), exitCode: 2, timedOut: false, truncated: false }
+      }
+      if (image.includes('trivy')) return JSON.stringify({ Results: [] })
+      return '[]'
+    })
+
+    const result = await runScannerCommands('/tmp/dsh-source', { executor })
+
+    expect(result.osv).toEqual({ status: 'unavailable', vulnerabilities: [] })
+  })
 })
