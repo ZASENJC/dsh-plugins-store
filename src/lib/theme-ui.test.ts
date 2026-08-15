@@ -32,6 +32,20 @@ describe('site theme control', () => {
     expect(layoutSource).toMatch(/document\.documentElement\.dataset\.theme = \w+/)
   })
 
+  it('shows one icon for the current mode and paints the browser bar before load', () => {
+    expect(layoutSource).toContain('<Sun class="theme-toggle__sun"')
+    expect(layoutSource).toContain('<Moon class="theme-toggle__moon"')
+    expect(layoutSource).toMatch(/<Sun class="theme-toggle__sun"[^>]*\shidden[\s\S]*<Moon class="theme-toggle__moon"[^>]*>/)
+    expect(layoutSource).toContain('themeToggleSun.hidden = nextTheme !== \'light\'')
+    expect(layoutSource).toContain('themeToggleMoon.hidden = nextTheme !== \'dark\'')
+
+    const themeColorIndex = layoutSource.indexOf('<meta name="theme-color"')
+    const themeBootstrapIndex = layoutSource.indexOf('<script is:inline define:vars={{ THEME_STORAGE_KEY }}>')
+    expect(themeColorIndex).toBeGreaterThanOrEqual(0)
+    expect(themeBootstrapIndex).toBeGreaterThan(themeColorIndex)
+    expect(layoutSource).toContain("document.querySelector('meta[name=\"theme-color\"]')?.setAttribute('content', '#f6f7f8')")
+  })
+
   it('defines a light palette and theme-aware surfaces', () => {
     expect(globalStyles).toContain(":root[data-theme='light']")
     expect(globalStyles).toContain('color-scheme: light')
