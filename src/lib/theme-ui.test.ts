@@ -33,9 +33,9 @@ describe('site theme control', () => {
   })
 
   it('shows one icon for the current mode and paints the browser bar before load', () => {
-    expect(layoutSource).toContain('<Sun class="theme-toggle__sun"')
-    expect(layoutSource).toContain('<Moon class="theme-toggle__moon"')
-    expect(layoutSource).toMatch(/<Sun class="theme-toggle__sun"[^>]*\shidden[\s\S]*<Moon class="theme-toggle__moon"[^>]*>/)
+    expect(layoutSource).toContain('<span class="theme-toggle__sun"')
+    expect(layoutSource).toContain('<span class="theme-toggle__moon"')
+    expect(layoutSource).toMatch(/<span class="theme-toggle__sun"[^>]*\shidden>[\s\S]*<Sun[\s\S]*<span class="theme-toggle__moon"[^>]*>[\s\S]*<Moon/)
     expect(layoutSource).toContain('themeToggleSun.hidden = nextTheme !== \'light\'')
     expect(layoutSource).toContain('themeToggleMoon.hidden = nextTheme !== \'dark\'')
 
