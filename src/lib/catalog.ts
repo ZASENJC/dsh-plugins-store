@@ -300,11 +300,39 @@ export function hydrateCatalogValidation(
   validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
 ): Catalog {
   const repositories = catalog.repositories.map((entry) => {
+    const existingValidation = entry.validation ?? buildValidationStatus({
+      repositoryId: entry.repositoryId,
+      projectType: entry.projectType,
+      repositoryPushedAt: entry.pushedAt,
+      legacyVerificationUrl: entry.verificationUrl,
+    })
+    const record = validationRecords.get(entry.repositoryId)
+    // The generated catalog can already contain the newest archive result. The
+    // checked-in feed is a compatibility input, so an absent or older record
+    // must not erase that result during the Astro build.
+    if (!record) {
+      if (entry.validation) return entry
+      const verified = existingValidation.verified
+      return {
+        ...entry,
+        verified,
+        validation: existingValidation,
+        status: {
+          ...entry.status,
+          verification: verified ? 'verified' as const : 'not-verified' as const,
+        },
+      }
+    }
+    const existingUpdatedAt = existingValidation.updatedAt ? Date.parse(existingValidation.updatedAt) : Number.NaN
+    const incomingUpdatedAt = Date.parse(record.updatedAt)
+    if (Number.isFinite(existingUpdatedAt)
+      && Number.isFinite(incomingUpdatedAt)
+      && incomingUpdatedAt < existingUpdatedAt) return entry
     const validation = buildValidationStatus({
       repositoryId: entry.repositoryId,
       projectType: entry.projectType,
       repositoryPushedAt: entry.pushedAt,
-      record: validationRecords.get(entry.repositoryId),
+      record,
       legacyVerificationUrl: entry.verificationUrl,
     })
     const verified = validation.verified

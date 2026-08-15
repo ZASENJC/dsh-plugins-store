@@ -8,7 +8,7 @@ on:
 
 permissions:
   actions: read
-  contents: read
+  contents: write
 
 concurrency:
   group: sync-catalog
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   sync:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != ''
     runs-on: ubuntu-latest
     env:
       VALIDATION_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
@@ -36,52 +36,36 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Restore last successful validation feed
+      - name: Restore source classification archive from upstream workflows
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          restored=false
-          if test -n "$VALIDATION_RUN_ID"; then
-            run_ids="$VALIDATION_RUN_ID"
-          else
-            run_ids="$(gh run list --workflow validate-plugins.yml --branch "$VALIDATION_BRANCH" --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
-          fi
-          for run_id in $run_ids; do
-            run_metadata="$(gh run view "$run_id" --json workflowName,headBranch,status,conclusion 2>/dev/null || true)"
-            if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | EXPECTED_BRANCH="$VALIDATION_BRANCH" node -e '
-              const fs = require("node:fs")
-              const metadata = JSON.parse(fs.readFileSync(0, "utf8"))
-              process.exit(metadata.workflowName === "Validate plugins"
-                && metadata.headBranch === process.env.EXPECTED_BRANCH
-                && metadata.status === "completed"
-                && metadata.conclusion === "success" ? 0 : 1)
-            '; then
-              continue
-            fi
-            artifact_dir="validation-restore/$run_id"
-            if gh run download "$run_id" --name plugin-validation-state --dir "$artifact_dir" 2>/dev/null \
-              && test -f "$artifact_dir/validation.json" \
-              && test -f "$artifact_dir/state.json" \
-              && npm run validate:artifact -- "$artifact_dir"; then
-              cp "$artifact_dir/validation.json" src/data/validation.json
-              restored=true
-              break
-            fi
-          done
-          if test "$restored" = false; then
-            echo "No prior validation artifact is available; catalog refresh will use the checked-in feed."
-          fi
-
-      - name: Restore latest completed source classification archive
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+          download_artifact_with_retry() {
+            local run_id="$1"
+            local artifact_name="$2"
+            local artifact_dir="$3"
+            rm -rf "$artifact_dir"
+            for attempt in 1 2 3 4 5 6 7 8; do
+              if gh run download "$run_id" --name "$artifact_name" --dir "$artifact_dir" 2>/dev/null; then
+                return 0
+              fi
+              rm -rf "$artifact_dir"
+              if test "$attempt" -lt 8; then
+                echo "Retry archive download ($artifact_name, attempt $attempt/8)"
+                sleep 10
+              fi
+            done
+            return 1
+          }
           restored=false
           for workflow_name in validate-plugins.yml classify-plugins.yml; do
             if test "$workflow_name" = "validate-plugins.yml"; then
-              if test -n "$VALIDATION_RUN_ID"; then run_ids="$VALIDATION_RUN_ID"; else run_ids="$(gh run list --workflow validate-plugins.yml --branch "$VALIDATION_BRANCH" --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"; fi
+              if test -n "$VALIDATION_RUN_ID"; then
+                run_ids="$VALIDATION_RUN_ID $(gh run list --workflow validate-plugins.yml --branch "$VALIDATION_BRANCH" --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+              else
+                run_ids="$(gh run list --workflow validate-plugins.yml --branch "$VALIDATION_BRANCH" --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+              fi
               artifact_name=plugin-validation-state
             else
               run_ids="$(gh run list --workflow classify-plugins.yml --branch "$VALIDATION_BRANCH" --limit 30 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
@@ -89,17 +73,18 @@ jobs:
             fi
             for run_id in $run_ids; do
               run_metadata="$(gh run view "$run_id" --json workflowName,headBranch,status,conclusion 2>/dev/null || true)"
-              if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | EXPECTED_BRANCH="$VALIDATION_BRANCH" node -e '
+              if [[ -z "$run_metadata" ]] || ! printf '%s' "$run_metadata" | EXPECTED_WORKFLOW="$workflow_name" EXPECTED_BRANCH="$VALIDATION_BRANCH" node -e '
                 const fs = require("node:fs")
                 const metadata = JSON.parse(fs.readFileSync(0, "utf8"))
-                process.exit(metadata.headBranch === process.env.EXPECTED_BRANCH
+                process.exit(metadata.workflowName === (process.env.EXPECTED_WORKFLOW === "validate-plugins.yml" ? "Validate plugins" : "Classify plugins")
+                  && metadata.headBranch === process.env.EXPECTED_BRANCH
                   && metadata.status === "completed"
-                  && ["success", "failure", "cancelled", "timed_out"].includes(metadata.conclusion) ? 0 : 1)
+                  && ["success", "failure", "cancelled", "timed_out", "action_required", "stale", "neutral"].includes(metadata.conclusion) ? 0 : 1)
               '; then
                 continue
               fi
               artifact_dir="classification-restore/$run_id"
-              if gh run download "$run_id" --name "$artifact_name" --dir "$artifact_dir" 2>/dev/null \
+              if download_artifact_with_retry "$run_id" "$artifact_name" "$artifact_dir" \
                 && test -f "$artifact_dir/source-classification.json" \
                 && node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$artifact_dir/source-classification.json"; then
                 cp "$artifact_dir/source-classification.json" src/data/source-classification.json
@@ -109,8 +94,43 @@ jobs:
             done
           done
           if test "$restored" = false; then
-            echo "No completed source classification archive is available; catalog refresh will use topic classification."
+            if test -f src/data/source-classification.json; then
+              echo "No newer source classification archive is available; sync will use the persisted archive."
+            else
+              echo "No completed source classification archive is available; sync will use the topic full-catalog fallback."
+            fi
           fi
+
+      - name: Persist source classification archive
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
+        run: |
+          if test ! -f src/data/source-classification.json; then
+            echo "No source classification archive to persist."
+            exit 0
+          fi
+          set -euo pipefail
+          endpoint="repos/$REPOSITORY/contents/src/data/source-classification.json"
+          remote_sha="$(gh api "$endpoint" --method GET -f "ref=$BRANCH" --jq '.sha' 2>/dev/null || true)"
+          local_sha="$(git hash-object src/data/source-classification.json)"
+          if test -n "$remote_sha" && test "$remote_sha" = "$local_sha"; then
+            echo "Persisted source classification archive is unchanged."
+            exit 0
+          fi
+          REMOTE_SHA="$remote_sha" BRANCH="$BRANCH" node --input-type=module - <<'NODE'
+          import fs from 'node:fs'
+
+          const payload = {
+            message: 'chore: persist source classification archive',
+            content: fs.readFileSync('src/data/source-classification.json').toString('base64'),
+            branch: process.env.BRANCH,
+          }
+          if (process.env.REMOTE_SHA) payload.sha = process.env.REMOTE_SHA
+          fs.writeFileSync('/tmp/source-classification-persist.json', JSON.stringify(payload))
+          NODE
+          gh api --method PUT "$endpoint" --input /tmp/source-classification-persist.json --jq '.commit.sha'
 
       - name: Sync GitHub Topic
         run: npm run sync
@@ -139,6 +159,73 @@ jobs:
         run: |
           npm test
           npm run build
+
+      - name: Verify generated catalog preserves upstream archives
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs')
+
+          const read = (path) => JSON.parse(fs.readFileSync(path, 'utf8'))
+          const source = read('src/data/catalog.json')
+          const built = read('dist/catalog.json')
+          const projection = (catalog) => ({
+            repositoryIds: catalog.repositories.map(({ repositoryId }) => repositoryId),
+            verified: catalog.stats.verified,
+            validationStatuses: catalog.stats.validationStatuses,
+            classifications: catalog.repositories.map((entry) => ({
+              repositoryId: entry.repositoryId,
+              projectType: entry.projectType,
+              category: entry.category,
+              categories: entry.categories,
+              classificationSource: entry.classificationSource,
+              classificationSignals: entry.classificationSignals,
+            })),
+          })
+          if (JSON.stringify(projection(source)) !== JSON.stringify(projection(built))) {
+            throw new Error('Built catalog changed classification or validation state')
+          }
+
+          const archivePath = 'src/data/source-classification.json'
+          if (fs.existsSync(archivePath)) {
+            const archive = read(archivePath)
+            const sourceById = new Map(source.repositories.map((entry) => [entry.repositoryId, entry]))
+            const excludedIds = archive.records
+              .filter((record) => record.disposition === 'exclude')
+              .map((record) => record.repositoryId)
+            if (excludedIds.some((repositoryId) => sourceById.has(repositoryId))) {
+              throw new Error('Catalog contains a repository excluded by source classification')
+            }
+            const expectedVerified = new Set(archive.records
+              .filter((record) => record.disposition === 'include'
+                && record.validation?.status === 'passed'
+                && record.validation?.sourceSha === record.sourceSha)
+              .filter((record) => sourceById.get(record.repositoryId)?.pushedAt === record.sourcePushedAt)
+              .map((record) => record.repositoryId))
+            const actualVerified = new Set(source.repositories
+              .filter((entry) => entry.validation.overall === 'verified')
+              .map((entry) => entry.repositoryId))
+            if (expectedVerified.size !== actualVerified.size
+              || [...expectedVerified].some((repositoryId) => !actualVerified.has(repositoryId))) {
+              throw new Error(`Catalog validation conclusions do not match source archive: expected ${expectedVerified.size}, got ${actualVerified.size}`)
+            }
+            for (const record of archive.records) {
+              if (record.disposition !== 'include' || !record.classification || record.classification.confidence === 'low') continue
+              const entry = sourceById.get(record.repositoryId)
+              if (!entry || entry.classificationSource !== 'source') {
+                throw new Error(`Catalog is missing source classification for repository ${record.repositoryId}`)
+              }
+              if (record.classification.projectType !== 'unknown' && entry.projectType !== record.classification.projectType) {
+                throw new Error(`Catalog project type disagrees with source archive for repository ${record.repositoryId}`)
+              }
+              if (record.classification.category !== 'other' && entry.category !== record.classification.category) {
+                throw new Error(`Catalog category disagrees with source archive for repository ${record.repositoryId}`)
+              }
+            }
+          } else {
+            console.log('No source classification archive was restored; topic full-catalog fallback remains authoritative.')
+          }
+          console.log(`Catalog archive check passed: ${source.stats.verified} verified, ${source.repositories.length} included repositories`)
+          NODE
 
       - name: Configure deployment SSH
         env:

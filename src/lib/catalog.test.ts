@@ -139,6 +139,69 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
     })
   })
 
+  it('keeps catalog validation when the legacy feed has no matching record', () => {
+    const entry = createCatalogEntry(githubRepository, new Set(), {
+      repositoryId: githubRepository.id,
+      sourceSha: 'a'.repeat(40),
+      sourcePushedAt: githubRepository.pushed_at,
+      updatedAt: '2026-08-16T00:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.2',
+      structure: { status: 'passed' },
+      sandbox: { status: 'passed' },
+    })
+    const hydrated = hydrateCatalogValidation({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T00:00:00Z',
+      source: { label: 'GitHub Topic', topic: 'dsh-plugin', url: 'https://github.com/topics/dsh-plugin' },
+      stats: { fetched: 1, reportedByGitHub: 1, verified: 1, categories: {}, projectTypes: {}, validationStatuses: { verified: 1 } },
+      repositories: [entry],
+    })
+
+    expect(hydrated.repositories[0]).toMatchObject({
+      verified: true,
+      validation: { overall: 'verified', sourceSha: 'a'.repeat(40) },
+    })
+    expect(hydrated.stats).toMatchObject({ verified: 1, validationStatuses: { verified: 1 } })
+  })
+
+  it('does not replace newer catalog evidence with an older legacy feed record', () => {
+    const entry = createCatalogEntry(githubRepository, new Set(), {
+      repositoryId: githubRepository.id,
+      sourceSha: 'a'.repeat(40),
+      sourcePushedAt: githubRepository.pushed_at,
+      updatedAt: '2026-08-16T00:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.2',
+      structure: { status: 'passed' },
+      sandbox: { status: 'passed' },
+    })
+    const hydrated = hydrateCatalogValidation({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T00:00:00Z',
+      source: { label: 'GitHub Topic', topic: 'dsh-plugin', url: 'https://github.com/topics/dsh-plugin' },
+      stats: { fetched: 1, reportedByGitHub: 1, verified: 1, categories: {}, projectTypes: {}, validationStatuses: { verified: 1 } },
+      repositories: [entry],
+    }, new Map([[githubRepository.id, {
+      repositoryId: githubRepository.id,
+      sourceSha: 'a'.repeat(40),
+      sourcePushedAt: githubRepository.pushed_at,
+      updatedAt: '2026-08-15T00:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.2',
+      structure: { status: 'passed' as const },
+      sandbox: { status: 'failed' as const },
+    }]]))
+
+    expect(hydrated.repositories[0]).toMatchObject({
+      verified: true,
+      validation: { overall: 'verified', updatedAt: '2026-08-16T00:00:00Z' },
+    })
+  })
+
   it('matches verified plugins by exact full repository name without accepting same-name forks', () => {
     const verified = {
       ...githubRepository,

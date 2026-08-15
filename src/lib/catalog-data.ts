@@ -1,9 +1,7 @@
 import rawCatalogData from '../data/catalog.json'
-import rawValidationData from '../data/validation.json'
 import { hydrateCatalogValidation, type Catalog } from './catalog'
-import { parseValidationFeed } from './validation'
 
-export const catalogData = hydrateCatalogValidation(
-  rawCatalogData as Catalog,
-  parseValidationFeed(rawValidationData),
-)
+// sync-github.ts has already merged source classification and validation
+// conclusions into this generated catalog. The legacy validation feed must not
+// be able to overwrite that archive-backed result during the site build.
+export const catalogData = hydrateCatalogValidation(rawCatalogData as Catalog)
