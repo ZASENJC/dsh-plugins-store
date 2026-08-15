@@ -52,6 +52,12 @@ describe('catalog data', () => {
     expect(entry.status).toEqual({ discovery: 'topic-listed', verification: 'not-verified' })
   })
 
+  it('does not expose the removed external curation state', () => {
+    const entry = createCatalogEntry(githubRepository)
+
+    expect(entry).not.toHaveProperty('awesomeListed')
+  })
+
   it('stores README-derived installation evidence separately from repository identity', () => {
     const reference = extractInstallReference(`
 ## Install
