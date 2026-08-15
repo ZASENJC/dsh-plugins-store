@@ -11,7 +11,7 @@ const target = {
   fullName: 'omdsh-dev/dsh-tool-calculator',
   sourceSha: '701f6549b4e1b648351403dc8a18a9bc9a2b713d',
   executionType: 'host-tool' as const,
-  smokeMode: 'tool-registration' as const,
+  smokeMode: 'loader' as const,
   expectedFinalStatuses: ['verified' as const],
 }
 
@@ -121,7 +121,7 @@ describe('P2 sandbox execution report', () => {
     expect(result.summary).toMatchObject({ attribution: 'infrastructure', code: 'SANDBOX_TIMEOUT' })
   })
 
-  it('keeps a pnpm offline metadata miss inconclusive without retaining registry diagnostics', async () => {
+  it('treats install errors as plugin failures now that the sandbox has network access', async () => {
     const executor = vi.fn(async (_command, id: string) => ({
       exitCode: id === 'install-plugin' ? 1 : 0,
       timedOut: false,
@@ -137,13 +137,11 @@ describe('P2 sandbox execution report', () => {
     })
 
     expect(result.report).toMatchObject({
-      currentStatus: 'inconclusive',
-      failure: null,
-      events: expect.arrayContaining([expect.objectContaining({
-        status: 'inconclusive',
-        code: 'OFFLINE_DEPENDENCY_CACHE_MISS',
-        attribution: 'infrastructure',
-      })]),
+      currentStatus: 'failed',
+      failure: {
+        code: 'PLUGIN_INSTALL_FAILED',
+        attribution: 'plugin',
+      },
     })
     expect(JSON.stringify(result)).not.toMatch(/registry\.npmjs|must-not-escape|private-package/)
   })

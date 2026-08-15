@@ -42,10 +42,25 @@ describe('P2 validator image contract', () => {
     ])
 
     expect(copySource).toContain('cp')
-    expect(smoke).toContain('tool-registration')
-    expect(smoke).toMatch(/if \(smokeMode === 'tool-registration'\) \{\s*await apply\(context, \{\}\)/)
+    expect(smoke).toContain("smokeMode = process.argv[3] ?? 'loader'")
+    expect(smoke).toContain("smokeMode !== 'loader'")
+    expect(smoke).not.toContain('tool-registration')
+    expect(smoke).not.toContain('await apply(')
     expect(postflight).toContain('/proc/net')
     expect(postflight).toContain("entry.isDirectory() && entry.name !== 'node_modules'")
     expect(`${copySource}${smoke}${postflight}`).not.toMatch(/https?:\/\//)
+  })
+
+  it('smokes the package activated in the DSH profile instead of only the source checkout', async () => {
+    const smoke = await readFile('validation/sandbox/host-tool-smoke.mjs', 'utf8')
+
+    expect(smoke).toContain('process.env.DSH_HOME')
+    expect(smoke).toContain("'profiles', 'validation'")
+    expect(smoke).toContain('profileManifest.dependencies')
+    expect(smoke).toContain('profileManifest.dsh?.profile?.bundles')
+    expect(smoke).toContain("'node_modules', packageName")
+    expect(smoke).toContain("readFile(resolve(installedRoot, 'package.json')")
+    expect(smoke).toContain('pathToFileURL(resolve(installedRoot, entrypoint))')
+    expect(smoke).not.toContain('pathToFileURL(resolve(pluginRoot, entrypoint))')
   })
 })
