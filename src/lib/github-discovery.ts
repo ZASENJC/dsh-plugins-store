@@ -257,8 +257,10 @@ export async function fetchAllSearchRepositories(
         pageSize,
         initialDateRange,
       )
+      const uniqueRepositories = new Map<number, SearchRepository>()
+      for (const repository of repositories) uniqueRepositories.set(repository.id, repository)
       return {
-        repositories: filterEligibleRepositories(repositories),
+        repositories: filterEligibleRepositories([...uniqueRepositories.values()]),
         reportedByGitHub,
       }
     } catch (error) {
