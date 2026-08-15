@@ -187,6 +187,7 @@ async function collectPartition(
         ? splitDatePartition(initialDatePartitions[0])
         : initialDatePartitions
     }
+    if (children === null) children = splitStarsPartition(partition)
     if (children === null && partition.starsStart === undefined) {
       const bounds = await getStarsBounds(fetcher, partition)
       children = splitStarsPartition({

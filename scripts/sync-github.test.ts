@@ -203,4 +203,42 @@ describe('GitHub catalog discovery filter', () => {
     expect(result.repositories.map(({ id }) => id)).toEqual([1, 2, 3, 4])
     expect(requests.every(({ sort }) => sort === 'stars')).toBe(true)
   })
+
+  it('recursively splits an existing star range when it is still oversized', async () => {
+    const rows = Array.from({ length: 7 }, (_, index) => repository({
+      id: index + 1,
+      stargazers_count: index,
+      created_at: '2026-01-01T00:00:00Z',
+    }))
+    const fetcher = async (
+      page: number,
+      partition: SearchPartition,
+      request: { sort: 'stars' | 'created'; order: 'asc' | 'desc' },
+    ) => {
+      const matching = rows
+        .filter((row) => partition.starsStart === undefined
+          || (row.stargazers_count >= partition.starsStart
+            && row.stargazers_count <= partition.starsEnd!))
+        .sort((left, right) => request.order === 'asc'
+          ? left.stargazers_count - right.stargazers_count
+          : right.stargazers_count - left.stargazers_count)
+      const pageSize = 2
+      return {
+        total_count: matching.length,
+        incomplete_results: false,
+        items: matching.slice((page - 1) * pageSize, page * pageSize),
+      }
+    }
+
+    const result = await fetchAllSearchRepositories(fetcher, {
+      maxResultsPerQuery: 3,
+      pageSize: 2,
+      initialDateStart: '2026-01-01',
+      initialDateEnd: '2026-01-01',
+    })
+
+    expect(new Set(result.repositories.map(({ id }) => id))).toEqual(
+      new Set([1, 2, 3, 4, 5, 6, 7]),
+    )
+  })
 })

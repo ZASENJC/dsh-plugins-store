@@ -103,12 +103,26 @@ async function fetchPage(
   request: SearchRequestOptions,
 ): Promise<SearchPage> {
   const query = buildSearchQuery(page, partition, request)
-  const response = await fetch(`${SEARCH_URL}?${query}`, { headers: getHeaders() })
-  if (!response.ok) {
+  while (true) {
+    const response = await fetch(`${SEARCH_URL}?${query}`, { headers: getHeaders() })
+    if (response.ok) return response.json() as Promise<SearchPage>
+
     const remaining = response.headers.get('x-ratelimit-remaining')
-    throw new Error(`GitHub API 请求失败：${response.status} ${response.statusText}，剩余额度 ${remaining ?? '未知'}`)
+    const retryAfter = Number(response.headers.get('retry-after'))
+    const resetAt = Number(response.headers.get('x-ratelimit-reset'))
+    const rateLimited = response.status === 429 || (response.status === 403 && remaining === '0')
+    if (!rateLimited) {
+      throw new Error(`GitHub API 请求失败：${response.status} ${response.statusText}，剩余额度 ${remaining ?? '未知'}`)
+    }
+
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : Number.isFinite(resetAt) && resetAt > 0
+        ? Math.max(1000, resetAt * 1000 - Date.now() + 1000)
+        : 60_000
+    console.warn(`GitHub Search 达到速率限制，等待 ${Math.ceil(waitMs / 1000)} 秒后继续`)
+    await new Promise((resolve) => setTimeout(resolve, waitMs))
   }
-  return response.json() as Promise<SearchPage>
 }
 
 async function fetchRepositories() {
