@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildSearchQuery,
+  fetchAllSearchRepositories,
   filterEligibleRepositories,
+  type SearchPartition,
   type SearchRepository,
 } from '../src/lib/github-discovery'
 
@@ -73,5 +75,43 @@ describe('GitHub catalog discovery filter', () => {
     ])
 
     expect(result).toEqual([])
+  })
+
+  it('fetches every repository by splitting an oversized search into date partitions', async () => {
+    const rows = Array.from({ length: 5 }, (_, index) => repository({
+      id: index + 1,
+      created_at: `2026-01-0${index < 3 ? 1 : 2}T00:00:00Z`,
+    }))
+    const calls: Array<{ page: number; partition: SearchPartition }> = []
+    const fetcher = async (
+      page: number,
+      partition: SearchPartition,
+    ) => {
+      calls.push({ page, partition })
+      const key = partition.createdStart === undefined
+        ? 'root'
+        : String(partition.createdStart)
+      const matching = key === 'root'
+        ? rows
+        : rows.filter((row) => row.created_at.startsWith(key))
+      const pageSize = 2
+      return {
+        total_count: matching.length,
+        incomplete_results: false,
+        items: matching.slice((page - 1) * pageSize, page * pageSize),
+      }
+    }
+
+    const result = await fetchAllSearchRepositories(fetcher, {
+      maxResultsPerQuery: 3,
+      pageSize: 2,
+      initialDateStart: '2026-01-01',
+      initialDateEnd: '2026-01-02',
+    })
+
+    expect(result.reportedByGitHub).toBe(5)
+    expect(result.repositories.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5])
+    expect(calls.some(({ partition }) => partition.createdStart === '2026-01-01')).toBe(true)
+    expect(calls.some(({ partition }) => partition.createdStart === '2026-01-02')).toBe(true)
   })
 })
