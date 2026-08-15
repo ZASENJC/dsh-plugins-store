@@ -1,7 +1,6 @@
 const REPOSITORY_ID = /^[A-Za-z0-9][A-Za-z0-9:_./-]{0,127}$/
 const REPOSITORY_FULL_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})\/[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})$/
 const NPM_PACKAGE = /^(?:@[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})\/)?[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})(?:@[A-Za-z0-9^~<>=*+._-][A-Za-z0-9^~<>=*+._-]{0,127})?$/
-const SOURCE_SHA = /^[a-f0-9]{40}$/i
 const MAX_BODY_BYTES = 4096
 
 function assertInstallPlan(plan) {
@@ -24,11 +23,10 @@ function assertInstallPlan(plan) {
 
   const specifier = plan.args[4]
   if (plan.source === 'github') {
-    const pinned = /^github:([^#]+)#([a-f0-9]{40})$/i.exec(specifier)
-    if (!pinned || !SOURCE_SHA.test(pinned[2])
-      || !REPOSITORY_FULL_NAME.test(pinned[1])
-      || pinned[1].toLowerCase() !== plan.target.toLowerCase()) {
-      throw new Error('GitHub 安装目标未固定到已验证 SHA')
+    const reference = /^github:([^#]+)(?:#([A-Za-z0-9][A-Za-z0-9_.:-]{0,127}))?$/i.exec(specifier)
+    if (!reference || !REPOSITORY_FULL_NAME.test(reference[1])
+      || reference[1].toLowerCase() !== plan.target.toLowerCase()) {
+      throw new Error('GitHub 安装目标无效')
     }
   } else {
     const packageName = specifier.startsWith('npm:') ? specifier.slice(4) : specifier

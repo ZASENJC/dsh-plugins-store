@@ -212,6 +212,28 @@ describe('plugin installation HTTP handler', () => {
     })
   })
 
+  it('accepts the structured unpinned README plan received from the catalog API', async () => {
+    const install = vi.fn().mockResolvedValue({ output: 'installed' })
+    const plan = {
+      source: 'github',
+      target: 'owner/repository',
+      command: 'dsh plugin --profile web add github:owner/repository',
+      args: ['plugin', '--profile', 'web', 'add', 'github:owner/repository'],
+      executable: true,
+    }
+    const response = await dispatch(createInstallHandler({ install }), {
+      body: JSON.stringify({ repositoryId: 'github:1', install: plan }),
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(install).toHaveBeenCalledWith({
+      repositoryId: 'github:1',
+      source: 'github',
+      target: 'owner/repository',
+      args: plan.args,
+    })
+  })
+
   it('reports host installation failures without leaking an exception', async () => {
     const install = vi.fn().mockRejectedValue(new Error('host failed'))
     const response = await dispatch(createInstallHandler({ install }))

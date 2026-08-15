@@ -170,22 +170,24 @@ export function resolveCatalogInstallReference(
   const verified = repository.validation?.overall === 'verified'
     && typeof sourceSha === 'string'
     && SOURCE_SHA.test(sourceSha)
+  const securityReview = repository.validation?.overall === 'security-review'
 
   if (candidate.source === 'github') {
     const sameRepository = candidate.target.toLowerCase() === repository.fullName.toLowerCase()
-    if (sameRepository
-      && verified
-      && candidate.executable
-      && candidate.evidence.pattern === 'dsh-plugin-add') {
+    if (securityReview || !sameRepository || !candidate.executable || candidate.evidence.pattern !== 'dsh-plugin-add') {
+      candidate.executable = false
+    } else if (verified) {
       const pinnedSpecifier = `github:${repository.fullName}#${sourceSha.toLowerCase()}`
       candidate.command = `dsh plugin --profile web add ${pinnedSpecifier}`
       candidate.args = ['plugin', '--profile', 'web', 'add', pinnedSpecifier]
-      candidate.executable = true
-    } else {
-      candidate.executable = false
     }
   } else if (candidate.source === 'npm') {
-    candidate.executable = candidate.executable && verified
+    if (!securityReview && candidate.evidence.pattern === 'package-manager-add') {
+      candidate.args = ['plugin', '--profile', 'web', 'add', `npm:${candidate.target}`]
+      candidate.executable = true
+    } else if (securityReview) {
+      candidate.executable = false
+    }
   } else {
     candidate.executable = false
   }

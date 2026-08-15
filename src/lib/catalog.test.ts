@@ -85,7 +85,7 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       candidate: {
         source: 'github',
         target: 'PlutoKeating/dsh-lark-bot',
-        executable: false,
+        executable: true,
       },
     })
   })
@@ -134,7 +134,7 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
 
     expect(hydrated.repositories[0]).toMatchObject({
       validation: { overall: 'expired', reason: '仓库源码已更新' },
-      install: { status: 'recognized', candidate: { executable: false } },
+      install: { status: 'recognized', candidate: { executable: true } },
     })
   })
 

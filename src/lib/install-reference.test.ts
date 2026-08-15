@@ -160,6 +160,21 @@ npm install dsh-example
     })
   })
 
+  it('keeps security-review commands out of one-click installation', () => {
+    const reference = extractInstallReference(`
+## Install
+
+\`\`\`sh
+dsh plugin --profile web add github:owner/plugin
+\`\`\`
+`)
+
+    expect(resolveCatalogInstallReference(reference, {
+      fullName: 'owner/plugin',
+      validation: { overall: 'security-review' },
+    })).toMatchObject({ candidate: { executable: false } })
+  })
+
   it('does not make a README command executable when it targets another repository', () => {
     const reference = extractInstallReference(`
 ## Install

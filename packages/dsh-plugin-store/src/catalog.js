@@ -46,6 +46,8 @@ export const VALIDATION_STATUS_IDS = Object.freeze([
 
 const INSTALLABLE_TYPES = new Set(['plugin', 'skill', 'collection', 'channel'])
 const REPOSITORY_FULL_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})\/[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})$/
+const GITHUB_SPECIFIER = /^github:([^#]+)(?:#([A-Za-z0-9][A-Za-z0-9_.:-]{0,127}))?$/i
+const SOURCE_SHA = /^[a-f0-9]{40}$/i
 const NPM_PACKAGE = /^(?:@[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})\/)?[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})(?:@[A-Za-z0-9^~<>=*+._-][A-Za-z0-9^~<>=*+._-]{0,127})?$/
 
 function getInstallCandidate(repository) {
@@ -75,19 +77,21 @@ function readDshInstallArgs(candidate) {
 function buildCandidatePlan(repository) {
   const candidate = getInstallCandidate(repository)
   if (candidate === null || candidate.executable !== true) return null
-  if (repository.validation?.overall !== 'verified' || !Array.isArray(candidate.args)) return null
+  if (!Array.isArray(candidate.args)) return null
   if (typeof candidate.target !== 'string' || typeof repository.fullName !== 'string') return null
-  if (!/^[a-f0-9]{40}$/i.test(String(repository.validation.sourceSha ?? ''))) return null
+  const sourceSha = String(repository.validation?.sourceSha ?? '')
+  if (repository.validation?.overall === 'verified' && !SOURCE_SHA.test(sourceSha)) return null
 
   const args = readDshInstallArgs(candidate)
   if (args === null) return null
 
   if (candidate.source === 'github') {
-    const match = /^github:([^#]+)#([a-f0-9]{40})$/i.exec(args[4])
+    const match = GITHUB_SPECIFIER.exec(args[4])
     if (!match || !REPOSITORY_FULL_NAME.test(match[1])
       || match[1].toLowerCase() !== String(repository.fullName).toLowerCase()
-      || match[2].toLowerCase() !== String(repository.validation.sourceSha ?? '').toLowerCase()
       || candidate.target.toLowerCase() !== repository.fullName.toLowerCase()) return null
+    if (repository.validation?.overall === 'verified'
+      && match[2]?.toLowerCase() !== sourceSha.toLowerCase()) return null
   } else if (candidate.source === 'npm') {
     const specifier = args[4].startsWith('npm:') ? args[4].slice(4) : args[4]
     if (!NPM_PACKAGE.test(specifier) || specifier !== candidate.target) return null

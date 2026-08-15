@@ -326,9 +326,9 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
               )}
             </div>
             <p>
-              <span data-i18n={installCandidate?.executable === true ? 'detail.installVerifiedNote' : 'detail.installUnverifiedNote'}>
+              <span data-i18n={installCandidate?.executable === true ? 'detail.installExecutableNote' : 'detail.installUnverifiedNote'}>
                 {installCandidate?.executable === true
-                  ? '该命令已固定到通过当前验证的来源；验证仍不等同安全审计或官方背书。'
+                  ? '该命令已通过安装计划安全校验，可由 DSH host 执行；验证状态仍不等同安全审计或官方背书。'
                   : '该命令来自 README 的明确安装特征，仅作为参考，不会由 DSH host 自动执行。'}
               </span>
             </p>
