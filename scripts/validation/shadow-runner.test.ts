@@ -204,13 +204,15 @@ describe('P1 shadow runner', () => {
 
     expect(summary).toMatchObject({
       discovered: 2,
-      reportsWritten: 1,
+      reportsWritten: 2,
+      decisions: { inconclusive: 2 },
       loadFailures: [{
         repositoryId: 1,
         code: 'SNAPSHOT_LOAD_FAILED',
         reason: '仓库快照或扫描基础设施不可用',
       }],
     })
+    expect(await readdir(join(root, '1', 'a'.repeat(40)))).toHaveLength(1)
     expect(JSON.stringify(summary)).not.toMatch(/secret|\/Users\/private/)
     expect(snapshotLoader).toHaveBeenCalledTimes(2)
   })
