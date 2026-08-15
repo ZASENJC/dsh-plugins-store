@@ -53,7 +53,7 @@ function verified(report: ValidationReport): ValidationReport {
 }
 
 describe('dynamic validation candidate runner', () => {
-  it('queues generic Linux plugins and retains unsupported contracts as inconclusive', () => {
+  it('queues generic installability checks for Linux, Web, and Channel plugins', () => {
     expect(planCandidate(structureReport(1, 'host-tool'))).toMatchObject({
       disposition: 'queue',
       validator: 'linux-headless',
@@ -65,11 +65,17 @@ describe('dynamic validation candidate runner', () => {
       smokeMode: 'loader',
     })
     expect(planCandidate(structureReport(3, 'web'))).toMatchObject({
-      disposition: 'inconclusive',
-      code: 'WEB_SMOKE_CONTRACT_REQUIRED',
+      disposition: 'queue',
+      validator: 'linux-headless',
+      smokeMode: 'loader',
+    })
+    expect(planCandidate(structureReport(4, 'channel-mcp'))).toMatchObject({
+      disposition: 'queue',
+      validator: 'linux-headless',
+      smokeMode: 'loader',
     })
 
-    const credentialBound = structureReport(4, 'host-tool')
+    const credentialBound = structureReport(5, 'host-tool')
     credentialBound.structureChecks.push({
       code: 'EXTERNAL_CREDENTIALS_REQUIRED',
       status: 'warning',
@@ -103,9 +109,9 @@ describe('dynamic validation candidate runner', () => {
     })
 
     expect(maxActive).toBe(1)
-    expect(result).toMatchObject({ attempted: 3, verified: 1, inconclusive: 2, failed: 0 })
+    expect(result).toMatchObject({ attempted: 3, verified: 2, inconclusive: 1, failed: 0 })
     expect(result.reports.map(({ currentStatus }) => currentStatus)).toEqual([
-      'verified', 'inconclusive', 'inconclusive',
+      'verified', 'inconclusive', 'verified',
     ])
   })
 })

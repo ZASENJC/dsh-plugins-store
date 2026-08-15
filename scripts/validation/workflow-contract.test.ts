@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises'
 
 import { describe, expect, it } from 'vitest'
 
+import { CURRENT_VALIDATION_TARGET } from '../../src/lib/validation'
+
 describe('decoupled incremental validation workflows', () => {
   it('refreshes catalog every 30 minutes and restores validation state without depending on validation success', async () => {
     const syncWorkflow = await readFile('.github/workflows/sync-catalog.yml', 'utf8')
@@ -47,5 +49,17 @@ describe('decoupled incremental validation workflows', () => {
     expect(workflow).not.toMatch(/git\s+(add|commit|push)/)
     expect(workflow).not.toContain('DEPLOY_SSH_KEY')
     expect(workflow).not.toMatch(/\bssh\b/)
+  })
+
+  it('keeps the automatic workflow and baseline on the current validator binding', async () => {
+    const [workflow, baseline] = await Promise.all([
+      readFile('.github/workflows/validate-plugins.yml', 'utf8'),
+      readFile('validation/baseline.json', 'utf8').then(JSON.parse),
+    ])
+
+    expect(CURRENT_VALIDATION_TARGET.validatorVersion).toBe('0.1.1')
+    expect(baseline).toMatchObject(CURRENT_VALIDATION_TARGET)
+    expect(workflow).toContain(`DSH_VALIDATION_VERSION: ${CURRENT_VALIDATION_TARGET.dshVersion}`)
+    expect(workflow).toContain(`VALIDATOR_VERSION: ${CURRENT_VALIDATION_TARGET.validatorVersion}`)
   })
 })

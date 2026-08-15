@@ -60,7 +60,10 @@ describe('P2 restricted Linux sandbox command plan', () => {
     const installDependencies = plan.steps.find(({ id }) => id === 'install-dependencies')!
     expect(installDependencies.phase).toBe('acquisition')
     expect(installDependencies.network).toBe('bridge')
-    expect(installDependencies.command.args).toEqual(expect.arrayContaining(['npm', 'ci', '--ignore-scripts']))
+    expect(installDependencies.command.args).toEqual(expect.arrayContaining([
+      'npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false',
+    ]))
+    expect(installDependencies.command.args).toContain('dsh-plugin-validator:0.1.1')
 
     const installPlugin = plan.steps.find(({ id }) => id === 'install-plugin')!
     expect(installPlugin.network).toBe('none')
@@ -118,5 +121,24 @@ describe('P2 restricted Linux sandbox command plan', () => {
 
     const installDependencies = plan.steps.find(({ id }) => id === 'install-dependencies')!
     expect(installDependencies.command.args.slice(-expectedCommand.length)).toEqual(expectedCommand)
+  })
+
+  it('uses script-disabled npm install when no supported root lockfile exists', () => {
+    const sourceDirectory = join(tmpdir(), `dsh-no-lock-${process.pid}-${temporaryDirectories.length}`)
+    mkdirSync(sourceDirectory, { recursive: true })
+    writeFileSync(join(sourceDirectory, 'package.json'), '{}\n')
+    temporaryDirectories.push(sourceDirectory)
+
+    const plan = buildLinuxSandboxPlan(target, {
+      runId: 'fixture-no-lock',
+      sourceDirectory,
+      dshVersion: '0.1.0-rc.6',
+      validatorVersion: '0.1.1',
+    })
+
+    const installDependencies = plan.steps.find(({ id }) => id === 'install-dependencies')!
+    expect(installDependencies.command.args.slice(-6)).toEqual([
+      'npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false',
+    ])
   })
 })

@@ -116,7 +116,7 @@ describe('shadow structure check', () => {
     ]))
   })
 
-  it('fails missing package entrypoints before sandbox execution', () => {
+  it('records missing package entrypoints as advisory and lets installation decide', () => {
     const snapshot = {
       ...hostToolSnapshot,
       files: {
@@ -138,14 +138,54 @@ describe('shadow structure check', () => {
       platform: 'linux-x64',
     })
 
-    expect(result.decision).toBe('failed')
+    expect(result.decision).toBe('passed')
+    expect(result.queueSandbox).toBe(true)
     expect(result.report).toMatchObject({
-      currentStatus: 'structure_failed',
-      failure: {
-        attribution: 'plugin',
-        code: 'PACKAGE_ENTRYPOINT_MISSING',
-      },
+      currentStatus: 'structure_passed',
+      failure: null,
     })
+    expect(result.report.structureChecks).toContainEqual(expect.objectContaining({
+      code: 'PACKAGE_ENTRYPOINT_MISSING',
+      status: 'warning',
+      severity: 'advisory',
+    }))
+  })
+
+  it.each([
+    ['PACKAGE_MANIFEST_VALID', { ...hostToolSnapshot, files: {} }],
+    ['DSH_BUNDLE_PATCH_VALID', {
+      ...hostToolSnapshot,
+      files: {
+        ...hostToolSnapshot.files,
+        'package.json': JSON.stringify({
+          name: '@example/no-patch',
+          main: './lib/index.js',
+          dsh: { bundle: { patch: './missing.patch.yml' } },
+        }),
+      },
+    }],
+    ['SKILL_DOCUMENT_PRESENT', { ...hostToolSnapshot, projectType: 'skill' as const, files: {} }],
+    ['COLLECTION_MEMBERS_PRESENT', {
+      ...hostToolSnapshot,
+      projectType: 'collection' as const,
+      files: { 'package.json': JSON.stringify({ name: '@example/collection' }) },
+    }],
+  ] as const)('keeps %s as advisory evidence instead of a P1 blocker', (code, snapshot) => {
+    const result = runStructureCheck(snapshot, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '0.1.1',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('passed')
+    expect(result.report).toMatchObject({ currentStatus: 'structure_passed', failure: null })
+    expect(result.report.structureChecks).toContainEqual(expect.objectContaining({
+      code,
+      status: 'warning',
+      severity: 'advisory',
+    }))
   })
 
   it('accepts a declared bare relative main entrypoint when the pinned Git tree contains it', () => {
@@ -280,7 +320,7 @@ describe('shadow structure check', () => {
     }))
   })
 
-  it('retains a Trivy vulnerability finding when OSV is unavailable', () => {
+  it('records a Trivy vulnerability warning while an unavailable scanner remains inconclusive', () => {
     const result = runStructureCheck({
       ...hostToolSnapshot,
       scans: {
@@ -299,11 +339,12 @@ describe('shadow structure check', () => {
       platform: 'linux-x64',
     })
 
-    expect(result.decision).toBe('quarantined')
+    expect(result.decision).toBe('inconclusive')
     expect(result.report.structureChecks).toEqual(expect.arrayContaining([
       expect.objectContaining({
         code: 'TRIVY_VULNERABILITY_REVIEW_REQUIRED',
-        status: 'quarantined',
+        status: 'warning',
+        severity: 'security',
         tool: 'trivy',
       }),
       expect.objectContaining({ code: 'OSV_SCAN_UNAVAILABLE', status: 'not-run', tool: 'osv-scanner' }),
@@ -311,6 +352,37 @@ describe('shadow structure check', () => {
     expect(result.report.structureChecks).not.toContainEqual(expect.objectContaining({
       code: 'TRIVY_SCAN_CLEAN',
     }))
+  })
+
+  it('keeps known vulnerabilities visible without blocking an otherwise installable plugin', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      scans: {
+        trivy: {
+          status: 'findings',
+          vulnerabilities: [{ id: 'CVE-2026-FIXTURE', severity: 'HIGH' }],
+          secrets: [],
+        },
+        osv: {
+          status: 'findings',
+          vulnerabilities: [{ id: 'GHSA-FIXTURE', severity: 'HIGH' }],
+        },
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '0.1.1',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('passed')
+    expect(result.queueSandbox).toBe(true)
+    expect(result.report).toMatchObject({ currentStatus: 'structure_passed', failure: null })
+    expect(result.report.structureChecks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'TRIVY_VULNERABILITY_REVIEW_REQUIRED', status: 'warning', severity: 'security' }),
+      expect.objectContaining({ code: 'VULNERABILITY_REVIEW_REQUIRED', status: 'warning', severity: 'security' }),
+    ]))
   })
 
   it('attributes unavailable scanners to infrastructure and blocks sandbox queueing', () => {
