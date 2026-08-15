@@ -345,9 +345,9 @@ export function buildValidationCatalog(
   const repositories = discovery.repositories.flatMap((repository) => {
     const record = currentRecord(repository, archive)
     if (record?.disposition === 'exclude') return []
-    const sourceType = record?.classification
-      && record.classification.confidence !== 'low'
-      && record.classification.projectType
+    const sourceType = record?.classification && record.classification.confidence !== 'low'
+      ? record.classification.projectType
+      : undefined
     return [{
       repositoryId: repository.repositoryId,
       projectType: (sourceType ?? repository.projectType) as ProjectType,

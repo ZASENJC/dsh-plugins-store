@@ -139,6 +139,26 @@ describe('source classification archive', () => {
       .toContain(2)
   })
 
+  it('falls back to the discovery project type for low-confidence source classification', () => {
+    const archive = buildSourceClassificationArchive({
+      discovery,
+      previous: null,
+      results: [{
+        repositoryId: 1,
+        fullName: 'owner/plugin',
+        sourcePushedAt: discovery.repositories[0].pushedAt,
+        sourceSha: pluginClassification.sourceSha,
+        disposition: 'include',
+        classification: { ...pluginClassification, confidence: 'low' },
+      }],
+      mode: 'full',
+      generatedAt: '2026-08-16T03:30:00Z',
+    })
+
+    expect(buildValidationCatalog(discovery, archive).repositories.find(({ repositoryId }) => repositoryId === 1))
+      .toMatchObject({ repositoryId: 1, projectType: 'plugin' })
+  })
+
   it('turns missing full-run observations into explicit inconclusive records instead of silently dropping them', () => {
     const archive = buildSourceClassificationArchive({
       discovery,
