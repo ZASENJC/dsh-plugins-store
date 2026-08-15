@@ -1,7 +1,9 @@
 import { parseValidationReport, type ValidationReport } from '../../src/lib/validation-report'
 import type { ValidationRecord } from '../../src/lib/validation'
 
-const ELIGIBLE_PROJECT_TYPES = new Set(['plugin', 'skill', 'collection', 'channel'])
+// Unknown projects still need a structure-only pass so source evidence can refine
+// the coarse Topic classification before the next catalog refresh.
+const ELIGIBLE_PROJECT_TYPES = new Set(['plugin', 'skill', 'collection', 'channel', 'unknown'])
 const TERMINAL_STATUSES = new Set([
   'unrecognized',
   'structure_failed',

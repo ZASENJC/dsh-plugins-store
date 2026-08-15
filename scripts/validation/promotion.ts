@@ -162,6 +162,7 @@ function publicRecord(report: ValidationReport): ValidationRecord {
     dshVersion: report.target.dshVersion,
     platform: report.target.platform,
     validatorVersion: report.target.validatorVersion,
+    ...(report.sourceClassification ? { sourceClassification: report.sourceClassification } : {}),
     structure: structureFailed
       ? { status: structureStatus, ...(structureCheckedAt ? { checkedAt: structureCheckedAt } : {}), ...evidence }
       : { status: structureStatus, ...(structureCheckedAt ? { checkedAt: structureCheckedAt } : {}) },

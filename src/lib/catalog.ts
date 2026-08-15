@@ -7,6 +7,10 @@ import {
   type ProjectType,
 } from './classification'
 import {
+  SOURCE_CLASSIFIER_VERSION,
+  type SourceClassification,
+} from './source-classification'
+import {
   VALIDATION_STATUS_DEFINITIONS,
   buildValidationStatus,
   type ValidationOverall,
@@ -75,6 +79,8 @@ export interface CatalogEntry {
   categories: Category[]
   matchedTopics: string[]
   classificationConfidence: Confidence
+  classificationSource: 'topics' | 'source'
+  classificationSignals: string[]
   defaultBranch: string
   awesomeListed: boolean
   verified: boolean
@@ -107,18 +113,47 @@ export interface Catalog {
 
 export type CatalogSort = 'recommended' | 'stars' | 'updated' | 'name'
 
+function usableSourceClassification(
+  record: ValidationRecord | undefined,
+  repositoryPushedAt: string,
+): SourceClassification | null {
+  const source = record?.sourceClassification
+  if (!source
+    || record.sourceSha === null
+    || record.sourcePushedAt !== repositoryPushedAt
+    || source.sourceSha !== record.sourceSha
+    || source.classifierVersion !== SOURCE_CLASSIFIER_VERSION) return null
+  return source
+}
+
 export function createCatalogEntry(
   repository: GitHubRepository,
   awesomeRepositoryNames: ReadonlySet<string> = new Set(),
   verifiedRepositoryNames: ReadonlySet<string> = new Set(),
   validationRecord?: ValidationRecord,
 ): CatalogEntry {
-  const classification = classifyRepository({
+  const topicClassification = classifyRepository({
     fullName: repository.full_name,
     name: repository.name,
     description: repository.description ?? '',
     topics: repository.topics ?? [],
   })
+  const sourceClassification = usableSourceClassification(validationRecord, repository.pushed_at)
+  const useSourceType = sourceClassification !== null
+    && sourceClassification.projectType !== 'unknown'
+    && sourceClassification.confidence !== 'low'
+  const useSourceCategory = sourceClassification !== null
+    && sourceClassification.category !== 'other'
+    && sourceClassification.confidence !== 'low'
+  const classification = {
+    projectType: useSourceType ? sourceClassification!.projectType : topicClassification.projectType,
+    category: useSourceCategory ? sourceClassification!.category : topicClassification.category,
+    categories: useSourceCategory ? sourceClassification!.categories : topicClassification.categories,
+    matchedTopics: topicClassification.matchedTopics,
+    confidence: useSourceType || useSourceCategory
+      ? sourceClassification!.confidence
+      : topicClassification.confidence,
+  }
   const normalizedFullName = repository.full_name.toLowerCase()
   const verificationUrl = verifiedRepositoryNames.has(normalizedFullName)
     ? VERIFICATION_DIRECTORY_URL
@@ -162,6 +197,8 @@ export function createCatalogEntry(
     categories: classification.categories,
     matchedTopics: classification.matchedTopics,
     classificationConfidence: classification.confidence,
+    classificationSource: useSourceType || useSourceCategory ? 'source' : 'topics',
+    classificationSignals: sourceClassification?.matchedSignals ?? [],
     defaultBranch: repository.default_branch || 'main',
     awesomeListed: awesomeRepositoryNames.has(repository.name.toLowerCase()),
     verified,

@@ -53,6 +53,26 @@ describe('validation report contract', () => {
     expect(parseValidationReport(baseReport)).toEqual(baseReport)
   })
 
+  it('accepts source classification only when it is bound to the report SHA', () => {
+    const sourceClassification = {
+      sourceSha: baseReport.repository.sourceSha,
+      classifierVersion: '0.1.0',
+      projectType: 'plugin' as const,
+      category: 'development' as const,
+      categories: ['development' as const],
+      matchedSignals: ['cordis.patch.yml'],
+      confidence: 'high' as const,
+    }
+
+    expect(parseValidationReport({ ...baseReport, sourceClassification })).toMatchObject({
+      sourceClassification,
+    })
+    expect(() => parseValidationReport({
+      ...baseReport,
+      sourceClassification: { ...sourceClassification, sourceSha: 'b'.repeat(40) },
+    })).toThrow('源码分类 sourceSha')
+  })
+
   it('rejects skipped stages and illegal state transitions', () => {
     expect(() => parseValidationReport({
       ...baseReport,

@@ -4,6 +4,7 @@ import { posix } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 
 import type { ProjectType } from '../../src/lib/classification'
+import { classifySource, type SourceClassification } from '../../src/lib/source-classification'
 import {
   parseValidationReport,
   type ExecutionType,
@@ -194,12 +195,14 @@ function createReport({
   snapshot,
   target,
   executionType,
+  sourceClassification,
   checks,
   failure,
 }: {
   snapshot: RepositoryStructureSnapshot
   target: StructureCheckTarget
   executionType: ExecutionType
+  sourceClassification?: SourceClassification
   checks: StructureCheckEvidence[]
   failure: null | { attribution: FailureAttribution, code: string, reason: string }
 }): ValidationReport {
@@ -212,6 +215,7 @@ function createReport({
     mode: 'shadow',
     validationKind: validationKindFor(executionType),
     executionType,
+    ...(sourceClassification ? { sourceClassification } : {}),
     repository: {
       id: repository.id,
       fullName: repository.fullName,
@@ -258,6 +262,7 @@ function createUnrecognizedReport(
   snapshot: RepositoryStructureSnapshot,
   target: StructureCheckTarget,
   checks: StructureCheckEvidence[],
+  sourceClassification?: SourceClassification,
 ): ValidationReport {
   const repository = snapshot.repository
   return parseValidationReport({
@@ -266,6 +271,7 @@ function createUnrecognizedReport(
     mode: 'shadow',
     validationKind: 'structure',
     executionType: null,
+    ...(sourceClassification ? { sourceClassification } : {}),
     repository: {
       id: repository.id,
       fullName: repository.fullName,
@@ -324,21 +330,32 @@ export function runStructureCheck(
     repository.sizeKb <= 200_000 ? 'Repository size is within the validation limit.' : 'Repository exceeds 200 MB.',
   )
 
-  if (snapshot.projectType === 'unknown') {
+  const sourceClassification = classifySource({
+    sourceSha: repository.sourceSha,
+    files: snapshot.files,
+  })
+  const sourceProjectType = sourceClassification.projectType !== 'unknown' && sourceClassification.confidence !== 'low'
+    ? sourceClassification.projectType
+    : snapshot.projectType
+  const classifiedSnapshot = sourceProjectType === snapshot.projectType
+    ? snapshot
+    : { ...snapshot, projectType: sourceProjectType }
+
+  if (classifiedSnapshot.projectType === 'unknown') {
     check(checks, 'EXECUTION_TYPE_UNRECOGNIZED', 'not-run', 'required', 'Execution type could not be recognized.')
     return {
       decision: 'inconclusive',
       queueSandbox: false,
       publicReason: '待识别执行类型',
-      report: createUnrecognizedReport(snapshot, target, checks),
+      report: createUnrecognizedReport(classifiedSnapshot, target, checks, sourceClassification),
     }
   }
 
-  const manifest = getManifest(snapshot.files) ?? {}
+  const manifest = getManifest(classifiedSnapshot.files) ?? {}
   const executionType = inferExecutionType({
-    projectType: snapshot.projectType,
+    projectType: classifiedSnapshot.projectType,
     manifest,
-    topics: snapshot.topics,
+    topics: classifiedSnapshot.topics,
   })
 
   if (executionType === 'non-plugin') {
@@ -347,12 +364,12 @@ export function runStructureCheck(
       decision: 'not-applicable',
       queueSandbox: false,
       publicReason: '非 DSH 插件验证范围',
-      report: createReport({ snapshot, target, executionType, checks, failure: null }),
+      report: createReport({ snapshot: classifiedSnapshot, target, executionType, sourceClassification, checks, failure: null }),
     }
   }
 
   if (executionType === 'skill') {
-    const skillFiles = Object.keys(snapshot.files).filter((path) => /(^|\/)SKILL\.md$/i.test(path))
+    const skillFiles = Object.keys(classifiedSnapshot.files).filter((path) => /(^|\/)SKILL\.md$/i.test(path))
     check(
       checks,
       'SKILL_DOCUMENT_PRESENT',
@@ -362,7 +379,7 @@ export function runStructureCheck(
       skillFiles[0],
     )
   } else if (executionType === 'collection') {
-    const manifests = Object.keys(snapshot.files).filter((path) => /(^|\/)package\.json$/.test(path))
+    const manifests = Object.keys(classifiedSnapshot.files).filter((path) => /(^|\/)package\.json$/.test(path))
     check(
       checks,
       'COLLECTION_MEMBERS_PRESENT',
@@ -530,6 +547,6 @@ export function runStructureCheck(
       && credentialPath === undefined
       && !['native', 'skill', 'non-plugin'].includes(executionType),
     publicReason,
-    report: createReport({ snapshot, target, executionType, checks, failure }),
+    report: createReport({ snapshot: classifiedSnapshot, target, executionType, sourceClassification, checks, failure }),
   }
 }

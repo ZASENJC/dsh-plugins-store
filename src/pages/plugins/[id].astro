@@ -40,6 +40,13 @@ interface Props {
 
 const { repository } = Astro.props as Props
 const category = getCategory(repository.category)
+const sourceClassificationActive = repository.classificationSource === 'source'
+const classificationSignals = sourceClassificationActive && (repository.classificationSignals?.length ?? 0) > 0
+  ? repository.classificationSignals
+  : repository.matchedTopics
+const classificationPrefixKey = sourceClassificationActive
+  ? 'detail.classificationSourcePrefix'
+  : 'detail.classificationPrefix'
 const installableTypes = new Set(['plugin', 'skill', 'collection', 'channel'])
 const showInstallReference = installableTypes.has(repository.projectType)
 const installRef = repository.validation.verified && repository.validation.sourceSha
@@ -267,9 +274,9 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
             </div>
           </div>
           <p class="classification-note">
-            <span data-i18n="detail.classificationPrefix">系统优先读取 GitHub Topics，再与站内分类词典和词根规则比对。当前命中：</span>
-            <span data-i18n-topic-list={JSON.stringify(repository.matchedTopics)}>
-              {repository.matchedTopics.length > 0 ? repository.matchedTopics.join('、') : '无有效分类标签'}
+            <span data-i18n={classificationPrefixKey}>系统优先读取 GitHub Topics，再与站内分类词典和词根规则比对。当前命中：</span>
+            <span data-i18n-topic-list={JSON.stringify(classificationSignals)}>
+              {classificationSignals.length > 0 ? classificationSignals.join('、') : '无有效分类标签'}
             </span>。
           </p>
         </section>

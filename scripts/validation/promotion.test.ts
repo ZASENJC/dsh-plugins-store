@@ -310,6 +310,30 @@ describe('P4 promotion quality gate', () => {
     })
   })
 
+  it('publishes SHA-bound source classification evidence with the validation record', () => {
+    const reports = reportsForAll(1)
+    reports[0].sourceClassification = {
+      sourceSha: reports[0].repository.sourceSha,
+      classifierVersion: '0.1.0',
+      projectType: 'plugin',
+      category: 'model-mcp',
+      categories: ['model-mcp'],
+      matchedSignals: ['package.json:dsh.bundle.patch'],
+      confidence: 'high',
+    }
+
+    const feed = buildPublicValidationFeed(baseline, reports, '2026-08-14T14:00:00.000Z')
+
+    expect(feed.records.find(({ repositoryId }) => repositoryId === baseline.targets[0].repositoryId))
+      .toMatchObject({
+        sourceClassification: {
+          sourceSha: reports[0].repository.sourceSha,
+          projectType: 'plugin',
+          category: 'model-mcp',
+        },
+      })
+  })
+
   it('uses isolated canary reports for the gate and publishes one latest record per repository', () => {
     const gateReports = reportsForAll(1)
     const currentSha = 'f'.repeat(40)

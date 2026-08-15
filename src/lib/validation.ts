@@ -1,4 +1,5 @@
 import type { ProjectType } from './classification'
+import { parseSourceClassification, type SourceClassification } from './source-classification'
 
 export const CURRENT_VALIDATION_TARGET = Object.freeze({
   dshVersion: '0.1.0-rc.6',
@@ -50,6 +51,7 @@ export interface ValidationRecord {
   dshVersion?: string
   platform?: string
   validatorVersion?: string
+  sourceClassification?: SourceClassification
   structure: ValidationStageEvidence
   sandbox: ValidationStageEvidence
 }
@@ -151,6 +153,13 @@ export function parseValidationFeed(value: unknown): Map<number, ValidationRecor
     if (raw.sourceSha !== null && (typeof raw.sourceSha !== 'string' || !/^[a-f0-9]{40}$/i.test(raw.sourceSha))) {
       throw new Error(`验证记录 ${repositoryId} sourceSha 无效`)
     }
+    const sourceClassification = raw.sourceClassification === undefined || raw.sourceClassification === null
+      ? undefined
+      : parseSourceClassification(raw.sourceClassification)
+    if (sourceClassification !== undefined
+      && (raw.sourceSha === null || sourceClassification.sourceSha !== String(raw.sourceSha).toLowerCase())) {
+      throw new Error(`验证记录 ${repositoryId} 源码分类 sourceSha 不一致`)
+    }
     if (!isValidDate(raw.sourcePushedAt) || !isValidDate(raw.updatedAt)) {
       throw new Error(`验证记录 ${repositoryId} 时间无效`)
     }
@@ -175,6 +184,7 @@ export function parseValidationFeed(value: unknown): Map<number, ValidationRecor
       ...(typeof raw.dshVersion === 'string' ? { dshVersion: raw.dshVersion } : {}),
       ...(typeof raw.platform === 'string' ? { platform: raw.platform } : {}),
       ...(typeof raw.validatorVersion === 'string' ? { validatorVersion: raw.validatorVersion } : {}),
+      ...(sourceClassification ? { sourceClassification } : {}),
       structure,
       sandbox,
     })

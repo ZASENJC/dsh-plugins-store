@@ -1,3 +1,8 @@
+import {
+  parseSourceClassification,
+  type SourceClassification,
+} from './source-classification'
+
 export const EXECUTION_TYPES = Object.freeze([
   'host-tool',
   'web',
@@ -100,6 +105,7 @@ export interface ValidationReport {
   mode: 'shadow' | 'enforce'
   validationKind: ValidationKind
   executionType: ExecutionType | null
+  sourceClassification?: SourceClassification
   repository: {
     id: number
     fullName: string
@@ -297,6 +303,13 @@ export function parseValidationReport(value: unknown): ValidationReport {
     || !isDate(value.repository.sourcePushedAt)) {
     throw new Error('验证报告仓库绑定无效')
   }
+  const sourceClassification = value.sourceClassification === undefined || value.sourceClassification === null
+    ? undefined
+    : parseSourceClassification(value.sourceClassification)
+  if (sourceClassification !== undefined
+    && sourceClassification.sourceSha !== String(value.repository.sourceSha).toLowerCase()) {
+    throw new Error('源码分类 sourceSha 与验证报告不一致')
+  }
   if (!isRecord(value.target)
     || !isNonEmptyString(value.target.dshVersion)
     || !isNonEmptyString(value.target.platform)
@@ -335,6 +348,7 @@ export function parseValidationReport(value: unknown): ValidationReport {
 
   return {
     ...(value as unknown as ValidationReport),
+    ...(sourceClassification ? { sourceClassification } : {}),
     events,
     structureChecks,
     failure,
