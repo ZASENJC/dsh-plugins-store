@@ -299,10 +299,17 @@ export function hydrateCatalogValidation(
       legacyVerificationUrl: entry.verificationUrl,
     })
     const verified = validation.verified
+    const install = entry.install
+      ? resolveCatalogInstallReference(entry.install, {
+          fullName: entry.fullName,
+          validation,
+        })
+      : undefined
     return {
       ...entry,
       verified,
       validation,
+      ...(install ? { install } : {}),
       status: {
         ...entry.status,
         verification: verified ? 'verified' as const : 'not-verified' as const,

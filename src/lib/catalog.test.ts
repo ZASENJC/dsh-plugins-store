@@ -7,6 +7,7 @@ import {
   formatRelativeDate,
   getCatalogDefinitions,
   getEmptyCatalog,
+  hydrateCatalogValidation,
   mixRecommendedEntries,
   sortCatalogEntries,
 } from './catalog'
@@ -81,6 +82,55 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
         target: 'PlutoKeating/dsh-lark-bot',
         executable: false,
       },
+    })
+  })
+
+  it('rebinds a recognized install command when validation is refreshed', () => {
+    const reference = extractInstallReference(`
+## Install
+
+\`\`\`sh
+dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
+\`\`\`
+`)
+    const entry = createCatalogEntry(
+      githubRepository,
+      new Set(),
+      new Set(),
+      {
+        repositoryId: githubRepository.id,
+        sourceSha: 'a'.repeat(40),
+        sourcePushedAt: githubRepository.pushed_at,
+        updatedAt: '2026-08-14T00:00:00Z',
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        validatorVersion: '0.1.2',
+        structure: { status: 'passed' },
+        sandbox: { status: 'passed' },
+      },
+      reference,
+    )
+    const hydrated = hydrateCatalogValidation({
+      schemaVersion: 1,
+      generatedAt: '2026-08-15T00:00:00Z',
+      source: { label: 'GitHub Topic', topic: 'dsh-plugin', url: 'https://github.com/topics/dsh-plugin' },
+      stats: { fetched: 1, reportedByGitHub: 1, verified: 1, categories: {}, projectTypes: {}, validationStatuses: {} },
+      repositories: [entry],
+    }, new Map([[githubRepository.id, {
+      repositoryId: githubRepository.id,
+      sourceSha: 'a'.repeat(40),
+      sourcePushedAt: '2026-08-13T20:00:00Z',
+      updatedAt: '2026-08-15T00:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.2',
+      structure: { status: 'passed' },
+      sandbox: { status: 'passed' },
+    }]]))
+
+    expect(hydrated.repositories[0]).toMatchObject({
+      validation: { overall: 'expired', reason: '仓库源码已更新' },
+      install: { status: 'recognized', candidate: { executable: false } },
     })
   })
 
