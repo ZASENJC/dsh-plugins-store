@@ -91,6 +91,31 @@ describe('shadow structure check', () => {
     })
   })
 
+  it('uses audited source evidence to recognize an unknown DSH bundle', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      projectType: 'unknown',
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result).toMatchObject({
+      decision: 'passed',
+      report: {
+        executionType: 'host-tool',
+        currentStatus: 'structure_passed',
+        sourceClassification: {
+          projectType: 'plugin',
+          confidence: 'high',
+        },
+      },
+    })
+  })
+
   it('passes a pinned host/tool package without executing source code', () => {
     const result = runStructureCheck(hostToolSnapshot, {
       now: '2026-08-14T08:10:00Z',

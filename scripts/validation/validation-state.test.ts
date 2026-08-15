@@ -29,6 +29,14 @@ const catalog = {
   ],
 }
 
+const catalogWithUnknown = {
+  ...catalog,
+  repositories: [
+    ...catalog.repositories,
+    { repositoryId: 5, projectType: 'unknown', pushedAt: '2026-08-14T14:00:00.000Z' },
+  ],
+}
+
 function state(entries: ValidationState['entries'], overrides: Partial<ValidationStateTarget> = {}): ValidationState {
   return {
     schemaVersion: 1,
@@ -96,6 +104,11 @@ function report(repositoryId: number, attribution: 'verified' | 'infrastructure'
 }
 
 describe('incremental validation cursor', () => {
+  it('includes unknown projects in the source-classification audit set', () => {
+    expect(selectValidationDelta(catalogWithUnknown, null, target, 20, '2026-08-14T16:01:00.000Z'))
+      .toMatchObject({ repositoryIds: [1, 2, 4, 5] })
+  })
+
   it('selects every validation-eligible project only when no compatible cursor exists', () => {
     expect(selectValidationDelta(catalog, null, target, 20, '2026-08-14T16:01:00.000Z')).toMatchObject({
       mode: 'full',

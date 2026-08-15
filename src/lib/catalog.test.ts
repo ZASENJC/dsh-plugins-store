@@ -156,6 +156,78 @@ describe('catalog data', () => {
     })
   })
 
+  it('uses current SHA-bound source classification on the next catalog refresh', () => {
+    const catalog = buildCatalog(
+      [{ ...githubRepository, id: 77, projectType: undefined } as never],
+      '2026-08-14T09:05:00.000Z',
+      1,
+      new Set(),
+      new Set(),
+      new Map([[77, {
+        repositoryId: 77,
+        sourceSha: 'a'.repeat(40),
+        sourcePushedAt: githubRepository.pushed_at,
+        updatedAt: '2026-08-14T09:00:00Z',
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        validatorVersion: '0.1.2',
+        structure: { status: 'passed' as const },
+        sandbox: { status: 'inconclusive' as const },
+        sourceClassification: {
+          sourceSha: 'a'.repeat(40),
+          classifierVersion: '0.1.0',
+          projectType: 'plugin' as const,
+          category: 'model-mcp' as const,
+          categories: ['model-mcp' as const],
+          matchedSignals: ['package.json:dsh.bundle.patch'],
+          confidence: 'high' as const,
+        },
+      }]]),
+    )
+
+    expect(catalog.repositories[0]).toMatchObject({
+      projectType: 'plugin',
+      category: 'model-mcp',
+      classificationSource: 'source',
+    })
+  })
+
+  it('keeps rough classification when the source result is stale', () => {
+    const catalog = buildCatalog(
+      [githubRepository],
+      '2026-08-14T09:05:00.000Z',
+      1,
+      new Set(),
+      new Set(),
+      new Map([[githubRepository.id, {
+        repositoryId: githubRepository.id,
+        sourceSha: 'b'.repeat(40),
+        sourcePushedAt: '2026-08-14T07:00:00Z',
+        updatedAt: '2026-08-14T09:00:00Z',
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        validatorVersion: '0.1.2',
+        structure: { status: 'passed' as const },
+        sandbox: { status: 'inconclusive' as const },
+        sourceClassification: {
+          sourceSha: 'b'.repeat(40),
+          classifierVersion: '0.1.0',
+          projectType: 'application' as const,
+          category: 'development' as const,
+          categories: ['development' as const],
+          matchedSignals: ['package.json:application'],
+          confidence: 'high' as const,
+        },
+      }]]),
+    )
+
+    expect(catalog.repositories[0]).toMatchObject({
+      projectType: 'channel',
+      category: 'communication',
+      classificationSource: 'topics',
+    })
+  })
+
   it('matches awesome mirrors by exact repository name', () => {
     const popular = {
       ...githubRepository,

@@ -134,4 +134,13 @@ describe('classifyRepository', () => {
       topics: ['dsh-plugin', 'catalog', 'plugin-discovery'],
     }).projectType).toBe('directory')
   })
+
+  it('recognizes common ecosystem vocabulary added to the category dictionary', () => {
+    expect(classifyRepository({
+      fullName: 'example/mcp-gateway',
+      name: 'mcp-gateway',
+      description: '',
+      topics: ['dsh-plugin', 'webhook', 'authentication', 'embedding', 'kubernetes'],
+    }).categories).toEqual(expect.arrayContaining(['communication', 'security', 'model-mcp', 'operations']))
+  })
 })
