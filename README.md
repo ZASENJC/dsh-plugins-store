@@ -151,7 +151,7 @@ flowchart TD
   PAGES -.->|生成| DIST["dist<br/>生产静态文件"]
   PLUGIN -.->|读取| API["/catalog.json"]
   DIST -.-> API
-  ACTIONS -.->|测试、构建、SSH 发布| DEPLOY
+  ACTIONS -.->|测试、构建、发布| DEPLOY
 ```
 
 ## 本地运行
