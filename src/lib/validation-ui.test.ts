@@ -27,4 +27,10 @@ describe('validation ladder presentation', () => {
     expect(detailSource).toContain('repository.validation.reportUrl')
     expect(detailSource).toContain('repository.validation.issueUrl')
   })
+
+  it('renders a distinct quarantined stage instead of the failed-stage treatment', () => {
+    expect(cardSource).toContain("data-status='quarantined'")
+    expect(detailSource).toContain("data-status='quarantined'")
+    expect(detailSource).toContain("quarantined: '安全复核'")
+  })
 })

@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 
 import type { ValidationReport } from '../../src/lib/validation-report'
 import type { BaselineTarget } from './baseline'
-import { evaluateBaselineOutcome, selectBaselineTargets } from './baseline-cli'
+import {
+  evaluateBaselineOutcome,
+  resolveBaselineRepository,
+  selectBaselineTargets,
+} from './baseline-cli'
 
 const targets: BaselineTarget[] = [1, 2, 3].map((repositoryId) => ({
   repositoryId,
@@ -25,5 +29,15 @@ describe('P2 baseline orchestration', () => {
 
     expect(evaluateBaselineOutcome(targets[0], report)).toEqual({ expected: true, observed: 'verified' })
     expect(evaluateBaselineOutcome(targets[2], report)).toEqual({ expected: false, observed: 'verified' })
+  })
+
+  it('keeps fixed-SHA canaries runnable when a target is absent from the dynamic catalog', () => {
+    expect(resolveBaselineRepository(targets[0], undefined)).toMatchObject({
+      repositoryId: 1,
+      fullName: 'fixture/plugin-1',
+      projectType: 'plugin',
+      topics: [],
+      archived: false,
+    })
   })
 })

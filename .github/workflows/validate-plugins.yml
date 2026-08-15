@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      force_full:
+        description: Revalidate every eligible repository with bounded concurrency
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   actions: read
@@ -22,6 +28,7 @@ jobs:
       shards: ${{ steps.selection.outputs.shards }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.force_full || false }}
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v4
@@ -76,12 +83,13 @@ jobs:
         id: selection
         run: |
           previous_args=()
-          if test -f validation-input/previous/state.json; then
+          if test "$FORCE_FULL" != "true" && test -f validation-input/previous/state.json; then
             previous_args=(--previous validation-input/previous/state.json)
           fi
           npm run --silent validate:select -- \
             --catalog validation-input/catalog.json \
             --baseline validation/baseline.json \
+            --previous-feed validation-input/previous-validation.json \
             --output validation-input/selection.json \
             --shard-count 20 \
             "${previous_args[@]}" > validation-input/selection-summary.json
@@ -144,6 +152,7 @@ jobs:
           node -e "const result=require('/tmp/canary-gate.json'); if(!result.assessment.eligible){console.error(result.assessment.reasons.join(',')); process.exit(1)}"
 
       - name: Upload current canary reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: plugin-validation-canary-current
@@ -164,7 +173,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DSH_VALIDATION_VERSION: 0.1.0-rc.6
-      VALIDATOR_VERSION: 0.1.0
+      VALIDATOR_VERSION: 0.1.1
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v4
@@ -194,7 +203,7 @@ jobs:
             --selection validation-input/selection.json \
             --shard-index "${{ matrix.shard }}" \
             --shard-count 20 \
-            --limit 0 > /tmp/shadow-summary.json
+            --limit 0 | tee /tmp/shadow-summary.json
           node -e "const result=require('/tmp/shadow-summary.json'); if(result.loadFailures.length || result.reportsWritten !== result.discovered){console.error('P1 shard is incomplete'); process.exit(1)}"
 
       - name: Run selected sandbox candidates serially

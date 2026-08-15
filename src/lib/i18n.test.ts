@@ -37,6 +37,13 @@ describe('site internationalization', () => {
     expect(getTranslation('ja', 'home.heroLine1')).toContain('自動同期・検証')
   })
 
+  it('translates security review without presenting quarantine as plugin failure', () => {
+    expect(getTranslation('zh-CN', 'validation.status.security-review')).toBe('安全复核中')
+    expect(getTranslation('en', 'validation.status.security-review')).toBe('Security review')
+    expect(getTranslation('ja', 'validation.status.security-review')).toBe('セキュリティ確認中')
+    expect(getTranslation('zh-CN', 'validation.step.quarantined')).toBe('安全复核')
+  })
+
   it('formats dynamic project names and counts without changing repository data', () => {
     expect(formatMessage('View {name} details', { name: 'dsh-tui' })).toBe('View dsh-tui details')
     expect(formatMessage('{count} projects', { count: 24 })).toBe('24 projects')

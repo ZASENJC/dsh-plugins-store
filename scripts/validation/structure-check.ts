@@ -125,12 +125,20 @@ function getNestedString(value: unknown, ...keys: string[]): string | null {
   return typeof current === 'string' && current.length > 0 ? current : null
 }
 
-function collectEntrypoints(value: unknown, result = new Set<string>()): Set<string> {
-  if (typeof value === 'string' && value.startsWith('./')) result.add(value)
-  else if (Array.isArray(value)) value.forEach((item) => collectEntrypoints(item, result))
+function collectEntrypoints(value: unknown, result = new Set<string>(), allowBare = false): Set<string> {
+  if (typeof value === 'string' && (value.startsWith('./') || allowBare)) result.add(value)
+  else if (Array.isArray(value)) value.forEach((item) => collectEntrypoints(item, result, allowBare))
   else if (asRecord(value)) Object.values(value as Record<string, unknown>)
-    .forEach((item) => collectEntrypoints(item, result))
+    .forEach((item) => collectEntrypoints(item, result, allowBare))
   return result
+}
+
+function externalCredentialPath(files: RepositoryStructureSnapshot['files']): string | undefined {
+  return Object.entries(files).find(([path, content]) => (
+    /(^|\/)\.npmrc$/i.test(path)
+    && typeof content === 'string'
+    && /npm\.pkg\.github\.com|_authToken\s*=|\$\{(?:NODE_AUTH_TOKEN|NPM_TOKEN|GITHUB_TOKEN)\}/i.test(content)
+  ))?.[0]
 }
 
 function fingerprint(repositoryId: number, sourceSha: string, code: string): string {
@@ -348,8 +356,8 @@ export function runStructureCheck(
     check(
       checks,
       'SKILL_DOCUMENT_PRESENT',
-      skillFiles.length > 0 ? 'passed' : 'failed',
-      'required',
+      skillFiles.length > 0 ? 'passed' : 'warning',
+      'advisory',
       skillFiles.length > 0 ? 'Skill document is present.' : 'No SKILL.md was found.',
       skillFiles[0],
     )
@@ -358,8 +366,8 @@ export function runStructureCheck(
     check(
       checks,
       'COLLECTION_MEMBERS_PRESENT',
-      manifests.length > 1 ? 'passed' : 'failed',
-      'required',
+      manifests.length > 1 ? 'passed' : 'warning',
+      'advisory',
       manifests.length > 1 ? 'Collection contains member package manifests.' : 'Collection has no discoverable member package.',
     )
   } else {
@@ -367,8 +375,8 @@ export function runStructureCheck(
     check(
       checks,
       'PACKAGE_MANIFEST_VALID',
-      packagePresent ? 'passed' : 'failed',
-      'required',
+      packagePresent ? 'passed' : 'warning',
+      packagePresent ? 'required' : 'advisory',
       packagePresent ? 'package.json is valid JSON.' : 'package.json is missing or invalid.',
       'package.json',
     )
@@ -376,17 +384,17 @@ export function runStructureCheck(
     const scripts = asRecord(manifest.scripts) ?? {}
     const hasBuild = typeof scripts.build === 'string' || typeof scripts.prepare === 'string' || typeof scripts.prepack === 'string'
     const entrypoints = new Set<string>()
-    collectEntrypoints(manifest.main, entrypoints)
+    collectEntrypoints(manifest.main, entrypoints, true)
     collectEntrypoints(manifest.exports, entrypoints)
-    collectEntrypoints(manifest.bin, entrypoints)
+    collectEntrypoints(manifest.bin, entrypoints, true)
     const relevantEntrypoints = [...entrypoints].filter((path) => !/(?:package\.json|cordis\.patch\.yml)$/.test(path))
     const missingEntrypoints = relevantEntrypoints.filter((path) => !hasOwnPath(snapshot.files, path))
     if (relevantEntrypoints.length === 0) {
-      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'failed', 'required', 'No executable package entrypoint is declared.', 'package.json')
+      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'warning', 'advisory', 'No executable package entrypoint is declared.', 'package.json')
     } else if (missingEntrypoints.length > 0 && hasBuild) {
       check(checks, 'BUILD_ARTIFACT_REQUIRES_BUILD', 'warning', 'advisory', 'Declared entrypoints require the sandbox build stage.', missingEntrypoints[0])
     } else if (missingEntrypoints.length > 0) {
-      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'failed', 'required', 'A declared package entrypoint is missing and no build step is declared.', missingEntrypoints[0])
+      check(checks, 'PACKAGE_ENTRYPOINT_MISSING', 'warning', 'advisory', 'A declared package entrypoint is missing and no build step is declared.', missingEntrypoints[0])
     } else {
       check(checks, 'PACKAGE_ENTRYPOINTS_VALID', 'passed', 'required', 'Declared package entrypoints exist.')
     }
@@ -408,13 +416,25 @@ export function runStructureCheck(
       check(
         checks,
         'DSH_BUNDLE_PATCH_VALID',
-        patchValid ? 'passed' : 'failed',
-        'required',
+        patchValid ? 'passed' : 'warning',
+        patchValid ? 'required' : 'advisory',
         patchValid ? 'DSH bundle patch exists and parses as a patch list.' : 'DSH bundle patch is missing or invalid.',
         patchPath ?? 'package.json',
       )
     }
   }
+
+  const credentialPath = externalCredentialPath(snapshot.files)
+  check(
+    checks,
+    credentialPath ? 'EXTERNAL_CREDENTIALS_REQUIRED' : 'EXTERNAL_CREDENTIALS_NOT_REQUIRED',
+    credentialPath ? 'warning' : 'passed',
+    'advisory',
+    credentialPath
+      ? 'An external package registry requires credentials that are unavailable in the sandbox.'
+      : 'No external package registry credential requirement was detected.',
+    credentialPath,
+  )
 
   const lockfile = Object.keys(snapshot.files).find((path) => /(^|\/)(pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?)$/.test(path))
   check(
@@ -457,29 +477,30 @@ export function runStructureCheck(
   const scannerUnavailable = snapshot.scans.trivy.status === 'unavailable'
     || snapshot.scans.osv.status === 'unavailable'
     || snapshot.scans.gitleaks?.status === 'unavailable'
-  const secretFindings = snapshot.scans.trivy.secrets.length
-    + (snapshot.scans.gitleaks?.secrets.length ?? 0)
-  const vulnerabilityFindings = [
-    ...snapshot.scans.trivy.vulnerabilities,
-    ...snapshot.scans.osv.vulnerabilities,
-  ]
+  const trivySecrets = snapshot.scans.trivy.secrets
+  const gitleaksSecrets = snapshot.scans.gitleaks?.secrets ?? []
+  const trivyVulnerabilities = snapshot.scans.trivy.vulnerabilities
+  const osvVulnerabilities = snapshot.scans.osv.vulnerabilities
+  const secretFindings = trivySecrets.length + gitleaksSecrets.length
   if (snapshot.scans.trivy.status === 'unavailable') {
     check(checks, 'TRIVY_SCAN_UNAVAILABLE', 'not-run', 'security', 'Trivy result is unavailable.', undefined, 'trivy')
-  } else if (secretFindings > 0) {
+  } else if (trivySecrets.length > 0) {
     check(checks, 'SECRET_SCAN_QUARANTINE', 'quarantined', 'security', 'Potential secret material requires private human review.', undefined, 'trivy')
+  } else if (trivyVulnerabilities.length > 0) {
+    check(checks, 'TRIVY_VULNERABILITY_REVIEW_REQUIRED', 'warning', 'security', 'Known vulnerabilities are recorded for review; installation validation may continue.', undefined, 'trivy')
   } else {
     check(checks, 'TRIVY_SCAN_CLEAN', 'passed', 'security', 'Trivy vulnerability and secret scan produced no blocking findings.', undefined, 'trivy')
   }
   if (snapshot.scans.osv.status === 'unavailable') {
     check(checks, 'OSV_SCAN_UNAVAILABLE', 'not-run', 'security', 'OSV result is unavailable.', undefined, 'osv-scanner')
-  } else if (vulnerabilityFindings.length > 0) {
-    check(checks, 'VULNERABILITY_REVIEW_REQUIRED', 'quarantined', 'security', 'Known vulnerabilities require policy review.', undefined, 'osv-scanner')
+  } else if (osvVulnerabilities.length > 0) {
+    check(checks, 'VULNERABILITY_REVIEW_REQUIRED', 'warning', 'security', 'Known vulnerabilities are recorded for review; installation validation may continue.', undefined, 'osv-scanner')
   } else {
     check(checks, 'OSV_SCAN_CLEAN', 'passed', 'security', 'OSV scan produced no known vulnerability findings.', undefined, 'osv-scanner')
   }
   if (snapshot.scans.gitleaks?.status === 'unavailable') {
     check(checks, 'GITLEAKS_SCAN_UNAVAILABLE', 'not-run', 'security', 'Gitleaks result is unavailable.', undefined, 'gitleaks')
-  } else if ((snapshot.scans.gitleaks?.secrets.length ?? 0) > 0) {
+  } else if (gitleaksSecrets.length > 0) {
     check(checks, 'GITLEAKS_SCAN_QUARANTINE', 'quarantined', 'security', 'Potential secret material requires private human review.', undefined, 'gitleaks')
   } else if (snapshot.scans.gitleaks) {
     check(checks, 'GITLEAKS_SCAN_CLEAN', 'passed', 'security', 'Gitleaks scan produced no secret findings.', undefined, 'gitleaks')
@@ -489,7 +510,7 @@ export function runStructureCheck(
   let decision: StructureCheckResult['decision'] = 'passed'
   let failure: Parameters<typeof createReport>[0]['failure'] = null
   let publicReason: string | null = null
-  if (secretFindings > 0 || vulnerabilityFindings.length > 0) {
+  if (secretFindings > 0) {
     decision = 'quarantined'
     publicReason = '需要人工安全复核'
     failure = { attribution: 'policy', code: 'SECURITY_REVIEW_REQUIRED', reason: publicReason }
@@ -505,7 +526,9 @@ export function runStructureCheck(
 
   return {
     decision,
-    queueSandbox: decision === 'passed' && !['native', 'skill', 'non-plugin'].includes(executionType),
+    queueSandbox: decision === 'passed'
+      && credentialPath === undefined
+      && !['native', 'skill', 'non-plugin'].includes(executionType),
     publicReason,
     report: createReport({ snapshot, target, executionType, checks, failure }),
   }

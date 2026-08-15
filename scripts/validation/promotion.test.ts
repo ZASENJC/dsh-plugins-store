@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { describe, expect, it } from 'vitest'
 
-import type { ValidationReport, ValidationStatus } from '../../src/lib/validation-report'
+import type { FailureAttribution, ValidationReport, ValidationStatus } from '../../src/lib/validation-report'
 import { parseBaseline, type BaselineTarget } from './baseline'
 import {
   assessPromotionGate,
@@ -81,8 +81,73 @@ function reportFor(
 
 function reportsForAll(runs = 2): ValidationReport[] {
   return baseline.targets.flatMap((target) => (
-    Array.from({ length: runs }, (_, index) => reportFor(target, index + 1))
+    Array.from({ length: runs }, (_, index) => {
+      const expected = target.expectedFinalStatuses[0]
+      return expected === 'failed' || expected === 'structure_failed'
+        ? negativeReportFor(target, index + 1, expected)
+        : reportFor(target, index + 1, expected)
+    })
   ))
+}
+
+function negativeReportFor(
+  target: BaselineTarget,
+  run: number,
+  status: 'failed' | 'structure_failed',
+): ValidationReport {
+  const report = reportFor(target, run)
+  const code = status === 'failed' ? 'PLUGIN_BUILD_FAILED' : 'PACKAGE_ENTRYPOINT_MISSING'
+  const failure = {
+    attribution: 'plugin' as const,
+    code,
+    reason: code,
+    fingerprint: `${target.repositoryId}-${code}`,
+    reproducibility: { attempts: 1, matchingFingerprints: 1 },
+  }
+  if (status === 'structure_failed') {
+    return {
+      ...report,
+      currentStatus: status,
+      events: [
+        ...report.events.slice(0, 2),
+        { sequence: 3, stage: 'structure', status, at: report.startedAt, ...failure },
+      ],
+      failure,
+    }
+  }
+  return {
+    ...report,
+    currentStatus: status,
+    events: [
+      ...report.events.slice(0, 5),
+      { sequence: 6, stage: 'installation', status: 'install_failed', at: report.startedAt, ...failure },
+      { sequence: 7, stage: 'final', status, at: report.startedAt, ...failure },
+    ],
+    failure,
+  }
+}
+
+function attributedStructureReportFor(
+  target: BaselineTarget,
+  run: number,
+  attribution: FailureAttribution,
+  code: string,
+): ValidationReport {
+  const report = negativeReportFor(target, run, 'structure_failed')
+  const failure = {
+    ...report.failure!,
+    attribution,
+    code,
+    reason: code,
+    fingerprint: `${target.repositoryId}-${code}`,
+  }
+  return {
+    ...report,
+    failure,
+    events: report.events.map((event) => (
+      event.status === 'structure_failed' ? { ...event, ...failure } : event
+    )),
+  }
 }
 
 describe('P4 promotion quality gate', () => {
@@ -127,6 +192,84 @@ describe('P4 promotion quality gate', () => {
       reasons: [],
       metrics: { mismatchedReports: 0 },
     })
+  })
+
+  it('accepts declared negative controls as coverage without promoting them as verified', () => {
+    const rawBaseline = JSON.parse(JSON.stringify(baseline))
+    rawBaseline.targets[0].expectedFinalStatuses = ['failed']
+    rawBaseline.targets[1].expectedFinalStatuses = ['structure_failed']
+    rawBaseline.targets[2].expectedFinalStatuses = ['inconclusive']
+    const negativeBaseline = parseBaseline(rawBaseline)
+    const reports = reportsForAll(1)
+    reports[0] = negativeReportFor(negativeBaseline.targets[0], 1, 'failed')
+    reports[1] = negativeReportFor(negativeBaseline.targets[1], 1, 'structure_failed')
+    const offline = reportFor(negativeBaseline.targets[2], 1, 'inconclusive')
+    Object.assign(offline.events.at(-1)!, {
+      code: 'OFFLINE_DEPENDENCY_CACHE_MISS',
+      reason: 'OFFLINE_DEPENDENCY_CACHE_MISS',
+      attribution: 'infrastructure',
+    })
+    reports[2] = offline
+
+    expect(assessPromotionGate(negativeBaseline, reports)).toMatchObject({
+      eligible: true,
+      reasons: [],
+      metrics: { observedTargets: 20, unexpectedReports: 0 },
+    })
+    const feed = buildPublicValidationFeed(negativeBaseline, reports, '2026-08-14T14:00:00.000Z')
+    expect(feed.records).toHaveLength(20)
+    expect(feed.records.find(({ repositoryId }) => repositoryId === negativeBaseline.targets[0].repositoryId))
+      .toMatchObject({
+      structure: { status: 'passed' },
+      sandbox: { status: 'failed', reason: expect.stringContaining('构建失败') },
+    })
+    expect(feed.records.find(({ repositoryId }) => repositoryId === negativeBaseline.targets[1].repositoryId))
+      .toMatchObject({
+      structure: { status: 'failed', reason: expect.any(String) },
+      sandbox: { status: 'skipped' },
+    })
+    expect(feed.records.find(({ repositoryId }) => repositoryId === negativeBaseline.targets[2].repositoryId))
+      .toMatchObject({
+      structure: { status: 'passed' },
+      sandbox: {
+        status: 'inconclusive',
+        reason: expect.stringContaining('离线'),
+      },
+    })
+  })
+
+  it('publishes infrastructure and policy structure outcomes without blaming the plugin', () => {
+    const gateReports = reportsForAll(1)
+    const infrastructure = attributedStructureReportFor(
+      baseline.targets[0],
+      9,
+      'infrastructure',
+      'SCANNER_UNAVAILABLE',
+    )
+    const policy = attributedStructureReportFor(
+      baseline.targets[1],
+      9,
+      'policy',
+      'SECURITY_REVIEW_REQUIRED',
+    )
+
+    const feed = buildPublicValidationFeed(
+      baseline,
+      [...gateReports, infrastructure, policy],
+      '2026-08-14T14:00:00.000Z',
+      gateReports,
+    )
+
+    expect(feed.records.find(({ repositoryId }) => repositoryId === infrastructure.repository.id))
+      .toMatchObject({
+        structure: { status: 'inconclusive', reason: expect.stringContaining('SCANNER_UNAVAILABLE') },
+        sandbox: { status: 'skipped' },
+      })
+    expect(feed.records.find(({ repositoryId }) => repositoryId === policy.repository.id))
+      .toMatchObject({
+        structure: { status: 'quarantined', reason: expect.stringContaining('SECURITY_REVIEW_REQUIRED') },
+        sandbox: { status: 'skipped' },
+      })
   })
 
   it('promotes one current verified binding per target after the baseline gate passes', () => {

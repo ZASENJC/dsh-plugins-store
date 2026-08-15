@@ -24,7 +24,7 @@ export interface PromotionAssessment {
   }
 }
 
-const TERMINAL_OBSERVATIONS = new Set(['verified', 'failed', 'inconclusive'])
+const TERMINAL_OBSERVATIONS = new Set(['verified', 'failed', 'inconclusive', 'structure_failed'])
 
 function isTerminalObservation(report: ValidationReport): boolean {
   return TERMINAL_OBSERVATIONS.has(report.currentStatus)
@@ -119,8 +119,42 @@ function observationTime(report: ValidationReport): number {
   return Date.parse(report.completedAt ?? report.startedAt)
 }
 
+const PUBLIC_REASON_BY_CODE: Readonly<Record<string, string>> = Object.freeze({
+  EXTERNAL_CREDENTIALS_REQUIRED: '插件依赖需要外部凭据。验证沙箱不使用真实账号或密钥，因此当前无法完成验证；这不代表插件已确认存在故障。',
+  OFFLINE_DEPENDENCY_CACHE_MISS: '插件依赖无法从固定的离线缓存完整解析。为保持执行阶段断网，当前验证结果为需要复核；这不代表插件已确认存在故障。',
+  PLUGIN_BUILD_FAILED: '插件固定 SHA 在隔离沙箱中构建失败，因此未通过验证。',
+  PACKAGE_ENTRYPOINT_MISSING: '插件固定 SHA 声明的入口缺失，因此未进入沙箱验证。',
+  SCANNER_UNAVAILABLE: '结构扫描基础设施暂不可用（SCANNER_UNAVAILABLE）；当前结果需要复核，这不代表插件已确认存在故障。',
+  SECURITY_REVIEW_REQUIRED: '自动扫描发现需要人工确认的安全信号（SECURITY_REVIEW_REQUIRED）；当前处于安全复核中，不代表恶意或安全定论。',
+})
+
+function publicReason(report: ValidationReport): string | undefined {
+  if (report.currentStatus === 'verified') return undefined
+  const code = report.failure?.code ?? report.events.at(-1)?.code ?? report.currentStatus
+  return PUBLIC_REASON_BY_CODE[code] ?? (
+    report.currentStatus === 'inconclusive'
+      ? `当前沙箱无法安全完成验证（${code}）；这不代表插件已确认存在故障。`
+      : `插件固定 SHA 未通过验证（${code}）。`
+  )
+}
+
 function publicRecord(report: ValidationReport): ValidationRecord {
   const reportUrl = report.artifacts.find(({ kind }) => kind === 'report')?.url
+  const reason = publicReason(report)
+  const structureFailed = report.currentStatus === 'structure_failed'
+  const structureStatus = !structureFailed
+    ? 'passed' as const
+    : report.failure?.attribution === 'policy'
+      ? 'quarantined' as const
+      : report.failure?.attribution === 'infrastructure' || report.failure?.attribution === 'inconclusive'
+        ? 'inconclusive' as const
+        : 'failed' as const
+  const structureCheckedAt = eventTime(report, structureFailed ? 'structure_failed' : 'structure_passed')
+  const evidence = {
+    ...(report.completedAt ? { checkedAt: report.completedAt } : {}),
+    ...(reportUrl ? { reportUrl } : {}),
+    ...(reason ? { reason } : {}),
+  }
   return {
     repositoryId: report.repository.id,
     sourceSha: report.repository.sourceSha,
@@ -129,15 +163,16 @@ function publicRecord(report: ValidationReport): ValidationRecord {
     dshVersion: report.target.dshVersion,
     platform: report.target.platform,
     validatorVersion: report.target.validatorVersion,
-    structure: {
-      status: 'passed',
-      ...(eventTime(report, 'structure_passed') ? { checkedAt: eventTime(report, 'structure_passed') } : {}),
-    },
-    sandbox: {
-      status: 'passed',
-      ...(report.completedAt ? { checkedAt: report.completedAt } : {}),
-      ...(reportUrl ? { reportUrl } : {}),
-    },
+    structure: structureFailed
+      ? { status: structureStatus, ...(structureCheckedAt ? { checkedAt: structureCheckedAt } : {}), ...evidence }
+      : { status: structureStatus, ...(structureCheckedAt ? { checkedAt: structureCheckedAt } : {}) },
+    sandbox: structureFailed
+      ? { status: 'skipped' }
+      : report.currentStatus === 'verified'
+        ? { status: 'passed', ...evidence }
+        : report.currentStatus === 'inconclusive'
+          ? { status: 'inconclusive', ...evidence }
+          : { status: 'failed', ...evidence },
   }
 }
 
@@ -165,9 +200,7 @@ export function buildPublicValidationFeed(
     }
   }
 
-  const records: ValidationRecord[] = [...latestByRepository.values()]
-    .filter(({ currentStatus }) => currentStatus === 'verified')
-    .map(publicRecord)
+  const records: ValidationRecord[] = [...latestByRepository.values()].map(publicRecord)
 
   return {
     schemaVersion: 1,

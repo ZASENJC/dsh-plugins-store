@@ -17,6 +17,8 @@ const catalog = {
     projectType: index === 0 ? 'unknown' : 'plugin',
     topics: ['dsh-plugin'],
     defaultBranch: 'main',
+    archived: false,
+    size: 120,
   })),
 }
 
@@ -29,6 +31,8 @@ describe('catalog discovery and stable sharding', () => {
       repositoryId: 1,
       fullName: 'fixture/plugin-1',
       projectType: 'unknown',
+      archived: false,
+      sizeKb: 120,
     })
   })
 

@@ -52,8 +52,8 @@ const context = new Proxy({
   },
 })
 
-await apply(context, {})
 if (smokeMode === 'tool-registration') {
+  await apply(context, {})
   if (registrations.length === 0) throw new Error('Plugin registered no tools')
   if (registrations.some((definition) => typeof definition?.name !== 'string')) {
     throw new Error('Registered tool has no name')

@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+
 import type { ValidationBinding, ValidationStatus } from '../../src/lib/validation-report'
 
 export interface LinuxSandboxTarget {
@@ -41,6 +44,7 @@ export interface SandboxStepResult {
   stepId: SandboxStepId
   exitCode: number | null
   timedOut: boolean
+  infrastructureCode?: 'OFFLINE_DEPENDENCY_CACHE_MISS'
 }
 
 export interface SandboxExecutionSummary {
@@ -50,7 +54,18 @@ export interface SandboxExecutionSummary {
   code: string
 }
 
-const VALIDATOR_IMAGE = 'dsh-plugin-validator:0.1.0'
+const VALIDATOR_IMAGE = 'dsh-plugin-validator:0.1.1'
+
+function dependencyInstallCommand(sourceDirectory: string): string[] {
+  if (existsSync(join(sourceDirectory, 'package-lock.json'))
+    || existsSync(join(sourceDirectory, 'npm-shrinkwrap.json'))) {
+    return ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']
+  }
+  if (existsSync(join(sourceDirectory, 'pnpm-lock.yaml'))) {
+    return ['pnpm', 'install', '--frozen-lockfile', '--ignore-scripts']
+  }
+  return ['pnpm', 'install', '--ignore-scripts', '--no-frozen-lockfile']
+}
 
 function runArgs({
   containerName,
@@ -143,9 +158,9 @@ export function buildLinuxSandboxPlan(
         command: { file: 'docker', args: ['volume', 'create', resourceName] },
       },
       makeStep('copy-source', 'acquisition', 'none', ['node', '/validator/copy-source.mjs', '/source', '/validation/workspace/plugin'], sourceDirectory),
-      makeStep('install-dependencies', 'acquisition', 'bridge', ['npm', 'ci', '--ignore-scripts', '--no-audit', '--no-fund']),
+      makeStep('install-dependencies', 'acquisition', 'bridge', dependencyInstallCommand(sourceDirectory)),
       makeStep('build', 'execution', 'none', ['npm', 'run', 'build', '--if-present']),
-      makeStep('install-plugin', 'execution', 'none', ['dsh', 'plugin', '--profile', 'validation', 'add', '--ignore-scripts', 'file:/validation/workspace/plugin']),
+      makeStep('install-plugin', 'execution', 'none', ['dsh', 'plugin', '--profile', 'validation', 'add', '--ignore-scripts', '--offline', 'file:/validation/workspace/plugin']),
       makeStep('load', 'execution', 'none', ['dsh', '--profile', 'validation', '--dump-config']),
       makeStep('smoke', 'execution', 'none', ['node', '/validator/host-tool-smoke.mjs', '/validation/workspace/plugin', target.smokeMode]),
       makeStep('postflight', 'execution', 'none', ['node', '/validator/postflight.mjs', '/validation']),
@@ -160,6 +175,9 @@ export function buildLinuxSandboxPlan(
 export function summarizeSandboxExecution(results: SandboxStepResult[]): SandboxExecutionSummary {
   const failed = results.find((result) => result.timedOut || result.exitCode !== 0)
   if (!failed) return { finalStatus: 'verified', attribution: 'plugin', code: 'SANDBOX_PASSED' }
+  if (failed.infrastructureCode) {
+    return { finalStatus: 'inconclusive', attribution: 'infrastructure', code: failed.infrastructureCode }
+  }
   if (failed.timedOut) {
     return { finalStatus: 'inconclusive', attribution: 'infrastructure', code: 'SANDBOX_TIMEOUT' }
   }

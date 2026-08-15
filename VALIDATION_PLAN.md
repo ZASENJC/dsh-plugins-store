@@ -1,6 +1,6 @@
 # DSH Plugin Validation Rollout Plan
 
-Last updated: 2026-08-14
+Last updated: 2026-08-15
 
 ## Objective
 
@@ -21,10 +21,10 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 | Phase | Scope | Status | Exit Gate |
 | --- | --- | --- | --- |
 | P0 | Report schema, state machine, invalidation, execution types | Complete | Unit tests cover valid/invalid transitions, history, SHA/DSH/platform/validator expiry, and execution types |
-| P1 | Discovery, execution-type recognition, structure check, shadow workflow | Implemented; observation pending | Full catalog produces sanitized reports; `validation.json` remains unchanged |
-| P2 | About 20 known Linux headless/tool baselines | Implemented; 1/20 observed | Each target is SHA-pinned and produces a sandbox report or explicit inconclusive result |
-| P3 | DSH Web + Playwright, collection and channel/MCP validators | Implemented; live Web observation pending | Validator-specific fixtures pass without real credentials or external services |
-| P4 | False-positive observation gate, Verified promotion, SHA-pinned install | Implemented; promotion blocked | Promotion refuses insufficient or stale evidence and accepts a passing observed baseline |
+| P1 | Discovery, execution-type recognition, structure check, shadow workflow | Operational | Full catalog produces sanitized reports; structure advisories do not block installability checks |
+| P2 | About 20 known Linux headless/tool baselines | Operational; validator 0.1.1 full rerun pending | Each target is SHA-pinned and produces a repeatable sandbox report or explicit inconclusive result |
+| P3 | DSH Web + Playwright, collection and channel/MCP validators | Implemented; generic Web/channel install path observed | Validator-specific fixtures pass without real credentials or external services |
+| P4 | False-positive observation gate, Verified promotion, SHA-pinned install | Operational; validator 0.1.1 promotion pending | Promotion refuses insufficient or stale evidence and accepts a passing observed baseline |
 | P5 | Opt-in Issue bot, Windows/macOS | Deferred | Requires separate authorization |
 
 ## Planned Artifacts
@@ -63,86 +63,135 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - P1 workflow GREEN: 38 focused tests pass. Catalog discovery is stable-sharded, fixed-SHA archives are expanded in a non-root networkless container, one repository failure cannot abort a shard, and scheduled CI uploads artifacts only with `contents: read`.
 - TypeScript checks pass with the one-shot `--ignoreDeprecations 6.0` flag; the repository's existing `baseUrl` setting blocks an unqualified TypeScript 7 check.
 - P1 full-catalog observation remains open until the sharded CI run completes; no public status is written before that gate.
-- P2 GREEN: the 20-entry baseline is bound to numeric repository IDs and full source SHAs. Acquisition and execution are separate; execution is non-root, networkless, secret-free, `linux/amd64`, resource-bounded, and disposable.
-- P2 live evidence: the calculator sample completed `queued -> running -> install_passed -> runtime_passed -> smoke_passed -> verified`; its container and volume were removed. The other 19 baseline targets remain unobserved, so this is not yet a baseline quality result.
-- P3 GREEN: Web/Playwright, collection, channel/MCP, and validator-routing contracts pass 15 focused tests. Missing contracts or unsupported platforms become `inconclusive` rather than false failures.
-- P3 image evidence: `dsh-web-validator:0.1.0` built for `linux/amd64`, runs as `pwuser`, and loads Playwright 1.55.0, `ws` 8.18.3, and DSH 0.1.0-rc.6 from the trusted validator path.
-- P3 has not yet observed a real Web plugin contract; no Web result is eligible for promotion.
-- Combined P0-P3 validation suite: 16 files and 66 tests pass; TypeScript passes with `--ignoreDeprecations 6.0`.
-- P4 RED: promotion modules, repeated evidence retention, complete public bindings, legacy trust isolation, and SHA-pinned embedded install commands failed for the intended missing behavior.
-- P4 GREEN: promotion requires all 20 configured baseline targets, one fresh sandbox observation per target, consistent expected outcomes, and exact SHA/DSH/platform/validator bindings.
-- Repeated runs for the same repository SHA now receive distinct report IDs and immutable nested report paths, so historical evidence is preserved instead of overwritten.
-- `npm run validate:promote` is observation-only by default. Public output requires both a passing quality gate and explicit `--publish`; a blocked publish cannot write `src/data/validation.json`.
-- Public passing records require source SHA, DSH version, platform, and validator version. External Verified README and repository override URLs remain historical `recorded` evidence only and no longer affect current Verified counts or ordering.
-- Published records automatically become `expired` when the current DSH version, platform, or validator version changes; a contract test keeps that target synchronized with `validation/baseline.json`.
-- Website and embedded plugin-store install commands append `#<sourceSha>` only when the promoted current validation record is verified.
-- Current promotion observation is blocked at 0/20 retained baseline targets. The earlier calculator live run remains noted as P2 execution evidence, but its report is not present in the promotion input captured at that checkpoint. `src/data/validation.json` therefore remained unchanged and empty.
-- Final checks: 37 test files and 182 tests pass; coverage is 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript and the 1835-page Astro build pass; the rebuilt embedded plugin passes 41 focused tests.
-- P0-P4 contain no external Issue creation path. P5 remains deferred.
-- Next activation step: retain one fresh sandbox report for every baseline target, review the observed mismatch rate, then run the explicit P4 publish command. Do not begin P5 as part of that activation.
-- Follow-up review started: verify that duplicate delivery of an otherwise valid report is deduplicated without being counted as an evidence-binding mismatch. This changes only promotion metrics, not eligibility requirements or publication state.
-- Follow-up GREEN: promotion now counts binding mismatches before deduplicating valid observations; 4 focused promotion tests pass, including duplicate delivery and stale-binding coverage.
-- Follow-up final check: full coverage and TypeScript pass, `git diff --check origin/main..HEAD` is clean, and the read-only P4 observation remains blocked at 0/20 with `published: false`.
+- Next: define the approximately 20-project P2 baseline and restricted Linux sandbox command/result contract.
 
-### 2026-08-14 - Single-plugin observation
+### 2026-08-15 - First full-run repair
 
-- User authorized one validation-flow test. Selected baseline target `omdsh-dev/dsh-tool-calculator` at repository ID `1323526209` and source SHA `701f6549b4e1b648351403dc8a18a9bc9a2b713d`.
-- Scope is one P2 Linux host/tool observation using DSH `0.1.0-rc.6` and validator `0.1.0`. It may retain a sanitized report, but must not publish P4 status, modify `src/data/validation.json`, or create an Issue.
-- Observation passed in 9.353 seconds: `discovered -> recognized -> structure_passed -> queued -> running -> install_passed -> runtime_passed -> smoke_passed -> verified`.
-- All 13 recorded structure checks passed. Trivy, OSV-Scanner, and Gitleaks reported no blocking vulnerability or secret findings; the report has no failure attribution.
-- The disposable container and volume were removed after postflight. The sanitized report is retained under `validation/reports/baseline/1323526209/701f6549b4e1b648351403dc8a18a9bc9a2b713d/`.
-- Read-only P4 observation now sees 1/20 targets. Promotion remains blocked with `published: false`; `src/data/validation.json` is unchanged and no Issue was created.
+- The first public validation run stopped safely on Linux archive cleanup ownership; RED/GREEN commits `7a34456` and `77813c0` fixed extraction ownership without allowing root execution.
+- The second run completed all 20 canaries but correctly held the 449-repository shard stage at the promotion gate: 13 canaries verified, 6 reported dependency installation failures, and 1 failed structure checks.
+- Local pinned-SHA reproduction identified a validator false-positive source: six canaries contain `pnpm-lock.yaml`, while the shared Linux plan always invokes `npm ci` even though the validator image already pins pnpm.
+- This repair run will first add RED coverage for lockfile-driven dependency commands and always-retained canary artifacts, then apply the smallest shared planner/workflow fixes.
+- Remaining canary failures will be rerun individually. Any genuine plugin or structure failure will stay visible and will not be relabeled as verified; the gate model will be changed only if an explicit negative-control outcome is supported by the baseline contract.
+- Exit gate: focused tests, coverage, type checks, workflow YAML parsing, and build pass; validation-only commits are pushed; a fresh full workflow advances beyond canary or exposes a newly diagnosed actionable failure with retained reports.
 
-### 2026-08-14 - Manual P1 shadow observation
+### 2026-08-15 - Strict-offline decision
 
-- User authorized one manual P1 operation test. Selected the first stable catalog entry, `SepineTam/mcp-for-stata` at repository ID `956330003`, and isolated output under `validation/reports/manual-p1/`.
-- Scope is discovery, execution-type recognition, pinned repository snapshot, non-executing structure checks, Trivy/OSV/Gitleaks scanning, and sanitized shadow report retention. It must not run third-party build/plugin code, publish validation state, or create an Issue.
-- The P1 operation completed with `discovered: 1`, `reportsWritten: 1`, no snapshot load failure, and no public-state mutation. The report recognized `channel-mcp` and pinned source SHA `e5b25dc90058001c942fb7ef851637c9f5728486`.
-- The result is `inconclusive` and not queueable: OSV-Scanner was unavailable, so attribution is `infrastructure / SCANNER_UNAVAILABLE`. The Python MCP repository also has no Node `package.json` or Node entrypoint; current structure rules record those failures but must not turn the scanner outage into a plugin failure.
-- No plugin/build code or sandbox validator ran. The sanitized report is retained under `validation/reports/manual-p1/956330003/e5b25dc90058001c942fb7ef851637c9f5728486/`; `src/data/validation.json` remains unchanged and no Issue was created.
+- The user selected the strict network-isolation path: plugin installation and execution remain networkless even when that reduces the number of conclusive results.
+- Confirmed validator fixes locally: pnpm lockfile selection, bare relative entrypoints, external registry credential detection, loader-only smoke behavior, retained failed canary artifacts, and negative-control gate outcomes.
+- Confirmed pinned outcomes: `dsh-stream-rules` and `dsh-tiered-approval` verify; Qwen-MM-Plugins, sandbox-micro, and sandbox-nono have standalone build failures caused by repository-external TypeScript references; sandbox-mxc requires private GitHub Packages credentials.
+- Confirmed `dsh-acp-for-bitfun` reaches plugin installation after its entrypoint false positive is fixed. Strict offline installation can lack pnpm registry metadata even when locked package content was acquired, so this validator limitation must be `inconclusive`, not a plugin defect.
+- Public validation output must retain failed, structure-failed, and inconclusive current-SHA observations with sanitized Chinese explanations. Only a current `verified` record may grant the Verified marker.
+- Exit gate: exact negative canary expectations are recorded; offline cache misses become infrastructure-inconclusive without raw stderr leakage; the public feed exposes the reason; validation-only commits pass required checks, push, and advance a new full workflow beyond canary.
 
-### 2026-08-14 - P4 single-observation policy
+### 2026-08-15 - Strict-offline implementation complete
 
-- User changed P4 promotion from at least two fresh observations per target to one. Preserve full baseline coverage, exact repository/SHA/DSH/platform/validator bindings, expected outcomes, and conflicting-outcome rejection.
-- Current catalog snapshot contains 826 entries: 381 plugins, 45 skills, 20 channels, 3 collections, 26 applications, 25 directories, 14 infrastructure projects, and 312 unknown entries. The validation-eligible display types total 449; only 20 host/tool targets currently have a pinned live-sandbox baseline.
-- RED intent: one fresh verified report for every configured baseline target must pass promotion and produce public records, with no repeat-observation block reason or metric.
-- GREEN: removed the repeat-observation block reason and metric. One fresh report for each of all 20 baseline targets passes promotion and produces 20 public records; exact bindings, full coverage, conflicting outcomes, and unexpected outcomes remain enforced. Seven focused promotion and CLI tests pass.
-- Final verification: 37 test files and 185 tests pass; coverage is 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines. TypeScript and `git diff --check origin/main..HEAD` pass. Read-only promotion sees 1/20 targets, is blocked only by baseline coverage, and remains `published: false`.
+- Added RED/GREEN checkpoints for lockfile-aware npm/pnpm acquisition, always-retained failed canary artifacts, bare relative entrypoints, external credential detection, loader-only smoke, declared negative canaries, offline installation, and public explanations.
+- `dsh-acp-for-bitfun` now completes in approximately three seconds with `OFFLINE_DEPENDENCY_CACHE_MISS`, `infrastructure`, and `inconclusive`; the sanitized report retains no registry URL, package name, token, or stderr.
+- Public validation generation now preserves verified, failed, structure-failed, and inconclusive current-SHA observations. The existing detail page displays the sanitized Chinese reason; only sandbox-passed records grant Verified.
+- Baseline expectations now match the observed fixed SHAs: three standalone build failures, two inconclusive dependency/credential cases, and fifteen verified controls.
+- Verification passed: 39 test files and 202 tests; 98.6% statements, 89.88% branches, 98.88% functions, and 99.04% lines; TypeScript no-emit; all workflow YAML; Astro check/build with 1835 generated pages and no errors.
+- Remaining: integrate the remote validation branch tip without including local documentation, push validation-only commits, dispatch the full workflow, and monitor canary plus bounded shards.
 
-### 2026-08-14 - Bounded full-chain publication
+### 2026-08-15 - Full-catalog API budget repair
 
-- User authorized the validation module to process the full catalog-to-store chain while remaining independent from catalog discovery and explicitly required bounded concurrency rather than launching hundreds of validators together.
-- Selected architecture: catalog sync publishes an immutable catalog artifact; validation runs the 20-target canary serially, then 20 stable catalog shards with at most four jobs in parallel and one candidate at a time inside each shard; a final trusted job promotes, builds, and deploys only after the canary and every shard complete.
-- Third-party validation jobs receive no deployment credentials. Missing Web/Channel/Collection/native contracts become retained `inconclusive` reports; they must never be promoted by pretending a validator ran.
-- Existing mature references remain OpenSSF Scorecard and StepSecurity Harden-Runner, both active Apache-2.0 projects. GitHub Actions native matrix and concurrency controls are used for scheduling to avoid adding an orchestration dependency.
-- RED scope: correct the OSV v2 `scan source` command, define a sequential dynamic candidate runner, separate canary gate reports from candidate publication reports, and enforce catalog-artifact/concurrency/credential boundaries in Workflow tests.
-- RED checkpoint `6040cc6` captured the intended failures before production changes: the candidate runner was missing, OSV v2 lacked the `source` subcommand, promotion could not isolate canary evidence, and the workflows lacked the catalog artifact and trusted publish chain.
-- GREEN: `validate:candidates` consumes P1 structure reports in stable repository-ID order. Host/Tool and Command candidates reuse the pinned archive and constrained Linux Loader sandbox; unsupported or missing Web/Channel/Collection/Skill/native contracts retain explicit `inconclusive` reports. The batch loop awaits each candidate, continues after an infrastructure exception, and never runs two candidates concurrently inside a shard.
-- Corrected the pinned OSV-Scanner v2.5.0 invocation to `scan source --format=json --recursive /workspace`, resolving the observed false `SCANNER_UNAVAILABLE` result caused by the obsolete command shape.
-- `Sync catalog` now runs daily or manually, deploys catalog discovery independently, and uploads `plugin-catalog-snapshot`. A successful main-branch sync triggers `Validate plugins`; manual validation remains independent and uses the checked-in snapshot.
-- The validation workflow runs all 20 canary targets serially and enforces the P4 gate before candidate work. It then runs 20 fixed catalog shards with matrix `max-parallel: 4`; each shard performs P1 and candidate validation serially. One complete validation workflow is allowed at a time, so the maximum third-party sandbox concurrency is four.
-- Each P1 shard must write one report per discovered entry with zero snapshot load failures. It may continue gathering evidence after an individual load failure, but any incomplete shard fails after processing and prevents the trusted publish job from running.
-- Canary and candidate artifacts are kept separate. Promotion gates only on canary evidence, merges canary and candidate reports for publication, and emits at most one latest verified record per numeric repository ID. The final install command remains bound to the promoted source SHA.
-- Deployment SSH credentials exist only in the final `publish` job after canary and all 20 shards succeed. P0-P4 still request only `actions: read` and `contents: read`, contain no Issue permission, and contain no Git commit or push path.
-- GREEN verification: 5 focused workflow/runner/scanner/promotion files pass 15 tests; the complete suite passes 38 files and 189 tests. Coverage is 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines. TypeScript passes, YAML parsing finds the expected `baseline`, `validate`, and `publish` jobs, and Astro builds 1835 pages.
-- No full-catalog Action, live deployment, or hundreds-plugin local execution was started in this implementation run. The current observed canary evidence remains 1/20 until the workflow is published and run.
-- Evidence retention is not yet permanent: GitHub Action artifacts are configured for 30 days. Permanent sanitized-history storage requires a separately authorized durable backend or repository-write policy; do not claim the artifact archive satisfies the permanent-history requirement.
+- Run `31821430436` passed the 20-target canary gate with the declared 15 verified, 3 failed, and 2 inconclusive outcomes, then started the 592-repository full run with four concurrent shards.
+- Shards 0-11 completed or produced evidence, while shards 12-19 failed at the P1 completeness guard after 484 reports. Later shards failed immediately with no reports, matching exhaustion of the repository-scoped GitHub REST budget.
+- Root cause: each P1 repository uses REST for metadata, commit, recursive tree, every structural blob, and archive acquisition. Lowering shard concurrency cannot make that request count fit the hourly budget.
+- Repair boundary: keep the current canary identity checks, but make full-catalog P1 resolve one exact SHA per repository, download the public fixed-SHA archive through codeload, and derive structure evidence locally. Candidate archive acquisition must use the same non-REST path.
+- Add sanitized shadow summaries to Action logs so future incomplete shards expose repository IDs without leaking raw request errors.
+- Exit gate: RED/GREEN tests cover fixed-SHA codeload, local structural inventory, single-request SHA resolution, catalog metadata binding, and summary visibility; rerun the full workflow and manually trigger catalog sync only after a complete validation state artifact exists.
 
-### 2026-08-14 - Decoupled incremental scheduling
+### 2026-08-15 - Archive-backed P1 implementation complete
 
-- User requires catalog discovery and publication every 30 minutes regardless of validation health, while validation runs independently once per hour.
-- The first successful validation cursor must select every validation-eligible catalog entry. Later runs select only a new numeric repository ID or an entry whose catalog `pushedAt` changed; the sandbox still binds the resolved full source SHA.
-- Validation target or canary baseline changes invalidate the cursor and force one new full run. A failed validation run must not advance the cursor.
-- The validation workflow will publish an artifact containing its cursor, current public validation feed, and reusable canary evidence. It will not deploy the store directly. Catalog sync will best-effort restore the newest successful validation feed before building, but missing or failed validation state must not fail catalog discovery or deployment.
-- RED scope: full/incremental/empty selection, stable shard selection, cursor advancement, prior-feed preservation, 30-minute versus hourly scheduling, and absence of deployment credentials from the validation workflow.
-- RED checkpoint `6f5fb59` captured the missing cursor, incremental selection, feed merge, and decoupled Workflow contracts before implementation.
-- GREEN: `Sync catalog` now runs at `*/30 * * * *`, always performs discovery and deployment independently, and uploads an immutable catalog snapshot. Restoring the newest successful validation feed is explicitly best-effort with `continue-on-error: true`; validation outages cannot block catalog refresh.
-- `Validate plugins` now runs at minute 17 of every hour and is no longer triggered by `workflow_run`. It reads the latest successful catalog snapshot and latest compatible validation-state artifact without receiving deployment credentials or Issue permissions.
-- With no compatible cursor, all validation-eligible `plugin`, `skill`, `collection`, and `channel` entries are selected. The current checked-in catalog dry selection is `full` with 449 repository IDs across 20 active shards. No third-party source was downloaded or executed by this dry selection.
-- Later hourly runs select only a new numeric repository ID or a repository whose catalog `pushedAt` changed. DSH version, platform, validator version, or baseline digest changes intentionally force a new full run so stale evidence cannot remain current.
-- Validation remains bounded at 20 stable shards with `max-parallel: 4`; each active shard runs P1 and sandbox candidates serially. Empty incremental runs skip all sandbox jobs and only refresh the reusable state artifact.
-- Cursor advancement accepts conclusive structure or sandbox evidence only. Infrastructure failures and inconclusive outcomes remain absent from the cursor and are selected again on the next hourly run. A forced full run starts with an empty cursor and cannot inherit stale completed entries.
-- Incremental promotion merges new SHA-bound records into the prior public feed so unchanged Verified evidence remains available. Updated plugins that do not verify keep their old historical record, which the store displays as expired because its source binding no longer matches.
-- The validation workflow no longer builds or deploys the storefront. Successful validation uploads only `state.json`, `validation.json`, and reusable canary reports; the next independent catalog refresh consumes them best-effort.
-- GREEN verification: five focused files pass 19 tests; the complete suite passes 39 files and 195 tests. Coverage is 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines. TypeScript passes with the repository's existing `--ignoreDeprecations 6.0` compatibility flag, both Workflow files parse as YAML, `git diff --check` passes, and Astro builds 1835 pages.
-- No full-catalog Action, deployment, push, or local third-party execution was started in this implementation run. GitHub artifact retention remains 30 days rather than permanent history storage.
+- RED commit `f48772d` captured the REST tarball, missing archive snapshot, missing catalog metadata binding, and hidden shadow summary contracts.
+- Full-catalog P1 now spends one REST request per repository to resolve the default branch through its numeric repository ID. Fixed-SHA source and candidate archives use validated public codeload paths, while structure evidence is derived locally before read-only scanners run.
+- A real P1 run for repository `1303320259` resolved SHA `ffea32e50a6b689f11ec22f2b8aa441b9a359b10`, downloaded and scanned the archive, wrote one immutable report, and retained zero load failures. Its quarantine decision remains private evidence and is not converted into an accusation or external Issue.
+- Verification passed: 42 test files and 217 tests, TypeScript no-emit, workflow YAML parsing, and diff whitespace checks.
+- Remaining: commit validation-only implementation files, push to main, rerun the complete 592-repository validation, verify a successful `plugin-validation-state`, then manually dispatch `Sync catalog` and inspect the deployed validation markers.
+
+### 2026-08-15 - Post-publication incremental repair
+
+- Run `31823926639` completed 20/20 shards and promotion successfully. Manual sync run `31826452019` restored that state, rebuilt, and deployed the public catalog.
+- Live `/catalog.json` shows SHA-bound validation data, including 30 current verified entries after the refreshed 1,000-repository catalog expired or displaced stale records.
+- The successful state retained 294 cursor entries from 593 published records because 299 infrastructure-attributed outcomes were deliberately left queued. That conflicts with the requested first-full-then-update-only schedule and would repeat unchanged repositories hourly.
+- Of those infrastructure outcomes, 274 are `SCANNER_UNAVAILABLE`; reproduction showed OSV Scanner exits 128 on a repository with no package sources and explicitly supports `--allow-no-lockfiles` for this normal case.
+- Repair boundary: parse structured scanner stdout even when a scanner uses a findings exit code; allow OSV repositories with no lockfiles; reconcile older cursors from exact pushedAt/DSH/platform/validator feed records; and advance every completed terminal report without granting verification.
+- Exit gate: RED/GREEN tests cover scanner command/result handling and exact-target cursor repair, then a new run selects only genuinely new or updated repositories from the refreshed catalog.
+
+### 2026-08-15 - Incremental repair implementation complete
+
+- RED commit `967fcad` captured OSV no-lockfile handling, structured findings from non-zero scanner exits, infrastructure cursor advancement, and exact-target feed reconciliation.
+- OSV Scanner now uses its supported `--allow-no-lockfiles` mode; scanner findings stdout is parsed even when the tool returns a findings exit code. Unstructured scanner failures remain infrastructure-unavailable.
+- Every completed terminal report now advances the cursor regardless of outcome attribution. This suppresses hourly reruns without changing failed or inconclusive evidence into a verified result.
+- Selection startup reconciles compatible older state from published records only when repository pushedAt, DSH version, platform, validator version, and baseline target remain compatible. A missing or incompatible cursor still forces the required first full run.
+- Real artifacts from runs `31823926639` and `31826452019` showed 362 repositories selected without reconciliation versus 121 genuinely new or updated repositories with reconciliation; repaired cursor entries increased from 294 to 513.
+- Verification passed: 42 test files and 219 tests, TypeScript no-emit, workflow YAML parsing, and diff whitespace checks.
+- Remaining: push validation-only commits and run the 121-repository incremental batch so its successful state becomes the hourly baseline.
+
+### 2026-08-15 - Incremental validation and website synchronization observed
+
+- Incremental validation run `31827248166` selected exactly 121 new or updated repository IDs from a compatible 513-entry cursor. All 20 active shards completed successfully with `max-parallel: 4`, followed by a successful promotion job.
+- The resulting `plugin-validation-state` advanced the cursor to 603 entries and retained 664 public evidence records: 246 structure-passed, 418 structure-failed, 37 sandbox-passed, 24 sandbox-failed, and 185 sandbox-inconclusive observations.
+- Manual catalog sync run `31828804340` restored the newest successful validation state, passed tests and build, and deployed independently. This confirms validation completion can feed the next catalog refresh without coupling validation health to the 30-minute discovery schedule.
+- Public `/catalog.json` was regenerated at `2026-08-14T18:29:03.549Z` with 1,000 repositories and 32 current SHA-bound Verified entries. `bibibala/dsh-git-guard` and `lxj808624/dsh-tool-git` display `已验证`; their install commands are pinned to `4554f987ea066567c43ea4288aa358fefd82390f` and `3bb1443a6291fb6437e52d8b897a1dd48db03a1b` respectively.
+- Two sandbox-passed records, `Chhlafiu4312/citeguard` and `Chhlafiu4312/promptwall`, correctly remain `expired` because their validated SHAs do not match the current catalog source binding.
+- P0-P4 created no external Issue. The action artifacts retain sanitized evidence for 30 days; durable permanent history remains a separate unresolved storage requirement.
+
+### 2026-08-15 - Structure outcome classification repair started
+
+- Live evidence contains 373 entries labeled `check-failed`, but only 62 are plugin-attributed required-check failures. Another 219 are historical `infrastructure / SCANNER_UNAVAILABLE` outcomes and 92 are `policy / SECURITY_REVIEW_REQUIRED` quarantines.
+- Repair boundary: preserve the raw required ladder and failure attribution, but publish infrastructure structure outcomes as `inconclusive` and policy quarantines as a distinct `quarantined` stage with the `security-review` overall marker. Neither may be displayed as a plugin structure failure.
+- Scanner evidence must be tool-specific. Trivy vulnerability findings, Trivy secret findings, OSV vulnerabilities, and Gitleaks secrets must not cause another scanner to be labeled dirty or clean incorrectly.
+- Add an explicit manual `force_full` workflow input so a validator repair can safely reprocess all eligible repositories without changing DSH, platform, validator, or baseline bindings. Scheduled runs remain incremental and concurrency remains capped at four shards.
+- Exit gate: RED/GREEN state, feed, UI, scanner, and workflow tests; full coverage and type/build checks; validation-only push; one successful bounded full revalidation; independent catalog sync; public counts no longer classify infrastructure or policy outcomes as `check-failed`.
+
+### 2026-08-15 - Structure outcome classification implementation complete
+
+- RED commit `2e75718` captured the required distinction between plugin structure failures, infrastructure-inconclusive results, and policy quarantines, plus scanner-specific evidence and the manual full-run workflow contract.
+- GREEN commit `392bd73` publishes infrastructure outcomes as `inconclusive`, policy outcomes as `quarantined / security-review`, and reserves `check-failed` for deterministic plugin-attributed structure failures.
+- Trivy vulnerability/secret evidence, OSV vulnerabilities, and Gitleaks secret evidence are now evaluated independently, removing contradictory clean findings caused by another scanner.
+- Manual `force_full` revalidation ignores the previous cursor only for an explicit workflow dispatch. The hourly schedule remains incremental, and shard concurrency remains bounded at four.
+- Local verification passed: 7 focused files and 54 tests; 42 files and 225 tests with 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines; TypeScript no-emit; workflow YAML parsing; `git diff --check`; Astro check/build with 1,835 generated pages and zero errors.
+- Remaining: push the validation-only commits, complete one bounded full validation run, inspect the resulting state classification, independently sync the catalog, and verify the public catalog/detail markers.
+
+### 2026-08-15 - Validator toolchain registry failure and repair
+
+- Full run `31830948136` selected 610 repositories in explicit `full` mode with 20 shards, then stopped safely before candidate execution because the P2 validator image could not be built.
+- The infrastructure failure was an npm publication-order gap: `@aws-sdk/credential-provider-node@3.972.80` referenced then-unavailable `@aws-sdk/credential-provider-ini@^3.973.14`. No plugin was executed or classified by the failed run.
+- RED commit `3914afc` requires both P2 and P3 images to install a repository-locked validator toolchain rather than resolving global DSH dependencies at image-build time.
+- GREEN commit `369f6e2` adds a complete npm lock for DSH `0.1.0-rc.6` and pnpm `11.19.0`, pins the last complete AWS provider pair, and exposes the local toolchain binaries through `PATH` in both images.
+- Local Docker rebuilt the P2 image from the lock with Node 22/npm 10, installing 533 packages with zero reported npm vulnerabilities. Baseline repository `1323526209` then completed the real non-root networkless sandbox and returned the expected `verified` outcome.
+- Verification passed: 42 files and 225 tests; 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines; TypeScript no-emit; `git diff --check`; real P2 image build; one real pinned canary.
+- Remaining: push the toolchain RED/GREEN commits, dispatch another bounded full run, inspect all public-state classifications, independently sync the catalog, and verify the deployed markers.
+
+### 2026-08-15 - Installability-first P1/P2 optimization started
+
+- Full run `31831960740` completed 20/20 bounded shards and promotion successfully. Its 610 current reports contained 124 ordinary structure failures, 123 security quarantines, 363 structure-passed results, and zero `SCANNER_UNAVAILABLE` outcomes.
+- The ordinary blockers were 42 invalid or missing DSH patch declarations, 35 missing entrypoints, 38 missing package manifests, 8 missing Skill documents, and 1 collection membership check. These should become advisory evidence and proceed to the owned validator where possible.
+- Of the 123 quarantines, 67 contained vulnerability findings without any secret finding. Known dependency vulnerabilities remain recorded security evidence but are no longer treated as malicious-source signals; 56 reports with Trivy or Gitleaks secret findings remain quarantined for human review.
+- Of 47 dependency acquisition failures, 43 had no root lockfile and were forced through `npm ci`. The relaxed P2 contract uses script-disabled `npm install` when no supported root lockfile exists, while retaining `npm ci` and frozen pnpm for pinned roots.
+- Web and channel/MCP projects without a feature-specific contract may use the generic Linux install, DSH load, entrypoint import, and postflight path. They do not gain Playwright or mock-feature evidence, but may satisfy the requested installability-level verification.
+- Bump the validator binding to `0.1.1` so prior `0.1.0` results expire and unchanged repositories re-enter one bounded full validation. Hourly runs remain incremental after that successful state.
+- Exit gate: RED/GREEN tests cover every relaxed structure blocker, vulnerability-versus-secret handling, no-lock acquisition, Web/Channel fallback, validator-version synchronization, independent schedules, bounded concurrency, and no Issue/deployment credentials in validation; then pass a real Docker canary, a complete GitHub full run, independent catalog sync, and public marker inspection.
+
+### 2026-08-15 - Installability-first P1/P2 implementation complete locally
+
+- RED commit `882d154` captured 12 expected failures for advisory structure checks, vulnerability warnings, Web/Channel install fallback, no-lock dependency acquisition, and validator `0.1.1` synchronization.
+- Missing manifests, entrypoints, DSH patches, Skill documents, and collection members are now advisory evidence. Repository identity/activity/size, scanner availability, external credentials, and Secret findings retain their safety behavior.
+- Trivy and OSV dependency vulnerabilities remain visible `security` warnings but no longer imply malicious source or block installation. Trivy/Gitleaks Secret signals remain quarantined and never enter the execution sandbox.
+- Web and channel/MCP projects without feature contracts now receive the generic Linux install, DSH load, entrypoint import, and postflight check. This is installability evidence, not Playwright or external-service feature evidence.
+- No-lock projects now use the pinned pnpm in the networked acquisition phase with scripts disabled, so the subsequent networkless DSH install consumes the same store. Execution remains non-root, secret-free, constrained, and `network=none`.
+- Real pinned sample `Hyperionjust/dsh-tool-underseal@11076603a692718c437c2eb0432e1b2a9a0cc2c5` moved from `DEPENDENCY_INSTALL_FAILED` to `install_passed / runtime_passed / smoke_passed / verified` after the aligned pnpm acquisition fix.
+- Real pinned Web sample `heartmove/dsh-side-chat@2d1c6f55124323522cf2e3bd0057f7ba957e16f6` moved from `WEB_SMOKE_CONTRACT_REQUIRED` to the same complete installability ladder and `verified` result.
+- Validator binding `0.1.1` makes the successful `0.1.0` state incompatible by design. A local selection using the latest 610-entry catalog/state produced `mode=full`, `firstRun=true`, 610 repositories, and 20 shards; subsequent successful state will restore incremental selection.
+- Verification passed: 42 files and 232 tests with 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines; TypeScript no-emit; all workflow YAML; `git diff --check`; Astro check/build with 1,835 pages; real P2 image build; two real pinned sandbox candidates.
+- Remaining: push the implementation, run the full `0.1.1` workflow with four-way concurrency, inspect the final state, trigger the independent catalog sync, and verify the public catalog/detail markers.
+
+### 2026-08-15 - Catalog-independent canary repair
+
+- Full run `31871667267` selected 646 repositories for validator `0.1.1` and completed the serial canary execution, but the promotion gate stopped before candidate shards with `BASELINE_COVERAGE_INSUFFICIENT`.
+- The retained artifact contained 19 reports. Fixed target `Elaina-real/dsh-tiered-approval` was absent from the dynamic catalog snapshot, so the baseline runner emitted `CATALOG_ENTRY_MISSING` instead of validating it. The repository remains public under numeric ID `1333278814`, and pinned SHA `096e3441a0709de1db7a4f72fdef16768ec51df5` still resolves exactly.
+- Baseline targets are now operationally independent from catalog membership. A missing catalog entry uses the baseline's fixed identity only to begin resolution; the numeric-ID GitHub lookup still verifies the repository and supplies its current full name before the pinned archive is downloaded.
+- RED/GREEN coverage proves a fixed-SHA canary remains runnable without a catalog entry. A real rerun of the missing target in validator `0.1.1` completed `install_passed`, `runtime_passed`, `smoke_passed`, and `verified` in the disposable non-root networkless sandbox.
+- Merge verification passed 43 test files and 235 tests with 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines; TypeScript no-emit; all workflow YAML; staged credential scan; `git diff --check`; and the 1,835-page Astro check/build.
+- Remaining: push the catalog-independent canary repair, rerun the bounded full workflow, inspect the successful validation state, trigger the independent catalog sync, and verify the public SHA-bound markers.

@@ -120,4 +120,31 @@ describe('P2 sandbox execution report', () => {
     expect(result.report).toMatchObject({ currentStatus: 'inconclusive', failure: null })
     expect(result.summary).toMatchObject({ attribution: 'infrastructure', code: 'SANDBOX_TIMEOUT' })
   })
+
+  it('keeps a pnpm offline metadata miss inconclusive without retaining registry diagnostics', async () => {
+    const executor = vi.fn(async (_command, id: string) => ({
+      exitCode: id === 'install-plugin' ? 1 : 0,
+      timedOut: false,
+      stdout: '',
+      stderr: id === 'install-plugin'
+        ? 'ERR_PNPM_NO_OFFLINE_META GET https://registry.npmjs.org/private-package TOKEN=must-not-escape'
+        : '',
+    }))
+
+    const result = await executeLinuxSandboxPlan(structureReport(), plan(), {
+      executor,
+      now: () => '2026-08-14T12:04:00Z',
+    })
+
+    expect(result.report).toMatchObject({
+      currentStatus: 'inconclusive',
+      failure: null,
+      events: expect.arrayContaining([expect.objectContaining({
+        status: 'inconclusive',
+        code: 'OFFLINE_DEPENDENCY_CACHE_MISS',
+        attribution: 'infrastructure',
+      })]),
+    })
+    expect(JSON.stringify(result)).not.toMatch(/registry\.npmjs|must-not-escape|private-package/)
+  })
 })

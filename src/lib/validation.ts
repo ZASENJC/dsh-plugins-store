@@ -3,7 +3,7 @@ import type { ProjectType } from './classification'
 export const CURRENT_VALIDATION_TARGET = Object.freeze({
   dshVersion: '0.1.0-rc.6',
   platform: 'linux-x64',
-  validatorVersion: '0.1.0',
+  validatorVersion: '0.1.1',
 } as const)
 
 export const VALIDATION_STAGE_DEFINITIONS = Object.freeze([
@@ -25,12 +25,13 @@ export const VALIDATION_STATUS_DEFINITIONS = Object.freeze([
   { id: 'expired', label: '需重新验证' },
   { id: 'recorded', label: '已有验证记录' },
   { id: 'inconclusive', label: '需要复核' },
+  { id: 'security-review', label: '安全复核中' },
   { id: 'not-applicable', label: '非插件验证范围' },
 ] as const)
 
 export type ValidationOverall = typeof VALIDATION_STATUS_DEFINITIONS[number]['id']
 export type ValidationStageId = typeof VALIDATION_STAGE_DEFINITIONS[number]['id']
-export type ValidationStageStatus = 'pending' | 'running' | 'passed' | 'failed' | 'inconclusive' | 'skipped'
+export type ValidationStageStatus = 'pending' | 'running' | 'passed' | 'failed' | 'inconclusive' | 'quarantined' | 'skipped'
 export type ValidationTone = 'neutral' | 'info' | 'running' | 'success' | 'warning' | 'danger'
 
 export interface ValidationStageEvidence {
@@ -84,6 +85,7 @@ const STAGE_STATUSES = new Set<ValidationStageStatus>([
   'passed',
   'failed',
   'inconclusive',
+  'quarantined',
   'skipped',
 ])
 const STATUS_DEFINITION_BY_ID = new Map(
@@ -101,6 +103,7 @@ const STATUS_TONES: Record<ValidationOverall, ValidationTone> = {
   expired: 'warning',
   recorded: 'info',
   inconclusive: 'warning',
+  'security-review': 'warning',
   'not-applicable': 'neutral',
 }
 
@@ -184,6 +187,7 @@ function resolveOverall(record: ValidationRecord): ValidationOverall {
   if (record.structure.status === 'running') return 'check-running'
   if (record.structure.status === 'failed') return 'check-failed'
   if (record.structure.status === 'inconclusive') return 'inconclusive'
+  if (record.structure.status === 'quarantined') return 'security-review'
   if (record.sandbox.status === 'pending' || record.sandbox.status === 'skipped') return 'sandbox-pending'
   if (record.sandbox.status === 'running') return 'sandbox-running'
   if (record.sandbox.status === 'failed') return 'sandbox-failed'

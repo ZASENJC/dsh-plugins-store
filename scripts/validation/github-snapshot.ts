@@ -3,8 +3,8 @@ import type { ScannerResults } from './scanner-adapters'
 import type { RepositoryStructureSnapshot } from './structure-check'
 
 const API_URL = 'https://api.github.com'
-const MAX_STRUCTURAL_BLOB_BYTES = 1_000_000
-const MAX_STRUCTURAL_BYTES = 5_000_000
+export const MAX_STRUCTURAL_BLOB_BYTES = 1_000_000
+export const MAX_STRUCTURAL_BYTES = 5_000_000
 
 interface GitHubRepositoryResponse {
   id: number
@@ -57,8 +57,8 @@ async function fetchJson<T>(
   return response.json() as Promise<T>
 }
 
-function isStructuralContentPath(path: string): boolean {
-  return /(^|\/)(package\.json|pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?|SKILL\.md|LICENSE(?:\..*)?|COPYING(?:\..*)?|cordis\.patch\.ya?ml|dsh\.bundle\.ya?ml|\.gitmodules|\.gitattributes)$/i.test(path)
+export function isStructuralContentPath(path: string): boolean {
+  return /(^|\/)(package\.json|pnpm-lock\.yaml|package-lock\.json|yarn\.lock|bun\.lockb?|SKILL\.md|LICENSE(?:\..*)?|COPYING(?:\..*)?|cordis\.patch\.ya?ml|dsh\.bundle\.ya?ml|\.gitmodules|\.gitattributes|\.npmrc)$/i.test(path)
 }
 
 function decodeBlob(blob: GitHubBlobResponse, path: string): string {

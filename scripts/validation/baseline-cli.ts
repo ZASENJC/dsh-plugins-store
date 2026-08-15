@@ -8,12 +8,13 @@ import { promisify } from 'node:util'
 import type { ValidationReport } from '../../src/lib/validation-report'
 import { downloadPinnedArchive, extractPinnedArchive } from './archive-downloader'
 import { parseBaseline, type BaselineTarget } from './baseline'
+import { runCandidateBatch } from './candidate-runner'
 import { discoverCatalogRepositories } from './shadow-cli'
 import { loadGitHubSnapshot } from './github-snapshot'
 import { buildLinuxSandboxPlan } from './linux-sandbox'
 import { executeLinuxSandboxPlan } from './sandbox-runner'
 import { runScannerCommands, type ScannerResults } from './scanner-adapters'
-import { writeReportAtomically } from './shadow-runner'
+import { writeReportAtomically, type ShadowCatalogRepository } from './shadow-runner'
 import { runStructureCheck } from './structure-check'
 
 const execFileAsync = promisify(execFile)
@@ -48,6 +49,23 @@ export function evaluateBaselineOutcome(
       report.currentStatus as BaselineTarget['expectedFinalStatuses'][number],
     ),
     observed: report.currentStatus,
+  }
+}
+
+export function resolveBaselineRepository(
+  target: BaselineTarget,
+  catalogRepository: ShadowCatalogRepository | undefined,
+): ShadowCatalogRepository {
+  return catalogRepository ?? {
+    repositoryId: target.repositoryId,
+    fullName: target.fullName,
+    url: `https://github.com/${target.fullName}`,
+    pushedAt: '1970-01-01T00:00:00.000Z',
+    projectType: 'plugin',
+    topics: [],
+    defaultBranch: 'main',
+    archived: false,
+    sizeKb: 0,
   }
 }
 
@@ -87,7 +105,7 @@ function parseOptions(args: string[]): BaselineCliOptions {
 export async function buildValidatorImage(): Promise<void> {
   await execFileAsync('docker', [
     'build', '--platform=linux/amd64',
-    '--tag', 'dsh-plugin-validator:0.1.0',
+    '--tag', 'dsh-plugin-validator:0.1.1',
     '--file', join(root, 'validation/sandbox/Dockerfile'),
     root,
   ], { maxBuffer: 32 * 1024 * 1024 })
@@ -109,11 +127,7 @@ export async function runBaselineCli(args = process.argv.slice(2)): Promise<void
     reportPath?: string
   }> = []
   for (const target of targets) {
-    const repository = catalogById.get(target.repositoryId)
-    if (!repository) {
-      observations.push({ repositoryId: target.repositoryId, expected: false, code: 'CATALOG_ENTRY_MISSING' })
-      continue
-    }
+    const repository = resolveBaselineRepository(target, catalogById.get(target.repositoryId))
     const temporaryRoot = await mkdtemp(join(tmpdir(), `dsh-baseline-${target.repositoryId}-`))
     try {
       const snapshot = await loadGitHubSnapshot(repository, {
@@ -124,6 +138,7 @@ export async function runBaselineCli(args = process.argv.slice(2)): Promise<void
       const sourceDirectory = join(temporaryRoot, 'source')
       await downloadPinnedArchive({
         repositoryId: target.repositoryId,
+        repositoryFullName: snapshot.repository.fullName,
         sourceSha: target.sourceSha,
         destinationPath: archivePath,
       })
@@ -139,13 +154,18 @@ export async function runBaselineCli(args = process.argv.slice(2)): Promise<void
       })
       let report = structure.report
       if (structure.decision === 'passed' && structure.report.executionType === target.executionType) {
-        const plan = buildLinuxSandboxPlan(target, {
-          runId: `run-${Date.now().toString(36)}`,
-          sourceDirectory,
-          dshVersion: baseline.dshVersion,
-          validatorVersion: baseline.validatorVersion,
+        const batch = await runCandidateBatch([report], {
+          executeQueued: async (candidateReport) => {
+            const plan = buildLinuxSandboxPlan(target, {
+              runId: `run-${Date.now().toString(36)}`,
+              sourceDirectory,
+              dshVersion: baseline.dshVersion,
+              validatorVersion: baseline.validatorVersion,
+            })
+            return (await executeLinuxSandboxPlan(candidateReport, plan)).report
+          },
         })
-        report = (await executeLinuxSandboxPlan(report, plan)).report
+        report = batch.reports[0]
       }
       const reportPath = await writeReportAtomically(options.outputDir, report)
       observations.push({ repositoryId: target.repositoryId, ...evaluateBaselineOutcome(target, report), reportPath })
