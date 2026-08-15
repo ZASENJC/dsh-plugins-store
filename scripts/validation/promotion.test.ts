@@ -183,6 +183,18 @@ describe('P4 promotion quality gate', () => {
     })
   })
 
+  it('keeps numeric repository identity valid across a repository rename', () => {
+    const reports = reportsForAll()
+    reports[0].repository.fullName = 'renamed-owner/renamed-plugin'
+    reports[0].repository.url = 'https://github.com/renamed-owner/renamed-plugin'
+
+    expect(assessPromotionGate(baseline, reports)).toMatchObject({
+      eligible: true,
+      reasons: [],
+      metrics: { observedTargets: 20, mismatchedReports: 0 },
+    })
+  })
+
   it('deduplicates repeated delivery without reporting a binding mismatch', () => {
     const reports = reportsForAll()
     reports.push(reports[0])

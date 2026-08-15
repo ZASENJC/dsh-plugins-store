@@ -36,7 +36,6 @@ function matchesBaselineBinding(
   target: BaselineTarget,
 ): boolean {
   return report.repository.id === target.repositoryId
-    && report.repository.fullName.toLowerCase() === target.fullName.toLowerCase()
     && report.repository.sourceSha === target.sourceSha
     && report.executionType === target.executionType
     && report.validationKind === 'linux-headless'
