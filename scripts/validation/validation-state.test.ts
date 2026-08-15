@@ -171,7 +171,7 @@ describe('incremental validation cursor', () => {
     })
   })
 
-  it('advances every completed entry so unchanged infrastructure outcomes do not repeat hourly', () => {
+  it('keeps infrastructure outcomes out of the cursor so they retry on the next run', () => {
     const previous = state([{ repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt }])
     const selection: ValidationSelection = {
       schemaVersion: 1,
@@ -193,9 +193,57 @@ describe('incremental validation cursor', () => {
     expect(next.entries).toEqual([
       { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
       { repositoryId: 2, pushedAt: catalog.repositories[1].pushedAt },
-      { repositoryId: 4, pushedAt: catalog.repositories[3].pushedAt },
+      {
+        repositoryId: 4,
+        pushedAt: catalog.repositories[3].pushedAt,
+        executionType: 'host-tool',
+        retryCount: 1,
+        nextRetryAt: '2026-08-14T16:35:00.000Z',
+      },
     ])
+    expect(selectValidationDelta(catalog, next, target, 20, '2026-08-14T16:30:00.000Z').repositoryIds)
+      .toEqual([])
     expect(selectValidationDelta(catalog, next, target, 20, '2026-08-14T17:01:00.000Z').repositoryIds)
+      .toEqual([4])
+  })
+
+  it('backs off retryable outcomes and stops automatic retries after five attempts', () => {
+    let current = state([
+      { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
+      { repositoryId: 2, pushedAt: catalog.repositories[1].pushedAt },
+      {
+        repositoryId: 4,
+        pushedAt: catalog.repositories[3].pushedAt,
+        retryCount: 1,
+        nextRetryAt: '2026-08-14T16:35:00.000Z',
+      },
+    ])
+    expect(selectValidationDelta(catalog, current, target, 20, '2026-08-14T16:30:00.000Z').repositoryIds)
+      .toEqual([])
+
+    for (const now of [
+      '2026-08-14T16:35:00.000Z',
+      '2026-08-14T17:05:00.000Z',
+      '2026-08-14T18:05:00.000Z',
+      '2026-08-14T20:05:00.000Z',
+    ]) {
+      const selection = selectValidationDelta(catalog, current, target, 20, now)
+      expect(selection.repositoryIds).toEqual([4])
+      current = buildValidationState(catalog, current, selection, [report(4, 'infrastructure')], now)
+    }
+
+    expect(current.entries).toEqual([
+      { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
+      { repositoryId: 2, pushedAt: catalog.repositories[1].pushedAt },
+      {
+        repositoryId: 4,
+        pushedAt: catalog.repositories[3].pushedAt,
+        executionType: 'host-tool',
+        retryCount: 5,
+        retryExhausted: true,
+      },
+    ])
+    expect(selectValidationDelta(catalog, current, target, 20, '2026-08-15T20:05:00.000Z').repositoryIds)
       .toEqual([])
   })
 
@@ -238,7 +286,13 @@ describe('incremental validation cursor', () => {
       selection,
       [report(4, 'infrastructure')],
       '2026-08-14T16:20:00.000Z',
-    ).entries).toEqual([{ repositoryId: 4, pushedAt: catalog.repositories[3].pushedAt }])
+    ).entries).toEqual([{
+      repositoryId: 4,
+      pushedAt: catalog.repositories[3].pushedAt,
+      executionType: 'host-tool',
+      retryCount: 1,
+      nextRetryAt: '2026-08-14T16:35:00.000Z',
+    }])
   })
 
   it('repairs an older cursor only from exact-source and exact-target published records', () => {

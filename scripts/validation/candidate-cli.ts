@@ -48,6 +48,10 @@ export async function runCandidateCli(args = process.argv.slice(2)): Promise<voi
   if (!options.skipImageBuild && needsLinuxValidatorImage(reports)) await buildValidatorImage()
 
   const result = await runCandidateBatch(reports, {
+    concurrency: (() => {
+      const value = Number(process.env.VALIDATION_CANDIDATE_CONCURRENCY ?? '1')
+      return Number.isSafeInteger(value) && value > 0 ? value : 1
+    })(),
     executeQueued: async (report, plan) => {
       const temporaryRoot = await mkdtemp(join(tmpdir(), `dsh-candidate-${report.repository.id}-`))
       try {

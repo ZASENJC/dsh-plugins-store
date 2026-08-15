@@ -1,5 +1,6 @@
 import {
   parseSourceClassificationArchive,
+  resolveSourceValidationDisposition,
   type SourceClassificationArchive,
   type SourceValidationResult,
 } from '../../src/lib/source-classification-archive'
@@ -9,6 +10,8 @@ import type { ValidationSelection } from './validation-state'
 export interface ValidationArchiveMergeResult {
   archive: SourceClassificationArchive
   verified: number[]
+  autoFailed: number[]
+  retryable: number[]
   manualReview: number[]
 }
 
@@ -37,12 +40,18 @@ function resultFromReport(report: ValidationReport, fallbackCheckedAt: string): 
       ? 'inconclusive'
       : 'failed'
   const errorCode = report.failure?.code ?? report.events.at(-1)?.code
+  const attribution = report.failure?.attribution ?? report.events.at(-1)?.attribution
   const durationMs = report.completedAt === null
     ? undefined
     : Math.max(0, Date.parse(report.completedAt) - Date.parse(report.startedAt))
+  const disposition: SourceValidationResult['disposition'] = resolveSourceValidationDisposition({
+    status,
+    attribution,
+    errorCode,
+  })
   return {
     status,
-    disposition: status === 'passed' ? 'verified' : 'manual_review',
+    disposition,
     stage: report.events.some(({ status }) => status === 'structure_failed')
       && !report.events.some(({ status }) => ['queued', 'running', 'install_passed', 'install_failed', 'runtime_passed', 'runtime_failed', 'smoke_passed', 'smoke_failed'].includes(status))
       ? 'structure'
@@ -55,14 +64,14 @@ function resultFromReport(report: ValidationReport, fallbackCheckedAt: string): 
     executionType: report.executionType,
     ...(durationMs === undefined ? {} : { durationMs }),
     ...(errorCode ? { errorCode } : {}),
-    ...(report.failure?.attribution ? { attribution: report.failure.attribution } : {}),
+    ...(attribution ? { attribution } : {}),
   }
 }
 
 function missingResult(selection: ValidationSelection, checkedAt: string): SourceValidationResult {
   return {
     status: 'inconclusive',
-    disposition: 'manual_review',
+    disposition: 'retryable',
     stage: 'sandbox',
     sourceSha: null,
     checkedAt,
@@ -85,13 +94,15 @@ export function buildValidationArchive(
   const reports = latestReports(rawReports)
   const byId = new Map(archive.records.map((record) => [record.repositoryId, record]))
   const verified: number[] = []
+  const autoFailed: number[] = []
+  const retryable: number[] = []
   const manualReview: number[] = []
 
   for (const repositoryId of selection.repositoryIds) {
     const record = byId.get(repositoryId)
     const report = reports.get(repositoryId)
     if (!record) {
-      manualReview.push(repositoryId)
+      retryable.push(repositoryId)
       continue
     }
     const matchingReport = report
@@ -103,7 +114,9 @@ export function buildValidationArchive(
       ? resultFromReport(matchingReport, generatedAt)
       : missingResult(selection, generatedAt)
     record.validation = validation
-    if (validation.status === 'passed') verified.push(repositoryId)
+    if (validation.disposition === 'verified') verified.push(repositoryId)
+    else if (validation.disposition === 'auto_failed') autoFailed.push(repositoryId)
+    else if (validation.disposition === 'retryable') retryable.push(repositoryId)
     else manualReview.push(repositoryId)
   }
 
@@ -114,6 +127,8 @@ export function buildValidationArchive(
       records: archive.records.map((record) => ({ ...record })),
     }),
     verified: verified.sort((a, b) => a - b),
+    autoFailed: [...new Set(autoFailed)].sort((a, b) => a - b),
+    retryable: [...new Set(retryable)].sort((a, b) => a - b),
     manualReview: [...new Set(manualReview)].sort((a, b) => a - b),
   }
 }

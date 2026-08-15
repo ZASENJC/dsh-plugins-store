@@ -129,7 +129,7 @@ export const styles = String.raw`
 
 .dps-filter-bar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 140px 160px 140px auto;
+  grid-template-columns: minmax(220px, 1fr) 160px 140px auto;
   gap: 8px;
   align-items: center;
 }
@@ -311,6 +311,16 @@ export const styles = String.raw`
   background: color-mix(in srgb, #4f9f75 14%, transparent);
 }
 
+.dps-badge[data-kind='installed'] {
+  color: #6ba8d6;
+  background: color-mix(in srgb, #6ba8d6 14%, transparent);
+}
+
+.dps-badge[data-kind='update'] {
+  color: #d89450;
+  background: color-mix(in srgb, #d89450 14%, transparent);
+}
+
 .dps-badge[data-kind='validation'][data-status='verified'] {
   color: #5eb98a;
   background: color-mix(in srgb, #4f9f75 14%, transparent);
@@ -399,6 +409,10 @@ export const styles = String.raw`
   white-space: nowrap;
 }
 
+.dps-remove-button {
+  color: var(--dsw-alias-state-error-primary, #df6d6d);
+}
+
 .dps-empty,
 .dps-error,
 .dps-loading {
@@ -411,6 +425,20 @@ export const styles = String.raw`
 
 .dps-error {
   gap: 10px;
+}
+
+.dps-stale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, #d89450 35%, var(--dsw-alias-border-l1));
+  border-radius: 6px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .dps-retry,
@@ -449,6 +477,10 @@ body > :has(> .dps-risk-modal) {
 .dps-risk-title {
   display: flex;
   align-items: center;
+}
+
+.dps-remove-title {
+  color: var(--dsw-alias-state-error-primary, #df6d6d);
 }
 
 .dps-risk-header {

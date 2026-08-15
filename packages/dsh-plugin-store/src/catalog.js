@@ -1,9 +1,10 @@
+import { compareCatalogInstallation, isUpdateAvailable } from './installed-plugins.js'
+
 export const DEFAULT_CATALOG_URLS = Object.freeze([
   'https://dsh.aitreez.com/catalog.json',
 ])
 
 export const CATEGORY_LABELS = Object.freeze({
-  all: '全部分类',
   ui: '界面体验',
   development: '开发工具',
   data: '数据知识',
@@ -27,22 +28,6 @@ export const PROJECT_TYPE_LABELS = Object.freeze({
   infrastructure: '基础设施',
   channel: '渠道适配',
 })
-
-export const VALIDATION_STATUS_IDS = Object.freeze([
-  'unrecognized',
-  'check-pending',
-  'check-running',
-  'check-failed',
-  'sandbox-pending',
-  'sandbox-running',
-  'sandbox-failed',
-  'verified',
-  'security-review',
-  'expired',
-  'recorded',
-  'inconclusive',
-  'not-applicable',
-])
 
 const INSTALLABLE_TYPES = new Set(['plugin', 'skill', 'collection', 'channel'])
 const REPOSITORY_FULL_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})\/[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})$/
@@ -135,8 +120,11 @@ export function filterCatalogRepositories(repositories, filters) {
   const tokens = filters.query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
   const filtered = repositories.filter((repository) => {
     if (filters.category !== 'all' && repository.category !== filters.category) return false
+    if (filters.projectType && filters.projectType !== 'all'
+      && repository.projectType !== filters.projectType) return false
     if (filters.validation && filters.validation !== 'all'
       && repository.validation?.overall !== filters.validation) return false
+    if (filters.installedOnly && !repository.installed) return false
     const currentVerified = repository.validation
       ? repository.validation.overall === 'verified'
       : repository.verified
@@ -147,6 +135,9 @@ export function filterCatalogRepositories(repositories, filters) {
   })
 
   return [...filtered].sort((left, right) => {
+    if (Boolean(left.updateAvailable) !== Boolean(right.updateAvailable)) {
+      return Number(right.updateAvailable) - Number(left.updateAvailable)
+    }
     if (filters.sort === 'stars') {
       return right.stars - left.stars || left.fullName.localeCompare(right.fullName)
     }
@@ -161,11 +152,61 @@ export function filterCatalogRepositories(repositories, filters) {
   })
 }
 
+export function mergeInstalledPlugins(repositories, installed) {
+  return repositories.map((repository) => {
+    const installedPlugin = compareCatalogInstallation(repository, installed)
+    return {
+      ...repository,
+      installed: installedPlugin !== null,
+      updateAvailable: isUpdateAvailable(repository, installedPlugin),
+      installedPlugin,
+    }
+  })
+}
+
 export function formatCompactNumber(value) {
   return new Intl.NumberFormat('zh-CN', {
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format(value)
+}
+
+function facetIds(catalog, field, readRepositoryValue) {
+  const stats = catalog?.stats?.[field]
+  if (stats !== null && typeof stats === 'object' && !Array.isArray(stats)) {
+    const ids = Object.keys(stats).filter(Boolean)
+    if (ids.length > 0) return ids
+  }
+
+  const repositories = Array.isArray(catalog?.repositories) ? catalog.repositories : []
+  return [...new Set(repositories.map(readRepositoryValue).filter(Boolean))]
+}
+
+export function getCatalogFilterOptions(catalog) {
+  return {
+    categories: ['all', ...facetIds(catalog, 'categories', (repository) => repository.category)],
+    projectTypes: facetIds(catalog, 'projectTypes', (repository) => repository.projectType),
+    validationStatuses: facetIds(
+      catalog,
+      'validationStatuses',
+      (repository) => repository.validation?.overall,
+    ),
+  }
+}
+
+export function buildCatalogDetailUrl(catalogUrl, repositoryId) {
+  if (typeof catalogUrl !== 'string' || catalogUrl.length === 0 || repositoryId === null || repositoryId === undefined) {
+    return null
+  }
+  try {
+    const url = new URL(catalogUrl)
+    url.pathname = `/plugins/${encodeURIComponent(String(repositoryId))}`
+    url.search = ''
+    url.hash = ''
+    return url.toString()
+  } catch {
+    return null
+  }
 }
 
 function validateCatalog(value) {
@@ -209,7 +250,7 @@ export class CatalogStore {
       error: null,
     })
 
-    this.pending = this.fetchCatalog()
+    this.pending = this.fetchCatalog({ force })
       .then((catalog) => {
         this.publish({ status: 'ready', catalog, error: null })
       })
@@ -227,10 +268,12 @@ export class CatalogStore {
     return this.pending
   }
 
-  async fetchCatalog() {
-    const response = await this.fetcher(this.url, {
+  async fetchCatalog({ force = false } = {}) {
+    const options = {
       headers: { Accept: 'application/json' },
-    })
+    }
+    if (force) options.cache = 'no-store'
+    const response = await this.fetcher(this.url, options)
     if (!response.ok) throw new Error(`目录请求失败 (${response.status})`)
     return validateCatalog(await response.json())
   }

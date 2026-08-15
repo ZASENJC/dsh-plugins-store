@@ -209,6 +209,12 @@ jobs:
             "${previous_args[@]}" \
             "${force_args[@]}"
 
+      - name: Bundle the exact discovery snapshot used for classification
+        if: always()
+        run: |
+          mkdir -p validation-state
+          cp validation-input/discovery.json validation-state/discovery.json
+
       - name: Upload source classification state for every completed run
         if: always()
         uses: actions/upload-artifact@v6

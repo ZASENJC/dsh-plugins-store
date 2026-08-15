@@ -94,6 +94,7 @@ jobs:
           fi
 
           classification_found=false
+          classification_discovery_found=false
           if test -n "$CLASSIFICATION_RUN_ID"; then
             completed_run_ids="$CLASSIFICATION_RUN_ID"
           else
@@ -114,9 +115,12 @@ jobs:
             artifact_dir="/tmp/dsh-classification-state-$run_id"
             if gh run download "$run_id" --name plugin-classification-state --dir "$artifact_dir" 2>/dev/null \
               && test -f "$artifact_dir/source-classification.json" \
-              && test -f "$artifact_dir/validation-catalog.json"; then
+              && test -f "$artifact_dir/validation-catalog.json" \
+              && test -f "$artifact_dir/discovery.json"; then
               cp "$artifact_dir/source-classification.json" validation-input/source-classification.json
               cp "$artifact_dir/validation-catalog.json" validation-input/validation-catalog.json
+              cp "$artifact_dir/discovery.json" validation-input/discovery.json
+              classification_discovery_found=true
               classification_found=true
               break
             fi
@@ -125,6 +129,16 @@ jobs:
             echo 'No completed classified validation catalog is available; validation is deferred.' >&2
             exit 1
           fi
+          if test "$classification_discovery_found" != true; then
+            echo 'Classified validation catalog has no paired discovery snapshot; validation is deferred.' >&2
+            exit 1
+          fi
+
+      - name: Verify atomic validation input snapshots
+        run: >-
+          npm run --silent validate:input --
+          --discovery validation-input/discovery.json
+          --validation-catalog validation-input/validation-catalog.json
 
       - name: Upload immutable validation input
         uses: actions/upload-artifact@v6
@@ -176,6 +190,10 @@ jobs:
             --output validation-input/selection.json \
             --shard-count 20 \
             "${previous_args[@]}" > validation-input/selection-summary.json
+          npm run --silent validate:input -- \
+            --discovery validation-input/discovery.json \
+            --validation-catalog validation-input/validation-catalog.json \
+            --selection validation-input/selection.json
           node -e 'const fs=require("fs"); const summary=JSON.parse(fs.readFileSync("validation-input/selection-summary.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,"has_changes="+String(summary.repositoryCount>0)+"\nfirst_run="+String(summary.firstRun)+"\nshards="+JSON.stringify(summary.shards)+"\n")'
 
       - name: Upload classified validation selection
@@ -245,7 +263,9 @@ jobs:
           retention-days: 30
 
   validate:
-    needs: [select, baseline]
+    # Baseline is validator-health telemetry. It must not prevent per-plugin
+    # evidence from being collected and archived.
+    needs: [select]
     if: needs.select.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -258,6 +278,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DSH_VALIDATION_VERSION: 0.1.0-rc.6
       VALIDATOR_VERSION: 0.1.2
+      VALIDATION_CANDIDATE_CONCURRENCY: 2
     steps:
       - name: Checkout validation source
         uses: actions/checkout@v5

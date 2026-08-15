@@ -19,6 +19,17 @@ describe('DSH host command', () => {
       path: '/api/dsh-plugin-store/install',
       handler: expect.any(Function),
     }))
+    expect(registerRoute).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'exact',
+      path: '/api/dsh-plugin-store/plugins',
+      handler: expect.any(Function),
+    }))
+    expect(registerRoute).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'exact',
+      path: '/api/dsh-plugin-store/remove',
+      handler: expect.any(Function),
+    }))
+    expect(registerRoute).toHaveBeenCalledTimes(3)
 
     const definition = registerCommand.mock.calls[0][0]
     expect(definition).toMatchObject({

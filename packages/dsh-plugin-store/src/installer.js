@@ -48,14 +48,14 @@ function assertRepositoryId(repositoryId) {
   }
 }
 
-function sendJson(response, status, body) {
+export function sendJson(response, status, body) {
   response.statusCode = status
   response.setHeader('Content-Type', 'application/json; charset=utf-8')
   response.setHeader('Cache-Control', 'no-store')
   response.end(JSON.stringify(body))
 }
 
-function readJsonBody(request) {
+export function readJsonBody(request) {
   return new Promise((resolve, reject) => {
     let body = ''
     let exceeded = false
@@ -95,9 +95,17 @@ function isLocalHost(value) {
   }
 }
 
-function isAuthorizedRequest(request) {
-  if (!isLoopbackAddress(request.socket?.remoteAddress)) return false
-  if (!isLocalHost(request.headers.host)) return false
+function isLocalRequest(request) {
+  return isLoopbackAddress(request.socket?.remoteAddress)
+    && isLocalHost(request.headers.host)
+}
+
+export function isAuthorizedLocalRequest(request) {
+  return isLocalRequest(request)
+}
+
+export function isAuthorizedRequest(request) {
+  if (!isLocalRequest(request)) return false
 
   const origin = request.headers.origin
   if (typeof origin !== 'string' || origin.length === 0) return false

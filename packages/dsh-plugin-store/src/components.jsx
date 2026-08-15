@@ -7,6 +7,7 @@ import {
   IconCordisPluginOutline14,
   IconDownloadOutline16,
   IconRefreshOutline16,
+  IconTrashOutline16,
   IconWarningOutline16,
   Modal,
   writeClipboard,
@@ -14,11 +15,13 @@ import {
 import {
   CATEGORY_LABELS,
   PROJECT_TYPE_LABELS,
-  VALIDATION_STATUS_IDS,
+  buildCatalogDetailUrl,
   buildInstallCommand,
   buildInstallPlan,
   filterCatalogRepositories,
   formatCompactNumber,
+  getCatalogFilterOptions,
+  mergeInstalledPlugins,
 } from './catalog.js'
 import { sendInstallFailureToAgent } from './agent-analysis.js'
 
@@ -33,24 +36,28 @@ function buildExternalInstallTarget(request, repositories) {
   return byId !== undefined && buildInstallPlan(byId) !== null ? byId : null
 }
 
-function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
+function ProjectCard({ repository, detailUrl, copied, onCopy, onInstall, onRemove, t }) {
   const command = buildInstallCommand(repository)
   const plan = buildInstallPlan(repository)
-  const detailUrl = `https://dsh.aitreez.com/plugins/${repository.repositoryId}`
+  const installed = repository.installed === true
+  const updateAvailable = repository.updateAvailable === true
   const validationState = repository.validation?.overall
     ?? (repository.verified ? 'recorded' : 'check-pending')
+  const validationLabel = repository.validation?.label ?? t(`store.validation.${validationState}`)
   const validationReason = repository.validation?.reason
 
   return (
     <article className="dps-card">
-      <a
-        className="dps-card-link"
-        href={detailUrl}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={`${t('store.openDetails')}: ${repository.fullName}`}
-        title={t('store.openDetails')}
-      />
+      {detailUrl !== null && (
+        <a
+          className="dps-card-link"
+          href={detailUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`${t('store.openDetails')}: ${repository.fullName}`}
+          title={t('store.openDetails')}
+        />
+      )}
       <div className="dps-card-head">
         <div className="dps-card-title">
           <h3 title={repository.name}>{repository.name}</h3>
@@ -64,9 +71,14 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
       )}
       <div className="dps-badges">
         <span className="dps-badge" data-kind="validation" data-status={validationState}>
-          {t(`store.validation.${validationState}`)}
+          {validationLabel}
         </span>
-        <span className="dps-badge">{CATEGORY_LABELS[repository.category] ?? CATEGORY_LABELS.other}</span>
+        {installed && (
+          <span className="dps-badge" data-kind={updateAvailable ? 'update' : 'installed'}>
+            {updateAvailable ? t('store.updateAvailable') : t('store.installed')}
+          </span>
+        )}
+        <span className="dps-badge">{CATEGORY_LABELS[repository.category] ?? repository.category}</span>
         <span className="dps-badge">{PROJECT_TYPE_LABELS[repository.projectType] ?? repository.projectType}</span>
       </div>
       <div className="dps-card-foot">
@@ -74,7 +86,7 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
           <IconCordisPluginOutline14 size={14} />
           <code title={command ?? t('store.topicListed')}>{command ?? t('store.topicListed')}</code>
         </div>
-        {command !== null && (
+        {(command !== null || installed) && (
           <div className="dps-card-actions">
             {plan !== null && (
               <Button
@@ -82,14 +94,29 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
                 size="sm"
                 variant="outline"
                 type="button"
-                disabled={installed}
+                disabled={installed && !updateAvailable}
                 onClick={() => onInstall(repository)}
               >
-                {installed ? <IconCheckOutline16 size={14} /> : <IconDownloadOutline16 size={14} />}
-                <span>{installed ? t('store.installed') : t('store.install')}</span>
+                {updateAvailable
+                  ? <IconRefreshOutline16 size={14} />
+                  : installed
+                    ? <IconCheckOutline16 size={14} />
+                    : <IconDownloadOutline16 size={14} />}
+                <span>{updateAvailable ? t('store.update') : installed ? t('store.installed') : t('store.install')}</span>
               </Button>
             )}
-            <button
+            {installed && (
+              <button
+                className="dps-icon-button dps-remove-button"
+                type="button"
+                onClick={() => onRemove(repository)}
+                aria-label={t('store.remove')}
+                title={t('store.remove')}
+              >
+                <IconTrashOutline16 size={16} />
+              </button>
+            )}
+            {command !== null && <button
               className="dps-icon-button"
               type="button"
               onClick={() => onCopy(repository.repositoryId, command)}
@@ -97,7 +124,7 @@ function ProjectCard({ repository, copied, installed, onCopy, onInstall, t }) {
               title={copied ? t('store.copied') : t('store.copyInstall')}
             >
               {copied ? <IconCheckOutline16 size={16} /> : <IconCopyOutline16 size={16} />}
-            </button>
+            </button>}
           </div>
         )}
       </div>
@@ -120,6 +147,7 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
 
   const plan = target === null ? null : buildInstallPlan(target)
   const command = plan?.command ?? (target === null ? '' : buildInstallCommand(target))
+  const updating = target?.updateAvailable === true
   const finished = phase === 'success'
 
   const close = () => {
@@ -175,7 +203,7 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
     <Modal
       open={target !== null}
       onClose={close}
-      title={t('store.riskTitle')}
+      title={t(updating ? 'store.updateRiskTitle' : 'store.riskTitle')}
       closeLabel={t('store.cancel')}
       className="dps-risk-modal"
       headless
@@ -185,7 +213,7 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
           <header className="dps-risk-header">
             <div className="dps-risk-title">
               <IconWarningOutline16 size={18} />
-              <h2>{t('store.riskTitle')}</h2>
+              <h2>{t(updating ? 'store.updateRiskTitle' : 'store.riskTitle')}</h2>
             </div>
             <button
               className="dps-icon-button"
@@ -199,8 +227,8 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
             </button>
           </header>
           <div className="dps-risk-body">
-            <strong>{t('store.riskLead')}</strong>
-            <p>{t('store.riskDetail')}</p>
+            <strong>{t(updating ? 'store.updateRiskLead' : 'store.riskLead')}</strong>
+            <p>{t(updating ? 'store.updateRiskDetail' : 'store.riskDetail')}</p>
             <div className="dps-risk-repository">
               <span>{target.fullName}</span>
               <code>{command}</code>
@@ -216,8 +244,8 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
                 <span>{t('store.riskAcknowledge')}</span>
               </label>
             )}
-            {phase === 'installing' && <p className="dps-install-status" role="status">{t('store.installing')}</p>}
-            {phase === 'success' && <p className="dps-install-status" data-kind="success" role="status">{t('store.installSuccess')}</p>}
+            {phase === 'installing' && <p className="dps-install-status" role="status">{t(updating ? 'store.updating' : 'store.installing')}</p>}
+            {phase === 'success' && <p className="dps-install-status" data-kind="success" role="status">{t(updating ? 'store.updateSuccess' : 'store.installSuccess')}</p>}
             {phase === 'error' && (
               <p className="dps-install-status" data-kind="error" role="alert">
                 <strong>{t('store.installFailed')}</strong>
@@ -257,8 +285,93 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
                   disabled={!acknowledged || plan === null || phase === 'installing'}
                   onClick={install}
                 >
-                  {phase === 'installing' ? t('store.installing') : t('store.confirmInstall')}
+                  {phase === 'installing' ? t(updating ? 'store.updating' : 'store.installing') : t(updating ? 'store.confirmUpdate' : 'store.confirmInstall')}
                 </Button>
+              </>
+            )}
+          </footer>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function RemovePluginModal({ target, onClose, onRemoved, t }) {
+  const [phase, setPhase] = React.useState('idle')
+  const [message, setMessage] = React.useState('')
+  const finished = phase === 'success'
+
+  React.useEffect(() => {
+    setPhase('idle')
+    setMessage('')
+  }, [target?.repositoryId])
+
+  const close = () => {
+    if (phase !== 'removing') onClose()
+  }
+
+  const remove = async () => {
+    if (target === null || phase === 'removing' || target.installedPlugin?.name === undefined) return
+    setPhase('removing')
+    setMessage('')
+    try {
+      const response = await fetch('/api/dsh-plugin-store/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: target.installedPlugin.name }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok || body.ok !== true) {
+        throw new Error(body.message ?? `${t('store.removeFailed')} (${response.status})`)
+      }
+      setPhase('success')
+      setMessage(body.output ?? '')
+      onRemoved(target.installedPlugin.name)
+    } catch (error) {
+      setPhase('error')
+      setMessage(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  return (
+    <Modal
+      open={target !== null}
+      onClose={close}
+      title={t('store.removeTitle')}
+      closeLabel={t('store.cancel')}
+      className="dps-risk-modal"
+      headless
+    >
+      {target !== null && (
+        <div className="dps-risk-shell">
+          <header className="dps-risk-header">
+            <div className="dps-risk-title dps-remove-title">
+              <IconTrashOutline16 size={18} />
+              <h2>{t('store.removeTitle')}</h2>
+            </div>
+            <button className="dps-icon-button" type="button" onClick={close} disabled={phase === 'removing'} aria-label={t('store.cancel')} title={t('store.cancel')}>
+              <IconCloseOutline16 size={16} />
+            </button>
+          </header>
+          <div className="dps-risk-body">
+            <strong>{t('store.removeLead')}</strong>
+            <p>{t('store.removeDetail')}</p>
+            <div className="dps-risk-repository">
+              <span>{target.fullName}</span>
+              <code>{target.installedPlugin.name}</code>
+            </div>
+            {phase === 'removing' && <p className="dps-install-status" role="status">{t('store.removing')}</p>}
+            {phase === 'success' && <p className="dps-install-status" data-kind="success" role="status">{t('store.removeSuccess')}</p>}
+            {phase === 'error' && <p className="dps-install-status" data-kind="error" role="alert"><strong>{t('store.removeFailed')}</strong><span>{message}</span></p>}
+            {phase === 'success' && message && <pre className="dps-install-output">{message}</pre>}
+          </div>
+          <footer className="dps-risk-actions">
+            {finished ? (
+              <Button size="sm" variant="outline" type="button" onClick={close}>{t('store.done')}</Button>
+            ) : (
+              <>
+                <Button size="sm" variant="outline" type="button" disabled={phase === 'removing'} onClick={close}>{t('store.cancel')}</Button>
+                <Button size="sm" variant="primary" type="button" disabled={phase === 'removing'} onClick={remove}>{phase === 'removing' ? t('store.removing') : t('store.confirmRemove')}</Button>
               </>
             )}
           </footer>
@@ -283,13 +396,14 @@ export function StoreView({
   )
   const [query, setQuery] = React.useState('')
   const [category, setCategory] = React.useState('all')
-  const [validation, setValidation] = React.useState('all')
   const [sort, setSort] = React.useState('recommended')
   const [verifiedOnly, setVerifiedOnly] = React.useState(false)
+  const [installedOnly, setInstalledOnly] = React.useState(false)
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE)
   const [copiedId, setCopiedId] = React.useState(null)
   const [installTarget, setInstallTarget] = React.useState(null)
-  const [installedIds, setInstalledIds] = React.useState(() => new Set())
+  const [installedState, setInstalledState] = React.useState({ status: 'loading', plugins: [] })
+  const [removeTarget, setRemoveTarget] = React.useState(null)
 
   React.useEffect(() => {
     catalogStore.load()
@@ -297,9 +411,41 @@ export function StoreView({
 
   React.useEffect(() => {
     setVisibleCount(PAGE_SIZE)
-  }, [query, category, validation, sort, verifiedOnly])
+  }, [query, category, sort, verifiedOnly, installedOnly])
 
-  const repositories = snapshot.catalog?.repositories ?? []
+  const refreshInstalled = async () => {
+    setInstalledState((current) => ({ ...current, status: 'loading' }))
+    try {
+      const response = await fetch('/api/dsh-plugin-store/plugins', {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok || body.ok !== true || !Array.isArray(body.plugins)) {
+        throw new Error(body.message ?? `${t('store.installedLoadFailed')} (${response.status})`)
+      }
+      setInstalledState({ status: 'ready', plugins: body.plugins })
+    } catch (error) {
+      setInstalledState({ status: 'error', plugins: [] })
+    }
+  }
+
+  React.useEffect(() => {
+    void refreshInstalled()
+  }, [])
+
+  const repositories = React.useMemo(
+    () => mergeInstalledPlugins(snapshot.catalog?.repositories ?? [], installedState.plugins),
+    [snapshot.catalog, installedState.plugins],
+  )
+  const filterOptions = React.useMemo(
+    () => getCatalogFilterOptions(snapshot.catalog),
+    [snapshot.catalog],
+  )
+
+  React.useEffect(() => {
+    if (!filterOptions.categories.includes(category)) setCategory('all')
+  }, [category, filterOptions])
   React.useEffect(() => {
     const target = buildExternalInstallTarget(requestedInstallTarget, repositories)
     if (target !== null) setInstallTarget(target)
@@ -308,10 +454,10 @@ export function StoreView({
   const filtered = React.useMemo(() => filterCatalogRepositories(repositories, {
     query,
     category,
-    validation,
     sort,
     verifiedOnly,
-  }), [repositories, query, category, validation, sort, verifiedOnly])
+    installedOnly,
+  }), [repositories, query, category, sort, verifiedOnly, installedOnly])
   const visible = filtered.slice(0, visibleCount)
   const generatedAt = snapshot.catalog?.generatedAt
     ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -326,7 +472,10 @@ export function StoreView({
     )), 1600)
   }
 
-  const refresh = () => catalogStore.load({ force: true })
+  const refresh = () => {
+    void refreshInstalled()
+    return catalogStore.load({ force: true })
+  }
   const closeInstallTarget = () => {
     setInstallTarget(null)
     onInstallRequestConsumed?.()
@@ -339,6 +488,7 @@ export function StoreView({
         <div className="dps-store-meta">
           <p>{t('store.results', { visible: visible.length, total: filtered.length })}</p>
           {generatedAt && <p>{t('store.updated', { date: generatedAt })}</p>}
+          {installedState.status === 'error' && <p role="status">{t('store.installedLoadFailed')}</p>}
           <p className="dps-disclaimer">{t('store.disclaimer')}</p>
         </div>
         <button
@@ -365,24 +515,14 @@ export function StoreView({
         </label>
         <label className="dps-filter">
           <select
-            value={validation}
-            onChange={(event) => setValidation(event.target.value)}
-            aria-label={t('store.validation')}
-          >
-            <option value="all">{t('store.validation.all')}</option>
-            {VALIDATION_STATUS_IDS.map((value) => (
-              <option key={value} value={value}>{t(`store.validation.${value}`)}</option>
-            ))}
-          </select>
-        </label>
-        <label className="dps-filter">
-          <select
             value={category}
             onChange={(event) => setCategory(event.target.value)}
             aria-label={t('store.category')}
           >
-            {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
+            {filterOptions.categories.map((value) => (
+              <option key={value} value={value}>
+                {value === 'all' ? t('store.categoryAll') : CATEGORY_LABELS[value] ?? value}
+              </option>
             ))}
           </select>
         </label>
@@ -406,6 +546,14 @@ export function StoreView({
           />
           <span>{t('store.verifiedOnly')}</span>
         </label>
+        <label className="dps-check">
+          <input
+            type="checkbox"
+            checked={installedOnly}
+            onChange={(event) => setInstalledOnly(event.target.checked)}
+          />
+          <span>{t('store.installedOnly')}</span>
+        </label>
       </div>
 
       <div className="dps-catalog-scroll">
@@ -421,6 +569,12 @@ export function StoreView({
             <button className="dps-retry" type="button" onClick={refresh}>{t('store.retry')}</button>
           </div>
         )}
+        {snapshot.status === 'error' && snapshot.catalog !== null && (
+          <div className="dps-stale" role="status">
+            <span>{t('store.refreshFailed')}: {snapshot.error}</span>
+            <button className="dps-retry" type="button" onClick={refresh}>{t('store.retry')}</button>
+          </div>
+        )}
         {snapshot.catalog !== null && filtered.length === 0 && (
           <div className="dps-empty">{t('store.empty')}</div>
         )}
@@ -431,10 +585,11 @@ export function StoreView({
                 <ProjectCard
                   key={repository.repositoryId}
                   repository={repository}
+                  detailUrl={buildCatalogDetailUrl(catalogStore.url, repository.repositoryId)}
                   copied={copiedId === repository.repositoryId}
-                  installed={installedIds.has(repository.repositoryId)}
                   onCopy={copyInstall}
                   onInstall={setInstallTarget}
+                  onRemove={(target) => setRemoveTarget(target)}
                   t={t}
                 />
               ))}
@@ -455,9 +610,15 @@ export function StoreView({
       <InstallRiskModal
         target={installTarget}
         onClose={closeInstallTarget}
-        onInstalled={(repositoryId) => setInstalledIds((current) => new Set(current).add(repositoryId))}
+        onInstalled={() => { void refreshInstalled() }}
         sessions={sessions}
         workspaces={workspaces}
+        t={t}
+      />
+      <RemovePluginModal
+        target={removeTarget}
+        onClose={() => setRemoveTarget(null)}
+        onRemoved={() => { void refreshInstalled() }}
         t={t}
       />
     </>

@@ -182,6 +182,71 @@ describe('source classification archive', () => {
     })
   })
 
+  it('migrates legacy manual-review validation outcomes by attribution and error code', () => {
+    const base = {
+      repositoryId: 1,
+      fullName: 'owner/plugin',
+      sourcePushedAt: discovery.repositories[0].pushedAt,
+      sourceSha: pluginClassification.sourceSha,
+      disposition: 'include' as const,
+      validation: {
+        status: 'failed' as const,
+        disposition: 'manual_review' as const,
+        stage: 'sandbox' as const,
+        sourceSha: pluginClassification.sourceSha,
+        checkedAt: '2026-08-16T04:00:00Z',
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        validatorVersion: '0.1.2',
+        executionType: 'host-tool',
+        errorCode: 'PLUGIN_LOAD_FAILED',
+        attribution: 'plugin' as const,
+      },
+    }
+    const archive = parseSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T04:00:00Z',
+      mode: 'full',
+      classifierVersion: '0.1.0',
+      records: [
+        base,
+        {
+          ...base,
+          repositoryId: 2,
+          fullName: 'owner/retry',
+          sourceSha: 'b'.repeat(40),
+          validation: {
+            ...base.validation,
+            status: 'inconclusive',
+            sourceSha: 'b'.repeat(40),
+            disposition: 'manual_review',
+            errorCode: 'VALIDATION_NOT_OBSERVED',
+            attribution: 'infrastructure',
+          },
+        },
+        {
+          ...base,
+          repositoryId: 3,
+          fullName: 'owner/security',
+          sourceSha: 'c'.repeat(40),
+          validation: {
+            ...base.validation,
+            sourceSha: 'c'.repeat(40),
+            disposition: 'manual_review',
+            errorCode: 'SECURITY_REVIEW_REQUIRED',
+            attribution: 'policy',
+          },
+        },
+      ],
+    })
+
+    expect(archive.records.map((record) => record.validation?.disposition)).toEqual([
+      'auto_failed',
+      'retryable',
+      'manual_review',
+    ])
+  })
+
   it('rejects a classification record whose classifier version differs from the archive', () => {
     expect(() => parseSourceClassificationArchive({
       schemaVersion: 1,

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 
 import { parseValidationReport, type ValidationReport } from '../../src/lib/validation-report'
+import { isRetryableSourceValidationCode } from '../../src/lib/source-classification-archive'
 import type { ValidationRecord } from '../../src/lib/validation'
 
 // Unknown projects still need a structure-only pass so source evidence can refine
@@ -14,6 +15,10 @@ const TERMINAL_STATUSES = new Set([
   'verified',
 ])
 
+export const MAX_AUTOMATIC_RETRIES = 5
+export const RETRY_BACKOFF_BASE_MS = 15 * 60 * 1000
+export const RETRY_BACKOFF_MAX_MS = 24 * 60 * 60 * 1000
+
 export interface ValidationStateTarget {
   dshVersion: string
   platform: string
@@ -26,6 +31,9 @@ export interface ValidationStateEntry {
   pushedAt: string
   lastDurationMs?: number
   executionType?: string
+  retryCount?: number
+  nextRetryAt?: string
+  retryExhausted?: boolean
 }
 
 export interface ValidationState {
@@ -87,7 +95,7 @@ function parseTarget(value: unknown): ValidationStateTarget {
   }
 }
 
-function parseCatalog(value: unknown): ValidationCatalog {
+export function parseValidationCatalog(value: unknown): ValidationCatalog {
   if (!isRecord(value)
     || value.schemaVersion !== 1
     || !isDate(value.generatedAt)
@@ -127,11 +135,39 @@ function parseEntries(value: unknown): ValidationStateEntry[] {
       && (!Number.isSafeInteger(raw.lastDurationMs) || Number(raw.lastDurationMs) < 0)) {
       throw new Error('Validation state duration is invalid')
     }
+    if (raw.retryCount !== undefined
+      && (!Number.isSafeInteger(raw.retryCount) || Number(raw.retryCount) < 1
+        || Number(raw.retryCount) > MAX_AUTOMATIC_RETRIES)) {
+      throw new Error('Validation state retry count is invalid')
+    }
+    if (raw.nextRetryAt !== undefined && !isDate(raw.nextRetryAt)) {
+      throw new Error('Validation state next retry time is invalid')
+    }
+    if (raw.retryExhausted !== undefined && typeof raw.retryExhausted !== 'boolean') {
+      throw new Error('Validation state retry exhaustion is invalid')
+    }
+    if (raw.retryCount === undefined
+      && (raw.nextRetryAt !== undefined || raw.retryExhausted === true)) {
+      throw new Error('Validation state retry metadata is incomplete')
+    }
+    if (raw.retryCount !== undefined
+      && raw.retryExhausted === true
+      && Number(raw.retryCount) < MAX_AUTOMATIC_RETRIES) {
+      throw new Error('Validation state retry exhaustion is premature')
+    }
+    if (raw.retryCount !== undefined
+      && Number(raw.retryCount) < MAX_AUTOMATIC_RETRIES
+      && raw.nextRetryAt === undefined) {
+      throw new Error('Validation state next retry time is missing')
+    }
     return {
       repositoryId,
       pushedAt: raw.pushedAt,
       ...(raw.lastDurationMs === undefined ? {} : { lastDurationMs: Number(raw.lastDurationMs) }),
       ...(typeof raw.executionType === 'string' && raw.executionType.length > 0 ? { executionType: raw.executionType } : {}),
+      ...(raw.retryCount === undefined ? {} : { retryCount: Number(raw.retryCount) }),
+      ...(typeof raw.nextRetryAt === 'string' ? { nextRetryAt: raw.nextRetryAt } : {}),
+      ...(raw.retryExhausted === true ? { retryExhausted: true } : {}),
     }
   }).sort((a, b) => a.repositoryId - b.repositoryId)
 }
@@ -207,6 +243,63 @@ function completedRecord(record: ValidationRecord): boolean {
   )
 }
 
+function reportFailureCode(report: ValidationReport): string | undefined {
+  return report.failure?.code ?? report.events.at(-1)?.code
+}
+
+export function isRetryableValidationReport(report: ValidationReport): boolean {
+  return ['inconclusive', 'structure_failed'].includes(report.currentStatus)
+    && (report.failure?.attribution === 'infrastructure'
+      || isRetryableSourceValidationCode(reportFailureCode(report)))
+}
+
+function isRetryableValidationRecord(record: ValidationRecord): boolean {
+  const reason = record.sandbox.reason ?? record.structure.reason
+  return (record.sandbox.status === 'inconclusive' || record.structure.status === 'inconclusive')
+    && isRetryableSourceValidationCode(reason)
+}
+
+function retryDelayMs(retryCount: number): number {
+  return Math.min(
+    RETRY_BACKOFF_MAX_MS,
+    RETRY_BACKOFF_BASE_MS * (2 ** Math.max(0, retryCount - 1)),
+  )
+}
+
+function retryEntry(
+  repositoryId: number,
+  pushedAt: string,
+  now: string,
+  previous: ValidationStateEntry | undefined,
+  report?: ValidationReport | null,
+): ValidationStateEntry {
+  const retryCount = Math.min(
+    MAX_AUTOMATIC_RETRIES,
+    previous?.pushedAt === pushedAt ? (previous.retryCount ?? 0) + 1 : 1,
+  )
+  const durationMs = report?.completedAt === null
+    ? undefined
+    : report === undefined || report === null
+      ? undefined
+      : Math.max(0, Date.parse(report.completedAt ?? now) - Date.parse(report.startedAt))
+  const executionType = report?.executionType
+  return {
+    repositoryId,
+    pushedAt,
+    ...(durationMs !== undefined && durationMs > 0 ? { lastDurationMs: durationMs } : {}),
+    ...(executionType ? { executionType } : {}),
+    retryCount,
+    ...(retryCount >= MAX_AUTOMATIC_RETRIES
+      ? { retryExhausted: true }
+      : { nextRetryAt: new Date(Date.parse(now) + retryDelayMs(retryCount)).toISOString() }),
+  }
+}
+
+function retryIsDue(entry: ValidationStateEntry, now: string): boolean {
+  if (entry.retryCount === undefined || entry.retryExhausted === true) return false
+  return entry.nextRetryAt === undefined || Date.parse(entry.nextRetryAt) <= Date.parse(now)
+}
+
 export function reconcileValidationState(
   rawCatalog: unknown,
   rawPrevious: ValidationState | null,
@@ -214,7 +307,7 @@ export function reconcileValidationState(
   target: ValidationStateTarget,
   now: string,
 ): ValidationState | null {
-  const catalog = parseCatalog(rawCatalog)
+  const catalog = parseValidationCatalog(rawCatalog)
   const parsedTarget = parseTarget(target)
   const previous = rawPrevious === null ? null : parseValidationState(rawPrevious)
   if (previous === null || !sameTarget(previous.target, parsedTarget)) return previous
@@ -229,6 +322,7 @@ export function reconcileValidationState(
     const record = records.get(repository.repositoryId)
     if (!record
       || !completedRecord(record)
+      || isRetryableValidationRecord(record)
       || record.sourcePushedAt !== repository.pushedAt
       || record.dshVersion !== parsedTarget.dshVersion
       || record.platform !== parsedTarget.platform
@@ -257,15 +351,20 @@ export function selectValidationDelta(
   shardCount: number,
   now: string,
 ): ValidationSelection {
-  const catalog = parseCatalog(rawCatalog)
+  const catalog = parseValidationCatalog(rawCatalog)
   if (!Number.isSafeInteger(shardCount) || shardCount < 1) throw new Error('Validation shard count is invalid')
   if (!isDate(now)) throw new Error('Validation selection time is invalid')
   const previous = rawPrevious === null ? null : parseValidationState(rawPrevious)
   const full = previous === null || !sameTarget(previous.target, parseTarget(target))
-  const previousById = new Map(previous?.entries.map((entry) => [entry.repositoryId, entry.pushedAt]) ?? [])
+  const previousById = new Map(previous?.entries.map((entry) => [entry.repositoryId, entry]) ?? [])
   const repositoryIds = catalog.repositories
     .filter(({ projectType }) => ELIGIBLE_PROJECT_TYPES.has(projectType))
-    .filter(({ repositoryId, pushedAt }) => full || previousById.get(repositoryId) !== pushedAt)
+    .filter(({ repositoryId, pushedAt }) => {
+      if (full) return true
+      const previousEntry = previousById.get(repositoryId)
+      if (previousEntry?.pushedAt !== pushedAt) return true
+      return previousEntry !== undefined && retryIsDue(previousEntry, now)
+    })
     .map(({ repositoryId }) => repositoryId)
     .sort((left, right) => left - right)
   const selected = new Set(repositoryIds)
@@ -359,7 +458,7 @@ export function buildValidationState(
   rawReports: ValidationReport[],
   now: string,
 ): ValidationState {
-  const catalog = parseCatalog(rawCatalog)
+  const catalog = parseValidationCatalog(rawCatalog)
   const previous = rawPrevious === null ? null : parseValidationState(rawPrevious)
   const selection = parseValidationSelection(rawSelection)
   if (!isDate(now)) throw new Error('Validation state time is invalid')
@@ -377,7 +476,18 @@ export function buildValidationState(
     const repository = eligible.get(repositoryId)
     if (!repository) throw new Error(`Validation selection repository ${repositoryId} is not eligible`)
     const report = terminalReport(rawReports, repositoryId, selection.target)
-    if (report && report.repository.sourcePushedAt === repository.pushedAt) {
+    const previousEntry = previous?.entries.find(({ repositoryId: id }) => id === repositoryId)
+    if (!report || report.repository.sourcePushedAt !== repository.pushedAt || isRetryableValidationReport(report)) {
+      entries.set(repositoryId, retryEntry(
+        repositoryId,
+        repository.pushedAt,
+        now,
+        selection.mode === 'full' ? undefined : previousEntry,
+        report,
+      ))
+      continue
+    }
+    if (report.repository.sourcePushedAt === repository.pushedAt) {
       const durationMs = report.completedAt === null
         ? undefined
         : Math.max(0, Date.parse(report.completedAt) - Date.parse(report.startedAt))

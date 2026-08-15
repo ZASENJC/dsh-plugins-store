@@ -15,7 +15,48 @@ export const SOURCE_CLASSIFICATION_ARCHIVE_SCHEMA_VERSION = 1 as const
 export type SourceClassificationDisposition = 'include' | 'exclude' | 'inconclusive'
 
 export type SourceValidationStatus = 'passed' | 'failed' | 'inconclusive'
-export type SourceValidationDisposition = 'verified' | 'manual_review'
+export type SourceValidationDisposition = 'verified' | 'auto_failed' | 'retryable' | 'manual_review'
+
+// These outcomes can be retried without asking a reviewer to inspect plugin
+// source. Unsupported execution contracts remain visible, but do not become
+// permanent manual-review records while a validator is being added.
+export const RETRYABLE_SOURCE_VALIDATION_CODES = new Set([
+  'VALIDATION_NOT_OBSERVED',
+  'CANDIDATE_INFRASTRUCTURE_FAILED',
+  'SANDBOX_TIMEOUT',
+  'SANDBOX_INFRASTRUCTURE_FAILED',
+  'SCANNER_UNAVAILABLE',
+  'SNAPSHOT_LOAD_FAILED',
+  'EXTERNAL_CREDENTIALS_REQUIRED',
+  'WEB_SMOKE_CONTRACT_REQUIRED',
+  'CHANNEL_MOCK_REQUIRED',
+  'CHANNEL_MOCK_INVALID',
+  'COLLECTION_MANIFEST_REQUIRED',
+  'SKILL_VALIDATOR_REQUIRED',
+  'PLATFORM_RUNNER_REQUIRED',
+  'VALIDATOR_CONTRACT_REQUIRED',
+])
+
+export function isRetryableSourceValidationCode(code: string | undefined): boolean {
+  return code !== undefined && RETRYABLE_SOURCE_VALIDATION_CODES.has(code)
+}
+
+export function resolveSourceValidationDisposition({
+  status,
+  attribution,
+  errorCode,
+}: {
+  status: SourceValidationStatus
+  attribution?: SourceValidationResult['attribution']
+  errorCode?: string
+}): SourceValidationDisposition {
+  if (status === 'passed') return 'verified'
+  if (errorCode === 'SECURITY_REVIEW_REQUIRED' || attribution === 'policy') return 'manual_review'
+  if (status === 'inconclusive'
+    && (attribution === 'infrastructure' || isRetryableSourceValidationCode(errorCode))) return 'retryable'
+  if (status === 'failed' || attribution === 'plugin' || attribution === 'compatibility') return 'auto_failed'
+  return 'manual_review'
+}
 
 export interface SourceValidationResult {
   status: SourceValidationStatus
@@ -113,7 +154,7 @@ function numberValue(value: unknown, fallback = 0): number {
 function parseValidationResult(value: unknown): SourceValidationResult {
   if (!isRecord(value)
     || !['passed', 'failed', 'inconclusive'].includes(value.status as string)
-    || !['verified', 'manual_review'].includes(value.disposition as string)
+    || !['verified', 'auto_failed', 'retryable', 'manual_review'].includes(value.disposition as string)
     || !['structure', 'sandbox'].includes(value.stage as string)
     || (value.sourceSha !== null && (typeof value.sourceSha !== 'string' || !/^[a-f0-9]{40}$/i.test(value.sourceSha)))
     || !isDate(value.checkedAt)
@@ -131,7 +172,7 @@ function parseValidationResult(value: unknown): SourceValidationResult {
     && !['plugin', 'compatibility', 'infrastructure', 'policy', 'inconclusive'].includes(value.attribution as string)) {
     throw new Error('Source validation attribution is invalid')
   }
-  return {
+  const result: SourceValidationResult = {
     status: value.status as SourceValidationStatus,
     disposition: value.disposition as SourceValidationDisposition,
     stage: value.stage as SourceValidationResult['stage'],
@@ -144,6 +185,13 @@ function parseValidationResult(value: unknown): SourceValidationResult {
     ...(value.durationMs === undefined ? {} : { durationMs: Number(value.durationMs) }),
     ...(typeof value.errorCode === 'string' ? { errorCode: value.errorCode } : {}),
     ...(value.attribution === undefined ? {} : { attribution: value.attribution as SourceValidationResult['attribution'] }),
+  }
+  // Archives written before disposition classification was introduced used
+  // manual_review for every non-passed result. Reclassify those records while
+  // preserving their original evidence and SHA binding.
+  return {
+    ...result,
+    disposition: resolveSourceValidationDisposition(result),
   }
 }
 
@@ -230,7 +278,11 @@ function parseArchiveRecord(value: unknown): SourceClassificationArchiveRecord {
   if (validation?.sourceSha !== undefined && validation.sourceSha !== null && validation.sourceSha !== sourceSha) {
     throw new Error('Source validation SHA binding is invalid')
   }
-  if (validation && ((validation.status === 'passed') !== (validation.disposition === 'verified'))) {
+  if (validation && (
+    (validation.status === 'passed' && validation.disposition !== 'verified')
+    || (validation.status === 'failed' && !['auto_failed', 'manual_review'].includes(validation.disposition))
+    || (validation.status === 'inconclusive' && !['auto_failed', 'retryable', 'manual_review'].includes(validation.disposition))
+  )) {
     throw new Error('Source validation disposition is invalid')
   }
   return {

@@ -65,12 +65,17 @@ export async function runShadowBatch({
   outputDir,
   target,
   snapshotLoader,
+  snapshotAttempts = 1,
 }: {
   repositories: ShadowCatalogRepository[]
   outputDir: string
   target: StructureCheckTarget
   snapshotLoader: (repository: ShadowCatalogRepository) => Promise<RepositoryStructureSnapshot>
+  snapshotAttempts?: number
 }): Promise<ShadowRunSummary> {
+  if (!Number.isSafeInteger(snapshotAttempts) || snapshotAttempts < 1) {
+    throw new Error('Snapshot attempts must be a positive integer')
+  }
   const summary: ShadowRunSummary = {
     mode: 'shadow',
     discovered: repositories.length,
@@ -82,10 +87,19 @@ export async function runShadowBatch({
   }
 
   for (const repository of repositories) {
-    let snapshot: RepositoryStructureSnapshot
-    try {
-      snapshot = await snapshotLoader(repository)
-    } catch {
+    let snapshot: RepositoryStructureSnapshot | undefined
+    let loaded = false
+    for (let attempt = 1; attempt <= snapshotAttempts; attempt += 1) {
+      try {
+        snapshot = await snapshotLoader(repository)
+        loaded = true
+        break
+      } catch {
+        // Transient GitHub, download, and scanner errors are retried before the
+        // repository is left in the archive retry queue.
+      }
+    }
+    if (!loaded || snapshot === undefined) {
       summary.loadFailures.push({
         repositoryId: repository.repositoryId,
         code: 'SNAPSHOT_LOAD_FAILED',

@@ -78,8 +78,13 @@ describe('dynamic validation candidate runner', () => {
       validator: 'linux-headless',
       smokeMode: 'loader',
     })
+    expect(planCandidate(structureReport(5, 'skill'))).toMatchObject({
+      disposition: 'queue',
+      validator: 'linux-headless',
+      smokeMode: 'loader',
+    })
 
-    const credentialBound = structureReport(5, 'host-tool')
+    const credentialBound = structureReport(6, 'host-tool')
     credentialBound.structureChecks.push({
       code: 'EXTERNAL_CREDENTIALS_REQUIRED',
       status: 'warning',
@@ -101,7 +106,7 @@ describe('dynamic validation candidate runner', () => {
     expect(needsLinuxValidatorImage([
       structureReport(5, 'skill'),
       structureReport(6, 'collection'),
-    ])).toBe(false)
+    ])).toBe(true)
   })
 
   it('executes one candidate at a time and continues after an infrastructure failure', async () => {
@@ -140,5 +145,27 @@ describe('dynamic validation candidate runner', () => {
     })
     expect(result.reports).toHaveLength(2)
     expect(result.reports.map(({ repository }) => repository.id)).toEqual([1, 2])
+  })
+
+  it('supports bounded parallel candidate execution without changing result order', async () => {
+    let active = 0
+    let maxActive = 0
+    const result = await runCandidateBatch([
+      structureReport(7, 'host-tool'),
+      structureReport(8, 'host-tool'),
+      structureReport(9, 'host-tool'),
+    ], {
+      concurrency: 2,
+      executeQueued: async (report) => {
+        active += 1
+        maxActive = Math.max(maxActive, active)
+        await new Promise((resolve) => setTimeout(resolve, 1))
+        active -= 1
+        return verified(report)
+      },
+    })
+
+    expect(maxActive).toBe(2)
+    expect(result.reports.map(({ repository }) => repository.id)).toEqual([7, 8, 9])
   })
 })

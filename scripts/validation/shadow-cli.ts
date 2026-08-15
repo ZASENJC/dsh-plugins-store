@@ -148,6 +148,7 @@ export async function runShadowCli(args = process.argv.slice(2)): Promise<void> 
   const summary = await runShadowBatch({
     repositories,
     outputDir: options.outputDir,
+    snapshotAttempts: 3,
     target: {
       now,
       dshVersion: process.env.DSH_VALIDATION_VERSION ?? '0.1.0-rc.6',

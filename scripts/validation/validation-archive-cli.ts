@@ -72,6 +72,26 @@ export async function runValidationArchiveCli(args = process.argv.slice(2)): Pro
         const record = byId.get(repositoryId)
         return { repositoryId, fullName: record?.fullName ?? null, sourceSha: record?.sourceSha ?? null }
       }),
+      autoFailed: result.autoFailed.map((repositoryId) => {
+        const record = byId.get(repositoryId)
+        const validation = record?.validation
+        return {
+          repositoryId,
+          fullName: record?.fullName ?? null,
+          sourceSha: record?.sourceSha ?? null,
+          errorCode: validation?.errorCode ?? 'VALIDATION_FAILED',
+        }
+      }),
+      retryable: result.retryable.map((repositoryId) => {
+        const record = byId.get(repositoryId)
+        const validation = record?.validation
+        return {
+          repositoryId,
+          fullName: record?.fullName ?? null,
+          sourceSha: record?.sourceSha ?? null,
+          errorCode: validation?.errorCode ?? 'VALIDATION_NOT_OBSERVED',
+        }
+      }),
       manualReview: result.manualReview.map((repositoryId) => {
         const record = byId.get(repositoryId)
         const validation = record?.validation
@@ -86,6 +106,8 @@ export async function runValidationArchiveCli(args = process.argv.slice(2)): Pro
   }
   process.stdout.write(`${JSON.stringify({
     verified: result.verified,
+    autoFailed: result.autoFailed,
+    retryable: result.retryable,
     manualReview: result.manualReview,
     reportsObserved: reports.length,
   })}\n`)

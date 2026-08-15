@@ -50,7 +50,8 @@ export function planCandidate(rawReport: ValidationReport): CandidatePlan {
   if (report.executionType === 'host-tool'
     || report.executionType === 'command'
     || report.executionType === 'web'
-    || report.executionType === 'channel-mcp') {
+    || report.executionType === 'channel-mcp'
+    || report.executionType === 'skill') {
     return { disposition: 'queue', validator: 'linux-headless', smokeMode: 'loader' }
   }
   if (route.disposition === 'inconclusive') {
@@ -105,34 +106,47 @@ export async function runCandidateBatch(
     executeQueued,
     onReport = async () => {},
     now = () => new Date().toISOString(),
+    concurrency = 1,
   }: {
     executeQueued: (report: ValidationReport, plan: QueuedCandidatePlan) => Promise<ValidationReport>
     onReport?: (report: ValidationReport) => Promise<void>
     now?: () => string
+    concurrency?: number
   },
 ): Promise<CandidateBatchResult> {
-  const reports: ValidationReport[] = []
-  for (const rawReport of rawReports) {
-    const report = parseValidationReport(rawReport)
-    const plan = planCandidate(report)
-    let result = report
-    if (plan.disposition === 'queue') {
-      try {
-        result = parseValidationReport(await executeQueued(report, plan))
-      } catch {
-        result = markInconclusive(report, 'CANDIDATE_INFRASTRUCTURE_FAILED', 'infrastructure', now)
+  const reports = new Array<ValidationReport>(rawReports.length)
+  const requestedConcurrency = concurrency ?? 1
+  if (!Number.isSafeInteger(requestedConcurrency) || requestedConcurrency < 1) {
+    throw new Error('Candidate concurrency must be a positive integer')
+  }
+  let nextIndex = 0
+  async function runWorker(): Promise<void> {
+    while (true) {
+      const index = nextIndex
+      nextIndex += 1
+      if (index >= rawReports.length) return
+      const report = parseValidationReport(rawReports[index])
+      const plan = planCandidate(report)
+      let result = report
+      if (plan.disposition === 'queue') {
+        try {
+          result = parseValidationReport(await executeQueued(report, plan))
+        } catch {
+          result = markInconclusive(report, 'CANDIDATE_INFRASTRUCTURE_FAILED', 'infrastructure', now)
+        }
+      } else if (plan.disposition === 'inconclusive') {
+        result = markInconclusive(report, plan.code, 'inconclusive', now)
       }
-    } else if (plan.disposition === 'inconclusive') {
-      result = markInconclusive(report, plan.code, 'inconclusive', now)
-    }
-    reports.push(result)
-    try {
-      await onReport(result)
-    } catch {
-      // A report persistence failure is isolated to this repository; the shard
-      // continues so the archive can mark the missing observation for retry.
+      reports[index] = result
+      try {
+        await onReport(result)
+      } catch {
+        // A report persistence failure is isolated to this repository; the shard
+        // continues so the archive can mark the missing observation for retry.
+      }
     }
   }
+  await Promise.all(Array.from({ length: Math.min(requestedConcurrency, rawReports.length) }, () => runWorker()))
 
   return {
     attempted: reports.length,

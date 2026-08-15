@@ -5,8 +5,10 @@ import {
   DEFAULT_CATALOG_URLS,
   buildInstallCommand,
   buildInstallPlan,
+  buildCatalogDetailUrl,
   filterCatalogRepositories,
   formatCompactNumber,
+  getCatalogFilterOptions,
 } from '../src/catalog.js'
 
 const repositories = [
@@ -75,6 +77,29 @@ describe('plugin catalog filtering', () => {
     expect(repositories.map(({ repositoryId }) => repositoryId)).toEqual([1, 2, 3])
   })
 
+  it('keeps updateable installed rows above ordinary rows and supports installed-only filtering', () => {
+    const result = filterCatalogRepositories([
+      { ...repositories[1], installed: false, updateAvailable: false },
+      { ...repositories[0], installed: true, updateAvailable: true },
+      { ...repositories[2], installed: true, updateAvailable: false },
+    ], {
+      query: '',
+      category: 'all',
+      installedOnly: false,
+      verifiedOnly: false,
+      sort: 'name',
+    })
+
+    expect(result.map(({ repositoryId }) => repositoryId)).toEqual([1, 3, 2])
+    expect(filterCatalogRepositories(result, {
+      query: '',
+      category: 'all',
+      installedOnly: true,
+      verifiedOnly: false,
+      sort: 'recommended',
+    }).map(({ repositoryId }) => repositoryId)).toEqual([1, 3])
+  })
+
   it('returns the newest matching projects and handles empty results', () => {
     expect(filterCatalogRepositories(repositories, {
       query: '',
@@ -99,6 +124,16 @@ describe('plugin catalog filtering', () => {
       verifiedOnly: false,
       sort: 'recommended',
     }).map(({ repositoryId }) => repositoryId)).toEqual([2])
+  })
+
+  it('filters API catalog rows by project type when requested', () => {
+    expect(filterCatalogRepositories(repositories, {
+      query: '',
+      category: 'all',
+      projectType: 'plugin',
+      verifiedOnly: false,
+      sort: 'recommended',
+    }).map(({ repositoryId }) => repositoryId)).toEqual([1])
   })
 
   it('does not treat a legacy verification record as current SHA verification', () => {
@@ -356,5 +391,62 @@ describe('remote catalog state', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(2)
     expect(store.getSnapshot().catalog.repositories).toHaveLength(1)
+  })
+
+  it('derives filter options from API facets and preserves new API-defined values', () => {
+    const options = getCatalogFilterOptions({
+      stats: {
+        categories: { ui: 2, experimental: 1 },
+        projectTypes: { plugin: 2, workflow: 1 },
+        validationStatuses: { verified: 1, 'review-queued': 2 },
+      },
+      repositories: [],
+    })
+
+    expect(options).toEqual({
+      categories: ['all', 'ui', 'experimental'],
+      projectTypes: ['plugin', 'workflow'],
+      validationStatuses: ['verified', 'review-queued'],
+    })
+  })
+
+  it('falls back to repository values when an older API response has no facet stats', () => {
+    const options = getCatalogFilterOptions({
+      repositories: [
+        { category: 'ui', projectType: 'plugin', validation: { overall: 'verified' } },
+        { category: 'experimental', projectType: 'workflow', validation: { overall: 'review-queued' } },
+      ],
+    })
+
+    expect(options).toEqual({
+      categories: ['all', 'ui', 'experimental'],
+      projectTypes: ['plugin', 'workflow'],
+      validationStatuses: ['verified', 'review-queued'],
+    })
+  })
+
+  it('derives the market detail route from the configured catalog API origin', () => {
+    expect(buildCatalogDetailUrl(
+      'https://catalog.example.test/catalog.json',
+      'github:123',
+    )).toBe('https://catalog.example.test/plugins/github%3A123')
+  })
+
+  it('bypasses the browser cache for an explicit API refresh', async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ schemaVersion: 1, repositories }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ schemaVersion: 1, repositories }) })
+    const store = new CatalogStore({ fetcher, urls: ['https://catalog.example.test/catalog.json'] })
+
+    await store.load()
+    await store.load({ force: true })
+
+    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://catalog.example.test/catalog.json', {
+      headers: { Accept: 'application/json' },
+    })
+    expect(fetcher).toHaveBeenNthCalledWith(2, 'https://catalog.example.test/catalog.json', {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    })
   })
 })
