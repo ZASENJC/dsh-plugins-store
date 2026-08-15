@@ -156,22 +156,38 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         </label>
       </div>
 
-      <div class="category-row" id="category-filter" aria-label="功能分类" data-i18n-aria-label="home.category">
-        <button class="category-filter is-active" type="button" data-category="all">
-          <span data-i18n="home.all">全部</span> <span>{catalog.stats.fetched}</span>
-        </button>
-        <button class="category-filter category-filter--verified" type="button" data-category="verified">
-          <i></i>
-          <span data-i18n="home.currentVerified">当前已验证</span>
-          <span>{catalog.stats.validationStatuses.verified ?? 0}</span>
-        </button>
-        {CATEGORIES.map((category) => (
-          <button class="category-filter" type="button" data-category={category.id}>
-            <i style={`--category-color: ${category.color}`}></i>
-            <span data-i18n={`category.${category.id}`}>{category.label}</span>
-            <span>{catalog.stats.categories[category.id] ?? 0}</span>
+      <div class="category-filter-panel" data-category-filter-panel>
+        <div class="category-row" id="category-filter" aria-label="功能分类" data-i18n-aria-label="home.category">
+          <button class="category-filter is-active" type="button" data-category="all">
+            <span class="category-filter__label" data-i18n="home.all">全部</span>
+            <span class="category-filter__count">{catalog.stats.fetched}</span>
           </button>
-        ))}
+          <button class="category-filter category-filter--verified" type="button" data-category="verified">
+            <i></i>
+            <span class="category-filter__label" data-i18n="home.currentVerified">当前已验证</span>
+            <span class="category-filter__count">{catalog.stats.validationStatuses.verified ?? 0}</span>
+          </button>
+          {CATEGORIES.map((category) => (
+            <button class="category-filter" type="button" data-category={category.id}>
+              <i style={`--category-color: ${category.color}`}></i>
+              <span class="category-filter__label" data-i18n={`category.${category.id}`}>{category.label}</span>
+              <span class="category-filter__count">{catalog.stats.categories[category.id] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          id="category-filter-toggle"
+          class="category-filter-toggle"
+          type="button"
+          aria-controls="category-filter"
+          aria-expanded="false"
+          aria-label="展开全部分类"
+          title="展开全部分类"
+          data-i18n-aria-label="home.expandCategories"
+          data-i18n-title="home.expandCategories"
+        >
+          <ChevronDown size={17} stroke-width={1.8} aria-hidden="true" />
+        </button>
       </div>
     </div>
   </section>
@@ -283,6 +299,8 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     const validationFilterValue = document.getElementById('validation-filter-value')
     const sortFilterValue = document.getElementById('sort-filter-value')
     const categoryFilter = document.getElementById('category-filter')
+    const categoryFilterPanel = document.querySelector('[data-category-filter-panel]')
+    const categoryFilterToggle = document.getElementById('category-filter-toggle')
     const resultCount = document.getElementById('result-count')
     const loadMore = document.getElementById('load-more')
     const remainingCount = document.getElementById('remaining-count')
@@ -516,6 +534,25 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       target.textContent = select.selectedOptions[0]?.textContent ?? ''
     }
 
+    const setCategoryExpanded = (expanded) => {
+      if (!categoryFilterPanel || !categoryFilterToggle) return
+      categoryFilterPanel.classList.add('is-collapsible')
+      categoryFilterPanel.classList.toggle('is-expanded', expanded)
+      categoryFilterToggle.setAttribute('aria-expanded', String(expanded))
+      const labelKey = expanded ? 'home.collapseCategories' : 'home.expandCategories'
+      const fallback = expanded ? '收起全部分类' : '展开全部分类'
+      const label = t(labelKey, {}, fallback)
+      categoryFilterToggle.dataset.i18nAriaLabel = labelKey
+      categoryFilterToggle.dataset.i18nTitle = labelKey
+      categoryFilterToggle.setAttribute('aria-label', label)
+      categoryFilterToggle.setAttribute('title', label)
+    }
+
+    setCategoryExpanded(false)
+    categoryFilterToggle?.addEventListener('click', () => {
+      setCategoryExpanded(categoryFilterToggle.getAttribute('aria-expanded') !== 'true')
+    })
+
     const restoreFiltersFromUrl = () => {
       const filters = new URLSearchParams(window.location.search)
       const requestedCategory = filters.get('category')
@@ -534,6 +571,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
         item.classList.toggle('is-active', item.dataset.category === selectedCategory)
       })
+      if (selectedCategory !== 'all') setCategoryExpanded(true)
       syncSelectValue(typeFilter, typeFilterValue)
       syncSelectValue(validationFilter, validationFilterValue)
       syncSelectValue(sortFilter, sortFilterValue)
@@ -895,21 +933,63 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     white-space: nowrap;
   }
 
-  .category-row {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
+  .category-filter-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
     padding-top: 12px;
-    scrollbar-width: none;
   }
 
-  .category-row::-webkit-scrollbar {
+  .category-row {
+    display: flex;
+    max-height: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow: hidden;
+    transition: max-height 180ms ease;
+  }
+
+  .category-filter-panel.is-collapsible:not(.is-expanded) .category-row {
+    max-height: 38px;
+  }
+
+  .category-filter-panel.is-collapsible.is-expanded .category-row {
+    max-height: 600px;
+  }
+
+  .category-filter-toggle {
     display: none;
+    width: 38px;
+    min-height: 38px;
+    place-items: center;
+    border: 1px solid var(--outline);
+    border-radius: 9999px;
+    background: transparent;
+    color: var(--body);
+    transition: border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .category-filter-panel.is-collapsible .category-filter-toggle {
+    display: grid;
+  }
+
+  .category-filter-toggle:hover {
+    border-color: var(--outline-strong);
+    background: var(--canvas-soft);
+  }
+
+  .category-filter-toggle svg {
+    transition: transform 160ms ease;
+  }
+
+  .category-filter-panel.is-expanded .category-filter-toggle svg {
+    transform: rotate(180deg);
   }
 
   .category-filter {
     display: inline-flex;
-    min-height: 34px;
+    min-height: 38px;
     flex: 0 0 auto;
     align-items: center;
     gap: 7px;
@@ -917,7 +997,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     border-radius: 9999px;
     background: transparent;
     color: var(--body);
-    font-size: 12px;
     padding-inline: 12px;
   }
 
@@ -939,10 +1018,24 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     background: #9fdda9;
   }
 
-  .category-filter span {
+  .category-filter__label {
+    color: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+  }
+
+  .category-filter__count {
     color: var(--mute);
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+  }
+
+  .category-filter:hover .category-filter__count,
+  .category-filter.is-active .category-filter__count {
+    color: var(--body);
   }
 
   .catalog-results {
@@ -1106,6 +1199,15 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     }
 
     .category-filter {
+      min-height: 44px;
+    }
+
+    .category-filter-panel.is-collapsible:not(.is-expanded) .category-row {
+      max-height: 44px;
+    }
+
+    .category-filter-toggle {
+      width: 44px;
       min-height: 44px;
     }
 
