@@ -8,13 +8,21 @@ validation/reports/
 .env.*
 !.env.example
 
+# Local-only documentation. README files remain trackable.
+*.md
+*.mdx
+*.rst
+*.adoc
+*.txt
+!README*
+!**/README*
+docs/*
+
+# These are public static text assets, not documentation.
+!public/robots.txt
+!public/ff823371ff4b9de02e0048648a569178.txt
+
 # Local agent and assistant instructions
-[Aa][Gg][Ee][Nn][Tt].md
-[Aa][Gg][Ee][Nn][Tt][Ss].md
-[Cc][Ll][Aa][Uu][Dd][Ee].md
-[Cc][Oo][Dd][Ee][Xx].md
-[Gg][Ee][Mm][Ii][Nn][Ii].md
-[Ii][Nn][Ss][Tt][Rr][Uu][Cc][Tt][Ii][Oo][Nn][Ss]*.md
 .agents/
 .claude/
 .codex/
