@@ -7,7 +7,7 @@ export const CURRENT_VALIDATION_TARGET = Object.freeze({
 } as const)
 
 export const VALIDATION_STAGE_DEFINITIONS = Object.freeze([
-  { id: 'discovery', label: '商店发现' },
+  { id: 'discovery', label: '市场发现' },
   { id: 'identification', label: '归类识别' },
   { id: 'structure', label: '结构检查' },
   { id: 'sandbox', label: '实机验证' },

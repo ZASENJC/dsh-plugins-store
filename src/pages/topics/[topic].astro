@@ -33,18 +33,26 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 ---
 
 <BaseLayout
-  title={`${topic} 标签 · DSH插件商店`}
+  title={`${topic} 标签 · DSH 插件市场`}
   description={`浏览 GitHub Topic 为 ${topic} 的 DSH 生态项目。`}
+  pageTitleKey="site.pageTitle.topic"
+  pageTitleParams={{ topic }}
 >
   <section class="topic-hero">
     <div class="container">
-      <a class="back-link" href={baseUrl}><ArrowLeft size={16} stroke-width={1.6} /> 返回目录</a>
+      <a class="back-link" href={baseUrl}>
+        <ArrowLeft size={16} stroke-width={1.6} />
+        <span data-i18n="topic.back">返回目录</span>
+      </a>
       <div class="topic-hero__content">
         <div>
           <p class="mono-label">GITHUB TOPIC</p>
           <h1><Tag size={30} stroke-width={1.4} /> {topic}</h1>
         </div>
-        <p><strong>{repositories.length}</strong> 个项目包含此标签</p>
+        <p>
+          <strong>{repositories.length}</strong>
+          <span data-i18n="topic.containsSuffix">个项目包含此标签</span>
+        </p>
       </div>
     </div>
   </section>
@@ -52,8 +60,8 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
   <section class="topic-results">
     <div class="container">
       <div class="results-head">
-        <p>{repositories.length} 个项目</p>
-        <p><i></i> GitHub Topic 精确匹配</p>
+        <p data-i18n="topic.count" data-i18n-param-count={repositories.length}>{repositories.length} 个项目</p>
+        <p><i></i> <span data-i18n="topic.exact">GitHub Topic 精确匹配</span></p>
       </div>
       <div class="project-grid">
         {repositories.map((repository) => <ProjectCard repository={repository} />)}

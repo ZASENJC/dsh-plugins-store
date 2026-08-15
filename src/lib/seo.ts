@@ -1,6 +1,6 @@
 export const SITE_URL = 'https://dsh.aitreez.com'
-export const HOME_TITLE = 'DSH 插件商店 - DeepSeek Harness 插件目录'
-export const HOME_DESCRIPTION = '在 DSH 商店中搜索和浏览 DSH 插件。本站作为 DeepSeek Harness 商店目录，自动收录和分类 GitHub dsh-plugin Topic 项目，并展示 DeepSeek Harness 插件的验证状态与安装参考。'
+export const HOME_TITLE = 'DSH 插件市场 - DSH-Plugin Store'
+export const HOME_DESCRIPTION = '在 DSH 插件市场中搜索和浏览 DSH 插件。本站作为 DeepSeek Harness 插件市场目录，自动收录和分类 GitHub dsh-plugin Topic 项目，并展示 DeepSeek Harness 插件的验证状态与安装参考。'
 
 export function getCanonicalUrl(currentUrl: URL): string {
   const pathname = currentUrl.pathname === '/' ? '/' : currentUrl.pathname.replace(/\/+$/, '')
@@ -18,11 +18,11 @@ export function buildHomepageStructuredData(numberOfItems: number) {
         '@type': 'WebSite',
         '@id': websiteId,
         url: `${SITE_URL}/`,
-        name: 'DSH 插件商店',
+        name: 'DSH 插件市场',
         alternateName: [
-          'DSH 商店',
-          'DeepSeek Harness 插件商店',
-          'DeepSeekHarness 插件商店',
+          'DSH 市场',
+          'DeepSeek Harness 插件市场',
+          'DeepSeekHarness 插件市场',
         ],
         description: HOME_DESCRIPTION,
         inLanguage: 'zh-CN',

@@ -34,8 +34,8 @@ const searchable = [
 >
   <div class="project-card__topline">
     <span class="category-dot" data-field="category-dot" style={`--category-color: ${category.color}`}></span>
-    <span class="mono-label" data-field="category">{category.label}</span>
-    <span class="project-card__type" data-field="project-type">{getProjectTypeLabel(repository.projectType)}</span>
+    <span class="mono-label" data-field="category" data-i18n={`category.${repository.category}`}>{category.label}</span>
+    <span class="project-card__type" data-field="project-type" data-i18n={`projectType.${repository.projectType}`}>{getProjectTypeLabel(repository.projectType)}</span>
   </div>
 
   <div class="project-card__identity">
@@ -60,11 +60,15 @@ const searchable = [
     class="project-card__validation"
     data-field="validation"
     data-tone={repository.validation.tone}
+    data-i18n-validation-title={repository.validation.overall}
     title={`验证状态：${repository.validation.label}`}
   >
     <span class="project-card__validation-label">
       <CircleDot size={13} stroke-width={1.8} />
-      <span data-field="validation-label">{repository.validation.label}</span>
+      <span
+        data-field="validation-label"
+        data-i18n={`validation.status.${repository.validation.overall}`}
+      >{repository.validation.label}</span>
     </span>
     <span class="project-card__validation-steps" aria-hidden="true">
       {Object.entries(repository.validation.stages).map(([stage, evidence]) => (
@@ -73,20 +77,31 @@ const searchable = [
     </span>
   </div>
 
-  <div class="project-card__topics" data-field="topics" aria-label="项目标签">
+  <div class="project-card__topics" data-field="topics" aria-label="项目标签" data-i18n-aria-label="card.topics">
     {repository.topics.slice(0, 4).map((topic) => <span>{topic}</span>)}
   </div>
 
   <div class="project-card__footer">
-    <div class="project-card__metrics" aria-label="仓库数据">
-      <span title="Star 数"><Star size={14} stroke-width={1.6} /> <span data-field="stars">{formatCompactNumber(repository.stars)}</span></span>
-      <span title="Fork 数"><GitFork size={14} stroke-width={1.6} /> <span data-field="forks">{formatCompactNumber(repository.forks)}</span></span>
-      <span title="开放 Issue 数"><CircleDot size={14} stroke-width={1.6} /> <span data-field="issues">{formatCompactNumber(repository.openIssues)}</span></span>
+    <div class="project-card__metrics" aria-label="仓库数据" data-i18n-aria-label="card.metrics">
+      <span title="Star 数" data-i18n-title="card.stars"><Star size={14} stroke-width={1.6} /> <span data-field="stars">{formatCompactNumber(repository.stars)}</span></span>
+      <span title="Fork 数" data-i18n-title="card.forks"><GitFork size={14} stroke-width={1.6} /> <span data-field="forks">{formatCompactNumber(repository.forks)}</span></span>
+      <span title="开放 Issue 数" data-i18n-title="card.issues"><CircleDot size={14} stroke-width={1.6} /> <span data-field="issues">{formatCompactNumber(repository.openIssues)}</span></span>
     </div>
-    <span class="project-card__updated" data-field="updated">{formatRelativeDate(repository.pushedAt)}</span>
+    <span
+      class="project-card__updated"
+      data-field="updated"
+      data-i18n-relative-date={repository.pushedAt}
+    >{formatRelativeDate(repository.pushedAt)}</span>
   </div>
 
-  <a class="project-card__open" data-field="open-link" href={detailUrl} aria-label={`查看 ${repository.name} 详情`}>
+  <a
+    class="project-card__open"
+    data-field="open-link"
+    href={detailUrl}
+    aria-label={`查看 ${repository.name} 详情`}
+    data-i18n-aria-label="card.openDetails"
+    data-i18n-param-name={repository.name}
+  >
     <ArrowUpRight size={18} stroke-width={1.6} />
   </a>
 </article>

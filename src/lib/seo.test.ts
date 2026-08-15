@@ -24,11 +24,10 @@ describe('canonical URLs', () => {
 })
 
 describe('homepage search intent', () => {
-  it('uses one authoritative homepage for the requested DSH and DeepSeek Harness terms', () => {
-    expect(HOME_TITLE).toContain('DSH 插件')
-    expect(HOME_TITLE).toContain('DeepSeek Harness 插件')
-    expect(HOME_DESCRIPTION).toContain('DSH 商店')
-    expect(HOME_DESCRIPTION).toContain('DeepSeek Harness 商店')
+  it('uses the requested DSH plugin market name as the homepage title', () => {
+    expect(HOME_TITLE).toBe('DSH 插件市场 - DSH-Plugin Store')
+    expect(HOME_DESCRIPTION).toContain('DSH 插件市场')
+    expect(HOME_DESCRIPTION).toContain('DeepSeek Harness 插件市场')
   })
 
   it('describes the homepage as a searchable plugin collection without overstating verification', () => {
@@ -38,11 +37,11 @@ describe('homepage search intent', () => {
     expect(graph).toEqual(expect.arrayContaining([
       expect.objectContaining({
         '@type': 'WebSite',
-        name: 'DSH 插件商店',
+        name: 'DSH 插件市场',
         alternateName: expect.arrayContaining([
-          'DSH 商店',
-          'DeepSeek Harness 插件商店',
-          'DeepSeekHarness 插件商店',
+          'DSH 市场',
+          'DeepSeek Harness 插件市场',
+          'DeepSeekHarness 插件市场',
         ]),
       }),
       expect.objectContaining({

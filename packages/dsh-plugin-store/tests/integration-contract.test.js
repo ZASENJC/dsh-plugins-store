@@ -85,7 +85,7 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain('body > :has(> .dps-risk-modal)')
   })
 
-  it('opens store details from the card while keeping only install and copy actions', () => {
+  it('opens Store details from the card while keeping only install and copy actions', () => {
     const source = readFileSync(componentsPath, 'utf8')
 
     expect(source).toContain('className="dps-card-link"')

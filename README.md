@@ -1,37 +1,48 @@
-# DSH插件商店
+<p align="center">
+  <img src="https://img.qunq.de/file/1786723993374_header.png" alt="DSH 插件市场头图" />
+</p>
 
 <p align="center">
   <a href="https://linux.do" aria-label="访问 LINUX DO">
     <img
       src="https://img.shields.io/badge/LINUX-DO-FFB003.svg?logo=data:image/svg%2bxml;base64,DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiPjxwYXRoIGQ9Ik00Ni44Mi0uMDU1aDYuMjVxMjMuOTY5IDIuMDYyIDM4IDIxLjQyNmM1LjI1OCA3LjY3NiA4LjIxNSAxNi4xNTYgOC44NzUgMjUuNDV2Ni4yNXEtMi4wNjQgMjMuOTY4LTIxLjQzIDM4LTExLjUxMiA3Ljg4NS0yNS40NDUgOC44NzRoLTYuMjVxLTIzLjk3LTIuMDY0LTM4LjAwNC0yMS40M1EuOTcxIDY3LjA1Ni0uMDU0IDUzLjE4di02LjQ3M0MxLjM2MiAzMC43ODEgOC41MDMgMTguMTQ4IDIxLjM3IDguODE3IDI5LjA0NyAzLjU2MiAzNy41MjcuNjA0IDQ2LjgyMS0uMDU2IiBzdHlsZT0ic3Ryb2tlOm5vbmU7ZmlsbC1ydWxlOmV2ZW5vZGQ7ZmlsbDojZWNlY2VjO2ZpbGwtb3BhY2l0eToxIi8+PHBhdGggZD0iTTQ3LjI2NiAyLjk1N3EyMi41My0uNjUgMzcuNzc3IDE1LjczOGE0OS43IDQ5LjcgMCAwIDEgNi44NjcgMTAuMTU3cS00MS45NjQuMjIyLTgzLjkzIDAgOS43NS0xOC42MTYgMzAuMDI0LTI0LjM4N2E2MSA2MSAwIDAgMSA5LjI2Mi0xLjUwOCIgc3R5bGU9InN0cm9rZTpub25lO2ZpbGwtcnVsZTpldmVub2RkO2ZpbGw6IzE5MTkxOTtmaWxsLW9wYWNpdHk6MSIvPjxwYXRoIGQ9Ik03Ljk4IDcwLjkyNmMyNy45NzctLjAzNSA1NS45NTQgMCA4My45My4xMTNRODMuNDI2IDg3LjQ3MyA2Ni4xMyA5NC4wODZxLTE4LjgxIDYuNTQ0LTM2LjgzMi0xLjg5OC0xNC4yMDMtNy4wOS0yMS4zMTctMjEuMjYyIiBzdHlsZT0ic3Ryb2tlOm5vbmU7ZmlsbC1ydWxlOmV2ZW5vZGQ7ZmlsbDojZjlhZjAwO2ZpbGwtb3BhY2l0eToxIi8+PC9zdmc+"
       alt="LINUX DO"
+      height="18"
     />
   </a>
+  <a href="https://www.nodeseek.com/" aria-label="访问 NodeSeek">
+    <img src="https://img.shields.io/badge/NODE-SEEK-1E9FFF.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAATlBMVEVHcEy%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv78NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ2%2Fv78MDAwAAAD%2F%2F%2F88PDx8fHzU1NSfn5%2BKiorNn%2Fb4AAAAEXRSTlMAxKMRhizc80hqEDPX7o1et%2F5TfbEAAAIXSURBVFiF7VVbYoQgDERFEJ8F3G73%2FhetJCRBKyeo8xWRTCZjBKUePHjwQDB4a72GsLUHvLvf53x620KsU86QXxjvve1wOWG4z0%2BVEqBUZ4%2FIFMtONvSSMU4HRnnupYCTUk0SAJE91R%2FXOSQs88YcUEI2NyCGZWmWkrCGAqv4cNrd0RI44KUtNS3hhJlEJL2eC7u80jBlNmAKfzAVNmhVJLLu1FRbzQ8ha2jJBYdaeupgKAQk92KMlIrRXEgYqIceeCwxG%2FEvvj4vZIjhG6MN3xpSakF7SxYY6k0pyN%2F3HfPie98%2FKVrwraZKDTA1Oa%2BTDraU9XMQfEeiekfxkZvWUNtkD3lZqa8awZdSZSkHUmwmGMSCpUYwiwlDTrGKPHXkhRpDjWCRWaKangk0E8AQxM%2BJwMdiFMg2JLD3CkL0lHVwvV81AsseXAmKQYoUXlrAETJFQ1ZMvMXFRPwKTZ6ry2e8xXr%2BjDiDNFedHCZbjQAHaaBS6IWj%2F7sY5UoP82WU8T%2FuSRCvVyVMYoGmpnv8p%2Fg5H4i3LuAgy2%2Bvs%2B38Gxv%2BkGq8aSI3AJ3z%2FrZkLA7qGwY6FPkSEMV8lFkZBTVeusj6sS6YzkcbRHI%2Bt7Rzm4vyE622JKCTzT2Hhg9YwLTOS7pXVk7HGoaZerEF4uLmIoxj%2BSR3H2zNluOD4QK1y%2Fn02hQCshy5r8SHM2Bbsa%2By7cGDB%2F8Vv7isS9jzGHgiAAAAAElFTkSuQmCC" alt="NodeSeek" height="18" />
+  </a>
   <a href="https://dsh.aitreez.com/">
-    <img src="https://img.shields.io/website?url=https%3A%2F%2Fdsh.aitreez.com%2F&amp;up_message=online&amp;down_message=offline&amp;label=dsh.aitreez.com" alt="Website" />
+    <img src="https://img.shields.io/website?url=https%3A%2F%2Fdsh.aitreez.com%2F&amp;up_message=online&amp;down_message=offline&amp;label=dsh.aitreez.com" alt="Website" height="18" />
   </a>
   <a href="https://github.com/ZASENJC/dsh-plugins-store/actions/workflows/sync-catalog.yml">
-    <img src="https://github.com/ZASENJC/dsh-plugins-store/actions/workflows/sync-catalog.yml/badge.svg" alt="Sync catalog" />
+    <img src="https://github.com/ZASENJC/dsh-plugins-store/actions/workflows/sync-catalog.yml/badge.svg" alt="Sync catalog" height="18" />
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/ZASENJC/dsh-plugins-store" alt="License" />
+    <img src="https://img.shields.io/github/license/ZASENJC/dsh-plugins-store" alt="License" height="18" />
   </a>
   <a href="https://astro.build/">
-    <img src="https://img.shields.io/badge/Astro-built-BC52EE?logo=astro&amp;logoColor=white" alt="Astro" />
+    <img src="https://img.shields.io/badge/Astro-built-BC52EE?logo=astro&amp;logoColor=white" alt="Astro" height="18" />
   </a>
 </p>
 
-面向 DeepSeek Harness 生态的 DSH 插件商店，自动收录并整理 GitHub [`dsh-plugin`](https://github.com/topics/dsh-plugin) Topic 项目，提供搜索、分类、排序和标签聚合浏览。
+面向 DeepSeek Harness 生态的 DSH 插件市场，自动收录并整理 GitHub [`dsh-plugin`](https://github.com/topics/dsh-plugin) Topic 项目，提供搜索、分类、排序和标签聚合浏览。
 
-[访问 DSH 插件商店（DeepSeek Harness 插件目录）](https://dsh.aitreez.com/)
+[访问 DSH 插件市场（DeepSeek Harness 插件目录）](https://dsh.aitreez.com/)
 
 ## 项目截图
 
-![DSH插件商店首页](<https://img.qunq.de/file/1786712025014_FireShot Capture 027 - DSH插件商店（DSH-plugin store） - [dsh.aitreez.com].jpeg>)
+<details>
+<summary>展开查看项目截图</summary>
 
-![dsh-TUI 项目详情](<https://img.qunq.de/file/1786712021455_FireShot Capture 029 - dsh-TUI · DSH插件商店 - [dsh.aitreez.com].png>)
+![DSH 插件市场首页](<https://img.qunq.de/file/1786723996481_FireShot Capture 033 - DSH 插件市场 - DSH-Plugin Store - [127.0.0.1].png>)
 
-![coding-agent 标签页面](<https://img.qunq.de/file/1786712029405_FireShot Capture 028 - coding-agent 标签 · DSH插件商店 - [dsh.aitreez.com].jpeg>)
+![deepseek-harness 项目详情](<https://img.qunq.de/file/1786723993650_FireShot Capture 034 - deepseek-harness · DSH 插件市场 - [127.0.0.1].png>)
+
+![dsh-plugin 标签页面](<https://img.qunq.de/file/1786723992252_FireShot Capture 037 - dsh-plugin 标签 · DSH 插件市场 - [127.0.0.1].png>)
+
+</details>
 
 ## 功能
 
@@ -88,6 +99,14 @@ npm run build
 ```
 
 推送到 `main` 后，GitHub Actions 会自动构建并部署 GitHub Pages。生产服务器每 30 分钟触发一次目录同步；同步、测试和构建成功后，静态站点会原子发布到生产服务器。
+
+## 社区交流
+
+欢迎加入 QQ 群或微信群，与社区成员交流 DSH 插件的使用、开发和生态动态。
+
+| QQ 群 | 微信群 |
+| :---: | :---: |
+| <img src="https://img.qunq.de/file/1786719353149_qrcode_1786717062979%202.jpg" alt="DSH 插件社区 QQ 群二维码" width="220" /> | <img src="https://img.qunq.de/file/1786722253271_IMG_6958.jpeg" alt="DSH 插件社区微信群二维码" width="220" /> |
 
 ## 许可证
 
