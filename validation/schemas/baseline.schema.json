@@ -23,7 +23,7 @@
           "fullName": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
           "sourceSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
           "executionType": { "const": "host-tool" },
-          "smokeMode": { "enum": ["loader", "tool-registration"] },
+          "smokeMode": { "const": "loader" },
           "expectedFinalStatuses": {
             "type": "array",
             "minItems": 1,

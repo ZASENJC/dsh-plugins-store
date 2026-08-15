@@ -19,6 +19,7 @@ describe('P2 Linux headless/tool baseline', () => {
     for (const target of baseline.targets) {
       expect(target.sourceSha).toMatch(/^[a-f0-9]{40}$/)
       expect(target.executionType).toBe('host-tool')
+      expect(target.smokeMode).toBe('loader')
       expect(target.expectedFinalStatuses.length).toBeGreaterThan(0)
     }
   })
@@ -29,7 +30,7 @@ describe('P2 Linux headless/tool baseline', () => {
       fullName: 'fixture/plugin',
       sourceSha: 'a'.repeat(40),
       executionType: 'host-tool',
-      smokeMode: 'tool-registration',
+      smokeMode: 'loader',
       expectedFinalStatuses: ['verified'],
     }
     const base = {
@@ -65,6 +66,24 @@ describe('P2 Linux headless/tool baseline', () => {
     expect(baseline.targets[0].smokeMode).toBe('loader')
   })
 
+  it('rejects deeper tool-registration smoke as a Verified requirement', () => {
+    expect(() => parseBaseline({
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T12:00:00Z',
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.2',
+      targets: [{
+        repositoryId: 1,
+        fullName: 'fixture/host-plugin',
+        sourceSha: 'a'.repeat(40),
+        executionType: 'host-tool',
+        smokeMode: 'tool-registration',
+        expectedFinalStatuses: ['verified'],
+      }],
+    })).toThrow('contract')
+  })
+
   it('allows fixed-SHA negative controls to declare failed structure or runtime outcomes', () => {
     const target = {
       repositoryId: 1,
@@ -89,14 +108,14 @@ describe('P2 Linux headless/tool baseline', () => {
     }
   })
 
-  it('records the observed fixed-SHA outcomes for known negative and inconclusive canaries', async () => {
+  it('records the expected fixed-SHA outcomes under the networked entry-smoke contract', async () => {
     const baseline = parseBaseline(JSON.parse(await readFile('validation/baseline.json', 'utf8')))
     const expected = new Map<number, string[]>([
       [1324174801, ['failed']],
       [1327532651, ['failed']],
       [1323134652, ['inconclusive']],
       [1329755053, ['failed']],
-      [1333107949, ['inconclusive']],
+      [1333107949, ['verified']],
     ])
 
     for (const [repositoryId, statuses] of expected) {

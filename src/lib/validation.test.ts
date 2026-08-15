@@ -117,7 +117,7 @@ describe('validation ladder', () => {
       updatedAt: '2026-08-14T09:00:00Z',
       dshVersion: '0.1.0-rc.6',
       platform: 'linux-x64',
-      validatorVersion: '0.1.1',
+      validatorVersion: '0.1.2',
       structure: { status: 'passed' as const, checkedAt: '2026-08-14T08:40:00Z' },
       sandbox: {
         status: 'passed' as const,
@@ -132,7 +132,7 @@ describe('validation ladder', () => {
       level: 4,
       verified: true,
       sourceSha: 'b'.repeat(40),
-      validatorVersion: '0.1.1',
+      validatorVersion: '0.1.2',
       reportUrl: 'https://reports.example/101.json',
     })
     expect(buildValidationStatus({

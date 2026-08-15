@@ -57,7 +57,7 @@ describe('decoupled incremental validation workflows', () => {
       readFile('validation/baseline.json', 'utf8').then(JSON.parse),
     ])
 
-    expect(CURRENT_VALIDATION_TARGET.validatorVersion).toBe('0.1.1')
+    expect(CURRENT_VALIDATION_TARGET.validatorVersion).toBe('0.1.2')
     expect(baseline).toMatchObject(CURRENT_VALIDATION_TARGET)
     expect(workflow).toContain(`DSH_VALIDATION_VERSION: ${CURRENT_VALIDATION_TARGET.dshVersion}`)
     expect(workflow).toContain(`VALIDATOR_VERSION: ${CURRENT_VALIDATION_TARGET.validatorVersion}`)

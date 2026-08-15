@@ -5,7 +5,7 @@ export interface BaselineTarget {
   fullName: string
   sourceSha: string
   executionType: Extract<ExecutionType, 'host-tool'>
-  smokeMode: 'loader' | 'tool-registration'
+  smokeMode: 'loader'
   expectedFinalStatuses: Array<Extract<ValidationStatus, 'verified' | 'failed' | 'inconclusive' | 'structure_failed'>>
 }
 
@@ -44,7 +44,7 @@ export function parseBaseline(value: unknown): ValidationBaseline {
       || typeof raw.sourceSha !== 'string'
       || !/^[a-f0-9]{40}$/.test(raw.sourceSha)
       || raw.executionType !== 'host-tool'
-      || !['loader', 'tool-registration'].includes(raw.smokeMode as string)
+      || raw.smokeMode !== 'loader'
       || !Array.isArray(raw.expectedFinalStatuses)
       || raw.expectedFinalStatuses.length === 0
       || !raw.expectedFinalStatuses.every((status) => (

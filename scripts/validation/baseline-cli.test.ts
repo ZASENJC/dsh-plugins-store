@@ -13,7 +13,7 @@ const targets: BaselineTarget[] = [1, 2, 3].map((repositoryId) => ({
   fullName: `fixture/plugin-${repositoryId}`,
   sourceSha: String(repositoryId).repeat(40),
   executionType: 'host-tool',
-  smokeMode: 'tool-registration',
+  smokeMode: 'loader',
   expectedFinalStatuses: repositoryId === 3 ? ['inconclusive'] : ['verified'],
 }))
 

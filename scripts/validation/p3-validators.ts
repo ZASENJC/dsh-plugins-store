@@ -37,7 +37,7 @@ function runtimeArgs(
 ): string[] {
   return [
     'run', '--rm', '--name', containerName,
-    '--platform=linux/amd64', '--network=none',
+    '--platform=linux/amd64', '--network=bridge',
     '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges',
     '--pids-limit=256', '--memory=2g', '--cpus=2', '--user=1000:1000',
     '--tmpfs=/tmp:rw,noexec,nosuid,size=256m',

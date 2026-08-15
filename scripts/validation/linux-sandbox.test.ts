@@ -11,7 +11,7 @@ const target = {
   fullName: 'omdsh-dev/dsh-tool-calculator',
   sourceSha: '701f6549b4e1b648351403dc8a18a9bc9a2b713d',
   executionType: 'host-tool' as const,
-  smokeMode: 'tool-registration' as const,
+  smokeMode: 'loader' as const,
   expectedFinalStatuses: ['verified' as const],
 }
 
@@ -30,7 +30,7 @@ afterEach(() => {
 })
 
 describe('P2 restricted Linux sandbox command plan', () => {
-  it('separates network acquisition from non-network execution and destroys the volume', () => {
+  it('allows ordinary network access for plugin execution while preserving sandbox isolation', () => {
     const plan = buildLinuxSandboxPlan(target, {
       runId: 'fixture-run',
       sourceDirectory: '/tmp/pinned-source',
@@ -63,14 +63,15 @@ describe('P2 restricted Linux sandbox command plan', () => {
     expect(installDependencies.command.args).toEqual(expect.arrayContaining([
       'pnpm', 'install', '--ignore-scripts', '--no-frozen-lockfile',
     ]))
-    expect(installDependencies.command.args).toContain('dsh-plugin-validator:0.1.1')
+    expect(installDependencies.command.args).toContain('dsh-plugin-validator:0.1.2')
 
     const installPlugin = plan.steps.find(({ id }) => id === 'install-plugin')!
-    expect(installPlugin.network).toBe('none')
-    expect(installPlugin.command.args).toEqual(expect.arrayContaining(['add', '--ignore-scripts', '--offline']))
+    expect(installPlugin.network).toBe('bridge')
+    expect(installPlugin.command.args).toEqual(expect.arrayContaining(['add', '--ignore-scripts']))
+    expect(installPlugin.command.args).not.toContain('--offline')
 
     for (const step of plan.steps.filter(({ phase }) => phase === 'execution')) {
-      expect(step.network).toBe('none')
+      expect(step.network).toBe('bridge')
       expect(step.command.args).toEqual(expect.arrayContaining([
         '--platform=linux/amd64',
         '--read-only',
@@ -123,7 +124,7 @@ describe('P2 restricted Linux sandbox command plan', () => {
     expect(installDependencies.command.args.slice(-expectedCommand.length)).toEqual(expectedCommand)
   })
 
-  it('uses script-disabled pnpm acquisition when no lockfile exists so offline DSH installation shares its store', () => {
+  it('uses script-disabled pnpm acquisition when no lockfile exists', () => {
     const sourceDirectory = join(tmpdir(), `dsh-no-lock-${process.pid}-${temporaryDirectories.length}`)
     mkdirSync(sourceDirectory, { recursive: true })
     writeFileSync(join(sourceDirectory, 'package.json'), '{}\n')
@@ -133,7 +134,7 @@ describe('P2 restricted Linux sandbox command plan', () => {
       runId: 'fixture-no-lock',
       sourceDirectory,
       dshVersion: '0.1.0-rc.6',
-      validatorVersion: '0.1.1',
+      validatorVersion: '0.1.2',
     })
 
     const installDependencies = plan.steps.find(({ id }) => id === 'install-dependencies')!

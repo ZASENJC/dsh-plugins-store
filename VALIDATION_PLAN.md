@@ -22,9 +22,9 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 | --- | --- | --- | --- |
 | P0 | Report schema, state machine, invalidation, execution types | Complete | Unit tests cover valid/invalid transitions, history, SHA/DSH/platform/validator expiry, and execution types |
 | P1 | Discovery, execution-type recognition, structure check, shadow workflow | Operational | Full catalog produces sanitized reports; structure advisories do not block installability checks |
-| P2 | About 20 known Linux headless/tool baselines | Operational; validator 0.1.1 full rerun pending | Each target is SHA-pinned and produces a repeatable sandbox report or explicit inconclusive result |
+| P2 | About 20 known Linux headless/tool baselines | Operational; validator 0.1.2 networked rerun pending | Each target is SHA-pinned and produces a repeatable sandbox report or explicit inconclusive result |
 | P3 | DSH Web + Playwright, collection and channel/MCP validators | Implemented; generic Web/channel install path observed | Validator-specific fixtures pass without real credentials or external services |
-| P4 | False-positive observation gate, Verified promotion, SHA-pinned install | Operational; validator 0.1.1 promotion pending | Promotion refuses insufficient or stale evidence and accepts a passing observed baseline |
+| P4 | False-positive observation gate, Verified promotion, SHA-pinned install | Operational; validator 0.1.2 promotion pending | Promotion refuses insufficient or stale evidence and accepts a passing observed baseline |
 | P5 | Opt-in Issue bot, Windows/macOS | Deferred | Requires separate authorization |
 
 ## Planned Artifacts
@@ -198,3 +198,22 @@ Build a reproducible plugin validation pipeline that preserves every stage of ev
 - Promotion bindings now follow the governance contract exactly: numeric repository ID, source SHA, DSH version, platform, validator version, execution type, and validation kind. A repository rename no longer invalidates otherwise exact evidence; numeric-ID lookup still verifies identity before acquisition.
 - Merge verification passed 43 test files and 235 tests with 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines; TypeScript no-emit; all workflow YAML; staged credential scan; `git diff --check`; and the 1,835-page Astro check/build.
 - Remaining: push the catalog-independent canary repair, rerun the bounded full workflow, inspect the successful validation state, trigger the independent catalog sync, and verify the public SHA-bound markers.
+
+### 2026-08-15 - Networked installability contract started
+
+- Full run `31872264506` completed all 20 bounded shards and promotion for validator `0.1.1`. Its 651 current entries contain 245 sandbox-passed, 170 sandbox-failed, 176 sandbox-inconclusive, and 60 Secret-signal quarantined results.
+- The user approved ordinary Action-runner network access during build, DSH installation, load, and entry smoke. Containers remain disposable, non-root, secret-free, read-only at the image layer, resource-limited, and isolated from host directories and the Docker socket.
+- Verified acceptance is intentionally limited to successful dependency/build preparation, installation into the real DSH `0.1.0-rc.6` validation profile, `dsh --profile validation --dump-config`, import of the declared package entrypoint with a valid `apply` export, and postflight cleanup checks.
+- Tool registration and deeper functional behavior are no longer promotion requirements. Feature-specific Playwright and Channel/MCP validators may retain additional evidence, but generic Verified status does not depend on it.
+- Bump the validator binding to `0.1.2`; the changed network and smoke semantics must expire validator `0.1.1` results and force one bounded full rerun before hourly validation returns to incremental mode.
+- Exit gate: RED/GREEN tests cover bridge networking, removal of offline installation, loader-only baseline contracts, synchronized validator binding, and unchanged secret/host isolation; then run focused tests, TypeScript, workflow YAML, a real Docker canary, commit/push, and dispatch the bounded full workflow.
+
+### 2026-08-15 - Networked installability contract implemented locally
+
+- Dependency preparation, build, DSH profile installation, config loading, entry smoke, and postflight now use ordinary bridge networking. The disposable container remains non-root, secret-free, read-only, resource-limited, and isolated from host directories and the Docker socket.
+- Verified acceptance now requires installation into the real validation profile, successful `dsh --profile validation --dump-config`, activation in both the profile dependencies and `dsh.profile.bundles`, import of the installed package entrypoint with an `apply` export, and a clean postflight. The smoke does not invoke `apply` or require tool registration.
+- Removed the obsolete offline-install flag and new-run `OFFLINE_DEPENDENCY_CACHE_MISS` classification. Historical reports with that code remain readable and visible.
+- Validator `0.1.2` is synchronized across the public target, baseline, workflow, Linux image tag, and toolchain metadata. P3 runtime plans also use bridge networking while retaining their independently versioned Web image `0.1.0`. `dsh-acp-for-bitfun` is expected to verify now that registry access is available.
+- RED checkpoint `964d395` captured installed-profile activation and networked install-failure attribution. Focused GREEN passed 11 files and 63 tests; full verification passed 43 files and 240 tests with 98.63% statements, 89.88% branches, 98.91% functions, and 99.06% lines, plus TypeScript no-emit, all workflow YAML, diff checks, and an Astro build of 1,835 pages with zero errors.
+- A complete Dockerfile rebuild was attempted twice but Docker Hub metadata resolution timed out during the TLS handshake before any plugin ran. For behavior verification only, a local `0.1.2` image was derived from the existing locked `0.1.1` image by replacing the smoke script; its script SHA-256 matched the workspace. Fixed calculator canary `1323526209` then recorded the complete `install_passed / runtime_passed / smoke_passed / verified` ladder with exact validator `0.1.2` bindings and left no container or volume residue.
+- Remaining: push the GREEN implementation, let GitHub Actions perform a clean Dockerfile build, complete the bounded validator `0.1.2` full run, inspect promotion output, and independently synchronize the catalog before checking public markers.
