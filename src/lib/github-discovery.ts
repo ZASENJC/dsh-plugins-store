@@ -11,6 +11,9 @@ export const SEARCH_PAGE_SIZE = 100
 export const MAX_RESULTS_PER_QUERY = 1_000
 
 const DEFAULT_MAX_ATTEMPTS = 3
+const HISTORICAL_DATE_START = '2008-01-01'
+const HISTORICAL_DATE_END = '2100-12-31'
+const INITIAL_DATE_PARTITION_YEARS = 20
 
 export interface SearchPartition {
   createdStart?: string
@@ -26,7 +29,7 @@ export interface SearchPage {
 }
 
 export interface SearchRequestOptions {
-  sort: 'stars' | 'created'
+  sort: 'stars'
   order: 'asc' | 'desc'
 }
 
@@ -123,33 +126,29 @@ function splitStarsPartition(partition: SearchPartition): [SearchPartition, Sear
   ]
 }
 
+function buildHistoricalDatePartitions(
+  startDate = HISTORICAL_DATE_START,
+  endDate = HISTORICAL_DATE_END,
+): SearchPartition[] {
+  const startYear = Number(startDate.slice(0, 4))
+  const endYear = Number(endDate.slice(0, 4))
+  if (!Number.isInteger(startYear) || !Number.isInteger(endYear) || startYear > endYear) {
+    throw new Error(`GitHub Search 日期分片范围无效：${startDate}..${endDate}`)
+  }
+
+  const partitions: SearchPartition[] = []
+  for (let year = startYear; year <= endYear; year += INITIAL_DATE_PARTITION_YEARS) {
+    const lastYear = Math.min(year + INITIAL_DATE_PARTITION_YEARS - 1, endYear)
+    partitions.push({
+      createdStart: year === startYear ? startDate : `${year}-01-01`,
+      createdEnd: lastYear === endYear ? endDate : `${lastYear}-12-31`,
+    })
+  }
+  return partitions
+}
+
 function assertComplete(response: SearchPage): void {
   if (response.incomplete_results) throw new Error('GitHub Search 返回 incomplete_results')
-}
-
-function getCreatedDay(repository: SearchRepository): string {
-  const createdDay = repository.created_at.slice(0, 10)
-  dateToDay(createdDay)
-  return createdDay
-}
-
-async function getDateBounds(
-  fetcher: SearchPageFetcher,
-  partition: SearchPartition,
-): Promise<{ start: string; end: string }> {
-  const [oldest, newest] = await Promise.all([
-    fetcher(1, partition, { sort: 'created', order: 'asc' }),
-    fetcher(1, partition, { sort: 'created', order: 'desc' }),
-  ])
-  assertComplete(oldest)
-  assertComplete(newest)
-  if (oldest.items.length === 0 || newest.items.length === 0) {
-    throw new Error('GitHub Search 无法确定创建日期分片边界')
-  }
-  return {
-    start: getCreatedDay(oldest.items[0]),
-    end: getCreatedDay(newest.items[0]),
-  }
 }
 
 async function getStarsBounds(
@@ -178,18 +177,15 @@ async function collectPartition(
   firstRequest: SearchRequestOptions,
   maxResultsPerQuery: number,
   pageSize: number,
-  initialDateRange?: { start: string; end: string },
+  initialDatePartitions: SearchPartition[],
 ): Promise<SearchRepository[]> {
   assertComplete(firstPage)
   if (firstPage.total_count > maxResultsPerQuery) {
-    let children = splitDatePartition(partition)
+    let children: SearchPartition[] | null = splitDatePartition(partition)
     if (children === null && !partition.createdStart && !partition.createdEnd) {
-      const bounds = initialDateRange ?? (await getDateBounds(fetcher, partition))
-      children = splitDatePartition({
-        ...partition,
-        createdStart: bounds.start,
-        createdEnd: bounds.end,
-      })
+      children = initialDatePartitions.length === 1
+        ? splitDatePartition(initialDatePartitions[0])
+        : initialDatePartitions
     }
     if (children === null && partition.starsStart === undefined) {
       const bounds = await getStarsBounds(fetcher, partition)
@@ -215,7 +211,7 @@ async function collectPartition(
         { sort: 'stars', order: 'desc' },
         maxResultsPerQuery,
         pageSize,
-        initialDateRange,
+        initialDatePartitions,
       ))
     }
     return repositories
@@ -238,24 +234,24 @@ export async function fetchAllSearchRepositories(
   const maxResultsPerQuery = options.maxResultsPerQuery ?? MAX_RESULTS_PER_QUERY
   const pageSize = options.pageSize ?? SEARCH_PAGE_SIZE
   const maxAttempts = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS
-  const initialDateRange = options.initialDateStart && options.initialDateEnd
-    ? { start: options.initialDateStart, end: options.initialDateEnd }
-    : undefined
+  const initialDatePartitions = options.initialDateStart && options.initialDateEnd
+    ? [{ createdStart: options.initialDateStart, createdEnd: options.initialDateEnd }]
+    : buildHistoricalDatePartitions()
   let lastError: unknown
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const rootPartition: SearchPartition = {}
-      const rootPage = await fetcher(1, rootPartition, { sort: 'created', order: 'asc' })
+      const rootPage = await fetcher(1, rootPartition, { sort: 'stars', order: 'desc' })
       const reportedByGitHub = rootPage.total_count
       const repositories = await collectPartition(
         fetcher,
         rootPartition,
         rootPage,
-        { sort: 'created', order: 'asc' },
+        { sort: 'stars', order: 'desc' },
         maxResultsPerQuery,
         pageSize,
-        initialDateRange,
+        initialDatePartitions,
       )
       const uniqueRepositories = new Map<number, SearchRepository>()
       for (const repository of repositories) uniqueRepositories.set(repository.id, repository)
