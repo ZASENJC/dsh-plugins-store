@@ -9,7 +9,7 @@ import {
 } from './p3-validators'
 
 describe('P3 DSH Web + Playwright validator', () => {
-  it('loads, checks a declared slot, uninstalls, and verifies cleanup without network or host mounts', () => {
+  it('loads, checks a declared slot, uninstalls, and verifies cleanup with network but no host mounts', () => {
     const plan = buildWebValidationPlan({
       repositoryId: 1,
       sourceSha: 'a'.repeat(40),
@@ -25,7 +25,7 @@ describe('P3 DSH Web + Playwright validator', () => {
     ])
     for (const step of plan.steps) {
       expect(step.command.args).toContain('--platform=linux/amd64')
-      expect(step.command.args).toContain('--network=none')
+      expect(step.command.args).toContain('--network=bridge')
       expect(step.command.args).toContain('dsh-web-validator:0.1.0')
       expect(step.command.args.join(' ')).not.toMatch(/docker\.sock|type=bind|TOKEN|SECRET/)
     }
@@ -69,7 +69,7 @@ describe('P3 collection validator', () => {
 })
 
 describe('P3 Channel/MCP mock validator', () => {
-  it('requires an explicit local mock contract and builds a networkless smoke plan', () => {
+  it('requires an explicit local mock contract and builds a networked smoke plan', () => {
     const contract = parseChannelMockContract({
       protocol: 'http',
       endpointEnv: 'DSH_CHANNEL_ENDPOINT',
@@ -85,7 +85,7 @@ describe('P3 Channel/MCP mock validator', () => {
 
     expect(plan.command.args).toEqual(expect.arrayContaining([
       '--platform=linux/amd64',
-      '--network=none',
+      '--network=bridge',
       'dsh-web-validator:0.1.0',
       '/validator/channel-mock-smoke.mjs',
     ]))
