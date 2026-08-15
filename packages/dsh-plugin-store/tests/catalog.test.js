@@ -131,6 +131,60 @@ describe('plugin catalog filtering', () => {
     expect(buildInstallCommand(repositories[2])).toBeNull()
   })
 
+  it('builds a safe plan for a recognized README command before validation completes', () => {
+    const repository = {
+      ...repositories[0],
+      repositoryId: 6,
+      fullName: 'owner/unverified-plugin',
+      validation: { overall: 'check-pending' },
+      install: {
+        status: 'recognized',
+        candidate: {
+          source: 'github',
+          target: 'owner/unverified-plugin',
+          command: 'dsh plugin --profile web add github:owner/unverified-plugin',
+          args: ['plugin', '--profile', 'web', 'add', 'github:owner/unverified-plugin'],
+          executable: true,
+          evidence: { source: 'readme', pattern: 'dsh-plugin-add', heading: 'Install' },
+        },
+      },
+    }
+
+    expect(buildInstallPlan(repository)).toMatchObject({
+      source: 'github',
+      target: 'owner/unverified-plugin',
+      args: ['plugin', '--profile', 'web', 'add', 'github:owner/unverified-plugin'],
+      executable: true,
+    })
+  })
+
+  it('builds a safe plan for a recognized npm README command before validation completes', () => {
+    const repository = {
+      ...repositories[0],
+      repositoryId: 7,
+      fullName: 'owner/npm-plugin',
+      validation: { overall: 'check-pending' },
+      install: {
+        status: 'recognized',
+        candidate: {
+          source: 'npm',
+          target: 'dsh-example',
+          command: 'npm install dsh-example',
+          args: ['plugin', '--profile', 'web', 'add', 'npm:dsh-example'],
+          executable: true,
+          evidence: { source: 'readme', pattern: 'package-manager-add', heading: 'Install' },
+        },
+      },
+    }
+
+    expect(buildInstallPlan(repository)).toMatchObject({
+      source: 'npm',
+      target: 'dsh-example',
+      args: ['plugin', '--profile', 'web', 'add', 'npm:dsh-example'],
+      executable: true,
+    })
+  })
+
   it('never manufactures an unpinned GitHub command', () => {
     const plan = buildInstallPlan(repositories[0])
     expect(plan?.args[4]).toBe(`github:owner/verified-ui#${'a'.repeat(40)}`)

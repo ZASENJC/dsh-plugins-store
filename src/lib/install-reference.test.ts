@@ -114,6 +114,52 @@ dsh plugin --profile web add github:owner/plugin
     })
   })
 
+  it('keeps a matching README GitHub command executable without current validation', () => {
+    const reference = extractInstallReference(`
+## Install
+
+\`\`\`sh
+dsh plugin --profile web add github:owner/plugin
+\`\`\`
+`)
+
+    expect(resolveCatalogInstallReference(reference, {
+      fullName: 'owner/plugin',
+      validation: { overall: 'check-pending' },
+    })).toMatchObject({
+      status: 'recognized',
+      candidate: {
+        source: 'github',
+        target: 'owner/plugin',
+        args: ['plugin', '--profile', 'web', 'add', 'github:owner/plugin'],
+        executable: true,
+      },
+    })
+  })
+
+  it('converts a recognized npm README command into a structured DSH install plan', () => {
+    const reference = extractInstallReference(`
+## Install
+
+\`\`\`sh
+npm install dsh-example
+\`\`\`
+`)
+
+    expect(resolveCatalogInstallReference(reference, {
+      fullName: 'owner/plugin',
+      validation: { overall: 'check-pending' },
+    })).toMatchObject({
+      status: 'recognized',
+      candidate: {
+        source: 'npm',
+        target: 'dsh-example',
+        args: ['plugin', '--profile', 'web', 'add', 'npm:dsh-example'],
+        executable: true,
+      },
+    })
+  })
+
   it('does not make a README command executable when it targets another repository', () => {
     const reference = extractInstallReference(`
 ## Install

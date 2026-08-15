@@ -102,10 +102,9 @@ describe('host-side structured installation', () => {
   it.each([
     { ...githubPlan, target: '' },
     { ...githubPlan, target: 'owner/repo;unsafe' },
-    { ...githubPlan, args: ['plugin', '--profile', 'web', 'add', 'github:owner/repository'] },
     { ...githubPlan, executable: false },
     { source: 'npm', target: 'dsh-example', args: ['plugin', '--profile', 'web', 'add', 'npm:dsh-example;unsafe'], executable: true },
-  ])('rejects an unsafe or unpinned plan before invoking the runner', async (plan) => {
+  ])('rejects an unsafe or malformed plan before invoking the runner', async (plan) => {
     const runner = vi.fn()
 
     await expect(installPlan(plan, {
@@ -115,6 +114,28 @@ describe('host-side structured installation', () => {
       signal: new AbortController().signal,
     })).rejects.toThrow()
     expect(runner).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['github:owner/repository', 'owner/repository'],
+    ['github:owner/repository#v1.2.3', 'owner/repository'],
+  ])('accepts a README GitHub reference without requiring a validation SHA', async (specifier, target) => {
+    const runner = vi.fn().mockResolvedValue({ stdout: 'installed', stderr: '' })
+    const plan = {
+      source: 'github',
+      target,
+      args: ['plugin', '--profile', 'web', 'add', specifier],
+      executable: true,
+    }
+
+    await installPlan(plan, {
+      runner,
+      execPath: '/usr/bin/node',
+      cliPath: '/opt/dsh/bin.js',
+      signal: new AbortController().signal,
+    })
+
+    expect(runner).toHaveBeenCalledWith('/usr/bin/node', ['/opt/dsh/bin.js', ...plan.args], expect.any(AbortSignal))
   })
 
   it('rejects an incomplete host runner configuration', async () => {
