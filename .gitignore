@@ -8,7 +8,7 @@ validation/reports/
 .env.*
 !.env.example
 
-# Local-only documentation. README files remain trackable.
+# Local-only documentation. README and SKILL files remain trackable.
 *.md
 *.mdx
 *.rst
@@ -16,6 +16,8 @@ validation/reports/
 *.txt
 !README*
 !**/README*
+!SKILL.md
+!**/SKILL.md
 docs/*
 
 # These are public static text assets, not documentation.
