@@ -1,24 +1,39 @@
 import { runNativeCommand } from '@deepseek-ai/dsh-native-command'
 import { createInstallHandler, installPlan } from './installer.js'
 import { createInventoryHandler, createRemoveHandler, listInstalledPlugins, removeInstalledPlugin } from './plugin-manager.js'
+import { loadBundledStoreSkill } from './store-skill.js'
+import { createStoreApprovalGate, createStoreTools } from './store-search.js'
 
 export const name = 'dsh-plugin-store'
-export const inject = ['commands', 'webServer']
+export const inject = ['commands', 'webServer', 'tools', 'skills']
 
 const INSTALL_PATH = '/api/dsh-plugin-store/install'
 const INVENTORY_PATH = '/api/dsh-plugin-store/plugins'
 const REMOVE_PATH = '/api/dsh-plugin-store/remove'
 
-function runnerOptions() {
+function runnerOptions(signal = new AbortController().signal) {
   return {
     runner: runNativeCommand,
     execPath: process.execPath,
     cliPath: process.argv[1],
-    signal: new AbortController().signal,
+    signal,
+  }
+}
+
+function storeToolOptions() {
+  return {
+    listInstalled: (signal) => listInstalledPlugins(runnerOptions(signal)),
+    install: (plan, signal) => installPlan(plan, runnerOptions(signal)),
+    remove: (packageName, installed, signal) => removeInstalledPlugin(packageName, {
+      ...runnerOptions(signal),
+      installed,
+    }),
   }
 }
 
 export function apply(ctx) {
+  const storeSkill = loadBundledStoreSkill()
+
   ctx.commands.register({
     name: 'store',
     description: 'Browse the DSH plugin store',
@@ -27,15 +42,16 @@ export function apply(ctx) {
       : { kind: 'error', text: 'Usage: /store' },
   })
 
+  for (const tool of createStoreTools(storeToolOptions())) ctx.tools.register(tool)
+  ctx.on('tools/pre-execute', createStoreApprovalGate())
+  ctx.skills.register(storeSkill)
+
   ctx.webServer.register({
     kind: 'exact',
     path: INSTALL_PATH,
     handler: createInstallHandler({
       install: (plan) => installPlan(plan, {
-        runner: runNativeCommand,
-        execPath: process.execPath,
-        cliPath: process.argv[1],
-        signal: new AbortController().signal,
+        ...runnerOptions(),
       }),
     }),
   })

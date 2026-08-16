@@ -9,6 +9,7 @@ const componentsPath = fileURLToPath(new URL('../src/components.jsx', import.met
 const catalogPath = fileURLToPath(new URL('../src/catalog.js', import.meta.url))
 const stylesPath = fileURLToPath(new URL('../src/styles.js', import.meta.url))
 const localesPath = fileURLToPath(new URL('../src/locales.js', import.meta.url))
+const skillPath = fileURLToPath(new URL('../skills/search-dsh-store/SKILL.md', import.meta.url))
 
 describe('installable DSH plugin package', () => {
   it('declares both host and web client entries plus the official UI dependencies', () => {
@@ -36,9 +37,11 @@ describe('installable DSH plugin package', () => {
     ]))
     expect(manifest.scripts).toHaveProperty('prepack', 'node build.mjs')
     expect(manifest.scripts).not.toHaveProperty('prepare')
+    expect(manifest.files).toContain('skills')
+    expect(readFileSync(skillPath, 'utf8')).toContain('name: search-dsh-store')
   })
 
-  it('wires slash execution to a root overlay plus the session utility and Plugins settings tab', () => {
+  it('wires slash execution to a root overlay and Plugins settings without a header utility', () => {
     expect(existsSync(clientPath)).toBe(true)
     if (!existsSync(clientPath)) return
 
@@ -48,7 +51,8 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain('dialogController.openInstall')
     expect(source).toContain("ctx.slots.inject('shell.overlay'")
     expect(source).toContain('StoreOverlay')
-    expect(source).toContain('conversation.session.header.utilities')
+    expect(source).not.toContain('conversation.session.header.utilities')
+    expect(source).not.toContain('StoreHeaderAction')
     expect(source).toContain('workspaces: ctx.workspaces')
     expect(source).toContain('ctx.sessions')
     expect(source).toContain('settings.plugins.tab')

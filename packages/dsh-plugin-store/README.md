@@ -3,7 +3,7 @@
 把 [DSH 插件市场](https://dsh.aitreez.com/) 作为原生页面接入 DeepSeek Harness Web：
 
 - 输入 `/store` 打开商店对话框
-- 点击会话标题栏的插件图标打开同一对话框
+- 在对话中要求 Agent 搜索、查找或推荐 DSH 插件时，通过 `store_search` 读取同一份实时市场 API；插件同时注册配套的 `search-dsh-store` skill
 - 通过“设置 → 插件 → 插件市场”长期浏览
 - README 明确识别出的安全 DSH/npm 安装命令可进入一键安装；GitHub 命令在有当前验证时会自动固定到 SHA
 - 验证状态与网页版同步展示，包括“安全复核中”和“需重新验证”的具体原因

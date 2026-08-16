@@ -1,3 +1,9 @@
+import {
+  classifyRepository,
+  type ProjectType,
+} from './classification'
+import type { SourceClassification } from './source-classification'
+
 export type InstallSource = 'github' | 'npm' | 'readme-command'
 
 export interface InstallEvidence {
@@ -34,12 +40,33 @@ interface CatalogInstallContext {
   }
 }
 
+interface InstallReferenceRepository {
+  fullName: string
+  name: string
+  description: string
+  topics: string[]
+}
+
 const INSTALL_HEADING = /(?:install(?:ation)?|setup|get(?:ting)? started|quicks*start|安装|安装方法|安装方式|快速开始)/i
 const GITHUB_SPECIFIER = /^github:([A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99})\/[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,99}))(?:#([A-Za-z0-9][A-Za-z0-9_.:-]{0,127}))?$/
 const NPM_PACKAGE = /^(?:@[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})\/)?[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})(?:@[A-Za-z0-9^~<>=*+._-][A-Za-z0-9^~<>=*+._-]{0,127})?$/
 const SOURCE_SHA = /^[a-f0-9]{40}$/i
 const UNSAFE_COMMAND = /(?:&&|\|\||[|;&<>`$\\])/u
 const PACKAGE_MANAGER_FLAG = /^(?:-D|-E|-g|--global|--save|--save-dev|--save-exact|--exact|--frozen-lockfile|--workspace)$/
+const INSTALLABLE_PROJECT_TYPES = new Set<ProjectType>(['plugin', 'skill', 'collection', 'channel'])
+
+export function canExtractInstallReference(
+  repository: InstallReferenceRepository,
+  sourceClassification?: SourceClassification,
+): boolean {
+  const topicProjectType = classifyRepository(repository).projectType
+  const sourceProjectType = sourceClassification
+    && sourceClassification.projectType !== 'unknown'
+    && sourceClassification.confidence !== 'low'
+    ? sourceClassification.projectType
+    : undefined
+  return INSTALLABLE_PROJECT_TYPES.has(sourceProjectType ?? topicProjectType)
+}
 
 function collectCodeBlocks(readme: string): ReadmeBlock[] {
   const blocks: ReadmeBlock[] = []
@@ -155,7 +182,13 @@ export function extractInstallReference(readme: string): InstallReference {
   }
 
   if (candidates.length === 0) return { status: 'unrecognized', candidates: [] }
-  if (candidates.length > 1) return { status: 'ambiguous', candidates }
+  if (candidates.length > 1) {
+    const executableWebCandidates = candidates.filter(({ executable }) => executable)
+    if (executableWebCandidates.length === 1) {
+      return { status: 'recognized', candidate: executableWebCandidates[0], candidates }
+    }
+    return { status: 'ambiguous', candidates }
+  }
   return { status: 'recognized', candidate: candidates[0], candidates }
 }
 

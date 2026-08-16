@@ -1,11 +1,32 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  canExtractInstallReference,
   extractInstallReference,
   resolveCatalogInstallReference,
 } from './install-reference'
 
 describe('README install reference extraction', () => {
+  it('uses a current source classification when generic topics cannot identify a plugin', () => {
+    const repository = {
+      fullName: 'danglong0313/dsh-history-sync',
+      name: 'dsh-history-sync',
+      description: 'Sync Codex and Claude history into DSH',
+      topics: ['deepseek', 'deepseek-harness', 'dsh', 'dsh-plugin', 'dsh-plugins'],
+    }
+
+    expect(canExtractInstallReference(repository)).toBe(false)
+    expect(canExtractInstallReference(repository, {
+      sourceSha: 'a'.repeat(40),
+      classifierVersion: '0.1.0',
+      projectType: 'plugin',
+      category: 'agent-session',
+      categories: ['agent-session'],
+      matchedSignals: ['package.json:dsh.bundle.patch'],
+      confidence: 'high',
+    })).toBe(true)
+  })
+
   it('recognizes an explicit DSH GitHub install command in an install section', () => {
     const result = extractInstallReference(`
 ## Installation
@@ -67,7 +88,30 @@ pnpm add -D @scope/dsh-example --exact
     })
   })
 
-  it('does not select a shell pipeline or silently choose between multiple commands', () => {
+  it('selects the only executable Web instruction when another profile is also documented', () => {
+    expect(extractInstallReference(`
+## DSH Desktop
+
+\`\`\`powershell
+dsh plugin --profile desktop add @owner/dsh-history-sync@0.2.0
+\`\`\`
+
+## Browser Web profile
+
+\`\`\`powershell
+dsh plugin --profile web add @owner/dsh-history-sync@0.2.0
+\`\`\`
+`)).toMatchObject({
+      status: 'recognized',
+      candidate: {
+        target: '@owner/dsh-history-sync@0.2.0',
+        args: ['plugin', '--profile', 'web', 'add', '@owner/dsh-history-sync@0.2.0'],
+        executable: true,
+      },
+    })
+  })
+
+  it('does not select a shell pipeline or silently choose between multiple Web commands', () => {
     expect(extractInstallReference(`
 ## Install
 
@@ -86,8 +130,16 @@ dsh plugin --profile web add npm:second-package
 `)).toMatchObject({
       status: 'ambiguous',
       candidates: expect.arrayContaining([
-        expect.objectContaining({ target: 'first-package' }),
-        expect.objectContaining({ target: 'second-package' }),
+        expect.objectContaining({
+          target: 'first-package',
+          command: 'dsh plugin --profile web add npm:first-package',
+          executable: true,
+        }),
+        expect.objectContaining({
+          target: 'second-package',
+          command: 'dsh plugin --profile web add npm:second-package',
+          executable: true,
+        }),
       ]),
     })
   })

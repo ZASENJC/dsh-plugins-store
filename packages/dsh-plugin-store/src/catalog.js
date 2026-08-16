@@ -59,13 +59,10 @@ function readDshInstallArgs(candidate) {
   return [...candidate.args]
 }
 
-function buildCandidatePlan(repository) {
-  const candidate = getInstallCandidate(repository)
-  if (candidate === null || candidate.executable !== true) return null
+function readExecutableCandidate(repository, candidate) {
+  if (candidate === null || candidate === undefined || candidate.executable !== true) return null
   if (!Array.isArray(candidate.args)) return null
   if (typeof candidate.target !== 'string' || typeof repository.fullName !== 'string') return null
-  const sourceSha = String(repository.validation?.sourceSha ?? '')
-  if (repository.validation?.overall === 'verified' && !SOURCE_SHA.test(sourceSha)) return null
 
   const args = readDshInstallArgs(candidate)
   if (args === null) return null
@@ -75,8 +72,6 @@ function buildCandidatePlan(repository) {
     if (!match || !REPOSITORY_FULL_NAME.test(match[1])
       || match[1].toLowerCase() !== String(repository.fullName).toLowerCase()
       || candidate.target.toLowerCase() !== repository.fullName.toLowerCase()) return null
-    if (repository.validation?.overall === 'verified'
-      && match[2]?.toLowerCase() !== sourceSha.toLowerCase()) return null
   } else if (candidate.source === 'npm') {
     const specifier = args[4].startsWith('npm:') ? args[4].slice(4) : args[4]
     if (!NPM_PACKAGE.test(specifier) || specifier !== candidate.target) return null
@@ -84,19 +79,41 @@ function buildCandidatePlan(repository) {
     return null
   }
 
+  return { args }
+}
+
+function buildCandidatePlan(repository) {
+  const candidate = getInstallCandidate(repository)
+  const validated = readExecutableCandidate(repository, candidate)
+  if (validated === null) return null
+  const sourceSha = String(repository.validation?.sourceSha ?? '')
+  if (repository.validation?.overall === 'verified' && !SOURCE_SHA.test(sourceSha)) return null
+  if (candidate.source === 'github' && repository.validation?.overall === 'verified') {
+    const match = GITHUB_SPECIFIER.exec(validated.args[4])
+    if (match?.[2]?.toLowerCase() !== sourceSha.toLowerCase()) return null
+  }
+
   return {
     source: candidate.source,
     target: candidate.target,
     command: candidate.source === 'github'
-      ? `dsh plugin --profile web add ${args[4]}`
+      ? `dsh plugin --profile web add ${validated.args[4]}`
       : candidate.command,
-    args,
+    args: validated.args,
     executable: true,
   }
 }
 
 export function buildInstallPlan(repository) {
   return buildCandidatePlan(repository)
+}
+
+export function getExecutableWebInstallCommands(repository) {
+  if (repository.install?.status !== 'ambiguous' || !Array.isArray(repository.install.candidates)) return []
+  return [...new Set(repository.install.candidates.flatMap((candidate) => {
+    const validated = readExecutableCandidate(repository, candidate)
+    return validated === null ? [] : [`dsh plugin --profile web add ${validated.args[4]}`]
+  }))]
 }
 
 function normalizedSearchText(repository) {

@@ -681,20 +681,6 @@ export function StoreOverlay({ dialogController, catalogStore, sessions, workspa
   )
 }
 
-export function StoreHeaderAction({ dialogController, t }) {
-  return (
-    <button
-      className="dps-header-button"
-      type="button"
-      onClick={() => dialogController.open()}
-      aria-label={t('header.open')}
-      title={t('header.open')}
-    >
-      <IconCordisPluginOutline14 size={16} />
-    </button>
-  )
-}
-
 export function StoreSettingsTab({ catalogStore, sessions, workspaces, t }) {
   return <StoreView catalogStore={catalogStore} mode="settings" sessions={sessions} workspaces={workspaces} t={t} />
 }

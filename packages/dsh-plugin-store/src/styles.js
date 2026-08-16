@@ -1,5 +1,4 @@
 export const styles = String.raw`
-.dps-header-button,
 .dps-icon-button {
   display: inline-flex;
   align-items: center;
@@ -11,19 +10,11 @@ export const styles = String.raw`
   cursor: pointer;
 }
 
-.dps-header-button {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-}
-
-.dps-header-button:hover,
 .dps-icon-button:hover {
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
-.dps-header-button:focus-visible,
 .dps-icon-button:focus-visible,
 .dps-load-more:focus-visible,
 .dps-retry:focus-visible,
@@ -679,7 +670,6 @@ body > :has(> .dps-risk-modal) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dps-header-button,
   .dps-icon-button,
   .dps-retry,
   .dps-load-more {

@@ -1,5 +1,5 @@
 import { CatalogStore } from './catalog.js'
-import { StoreHeaderAction, StoreOverlay, StoreSettingsTab } from './components.jsx'
+import { StoreOverlay, StoreSettingsTab } from './components.jsx'
 import { StoreDialogController } from './controller.js'
 import { consumeLocalInstallRequest } from './deep-link.js'
 import { NS, en, zh } from './locales.js'
@@ -28,14 +28,6 @@ export function apply(ctx) {
     locale: NS,
     inject: () => ({ catalogStore, dialogController, sessions: ctx.sessions, workspaces: ctx.workspaces }),
   }, StoreOverlay))
-
-  ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
-    name: 'conversation.session.header.utilities',
-    id: 'plugin-store',
-    order: 40,
-    locale: NS,
-    inject: () => ({ dialogController }),
-  }, StoreHeaderAction))
 
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
     name: 'settings.plugins.tab',

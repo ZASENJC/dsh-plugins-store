@@ -7,10 +7,14 @@ import {
   VERIFIED_REPOSITORY_OVERRIDES,
   type GitHubRepository,
 } from '../src/lib/catalog'
-import { classifyRepository } from '../src/lib/classification'
 import { extractVerifiedRepositoryNames } from '../src/lib/github-content'
-import { extractInstallReference, type InstallReference } from '../src/lib/install-reference'
 import {
+  canExtractInstallReference,
+  extractInstallReference,
+  type InstallReference,
+} from '../src/lib/install-reference'
+import {
+  currentSourceClassification,
   filterCatalogRepositoriesByArchive,
   parseSourceClassificationArchive,
   validationRecordsFromArchive,
@@ -53,14 +57,19 @@ async function fetchRenderedReadme(fullName: string): Promise<Response> {
   })
 }
 
-function canHaveInstallReference(repository: GitHubRepository): boolean {
-  const classification = classifyRepository({
+function canHaveInstallReference(
+  repository: GitHubRepository,
+  classificationArchive: SourceClassificationArchive | null,
+): boolean {
+  return canExtractInstallReference({
     fullName: repository.full_name,
     name: repository.name,
     description: repository.description ?? '',
     topics: repository.topics ?? [],
-  })
-  return new Set(['plugin', 'skill', 'collection', 'channel']).has(classification.projectType)
+  }, currentSourceClassification({
+    repositoryId: repository.id,
+    pushedAt: repository.pushed_at,
+  }, classificationArchive))
 }
 
 async function fetchRawReadme(repository: GitHubRepository): Promise<string | null> {
@@ -80,8 +89,13 @@ async function fetchRawReadme(repository: GitHubRepository): Promise<string | nu
   return null
 }
 
-async function fetchInstallReferences(repositories: GitHubRepository[]): Promise<ReadonlyMap<number, InstallReference>> {
-  const candidates = repositories.filter(canHaveInstallReference)
+async function fetchInstallReferences(
+  repositories: GitHubRepository[],
+  classificationArchive: SourceClassificationArchive | null,
+): Promise<ReadonlyMap<number, InstallReference>> {
+  const candidates = repositories.filter((repository) => (
+    canHaveInstallReference(repository, classificationArchive)
+  ))
   const references = new Map<number, InstallReference>()
   let cursor = 0
 
@@ -167,7 +181,7 @@ async function sync() {
   const catalogRepositories = classificationArchive === null
     ? repositories
     : filterCatalogRepositoriesByArchive(allRepositories, classificationArchive)
-  const installReferences = await fetchInstallReferences(catalogRepositories)
+  const installReferences = await fetchInstallReferences(catalogRepositories, classificationArchive)
   const generatedAt = new Date().toISOString()
   const catalog = buildCatalog(
     catalogRepositories,
