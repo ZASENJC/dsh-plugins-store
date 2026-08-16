@@ -1,13 +1,14 @@
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { chmod, mkdir } from 'node:fs/promises'
+import { chmod, lstat, mkdir, readFile, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { isAbsolute, join, posix, relative, resolve } from 'node:path'
 
 import type { ScannerSecret, ScannerVulnerability } from './structure-check'
 
 const MAX_SCANNER_OUTPUT_BYTES = 16 * 1024 * 1024
 const SCANNER_TIMEOUT_MS = 120_000
+const MAX_SECRET_CONTEXT_BYTES = 1_000_000
 
 export const SCANNER_IMAGES = Object.freeze({
   trivy: 'aquasec/trivy:0.74.0',
@@ -106,10 +107,87 @@ export function buildScannerCommands(
     {
       tool: 'gitleaks',
       file: 'docker',
-      args: [...dockerPrefix(sourceDir), '--network=none', SCANNER_IMAGES.gitleaks, 'dir', '/workspace', '--no-banner', '--report-format=json', '--report-path=/dev/stdout', '--exit-code=0'],
+      args: [...dockerPrefix(sourceDir), '--network=none', SCANNER_IMAGES.gitleaks, 'dir', '/workspace', '--no-banner', '--redact=100', '--report-format=json', '--report-path=/dev/stdout', '--exit-code=0'],
       outputPath: join(outputRoot, 'gitleaks.json'),
     },
   ]
+}
+
+function normalizedScannerPath(value: string): string | null {
+  const unixPath = value.replace(/\\/g, '/')
+  const workspaceRelative = unixPath.startsWith('/workspace/')
+    ? unixPath.slice('/workspace/'.length)
+    : unixPath.replace(/^\.\//, '')
+  const normalized = posix.normalize(workspaceRelative)
+  return normalized !== '.'
+    && normalized !== '..'
+    && !normalized.startsWith('../')
+    && !posix.isAbsolute(normalized)
+    && !normalized.includes('\0')
+    ? normalized
+    : null
+}
+
+function isNonRuntimeEvidencePath(path: string): boolean {
+  return /(^|\/)(?:__tests__|docs?|documentation|examples?|fixtures?|references?|samples?|specs?|test|tests|testdata|digest)(?:\/|$)/i.test(path)
+    || /(^|\/)README(?:\.[^/]*)?$/i.test(path)
+    || /\.(?:fixture|spec|test)\.[^/]+$/i.test(path)
+}
+
+function hasAssignmentSyntax(match: string): boolean {
+  const redactionIndex = match.indexOf('REDACTED')
+  if (redactionIndex < 0) return true
+  const prefix = match.slice(0, redactionIndex)
+  return /[\w.-]{1,80}\s*["']?\s*(?:=|:{1,3}=|:|=>|\?=)\s*["']?\s*$/i.test(prefix)
+}
+
+function gitleaksFindingTriage(
+  ruleId: string,
+  path: string | null,
+  match: unknown,
+): ScannerSecret['triage'] | undefined {
+  if (ruleId !== 'generic-api-key' || path === null) return undefined
+  if (isNonRuntimeEvidencePath(path)) return 'generic-non-runtime'
+  if (typeof match === 'string' && !hasAssignmentSyntax(match)) return 'generic-syntax-noise'
+  return undefined
+}
+
+async function hasKnownPublicClientContext(
+  sourceDirectory: string,
+  secret: ScannerSecret,
+): Promise<boolean> {
+  if (secret.ruleId !== 'generic-api-key' || secret.path === undefined || secret.line === undefined) return false
+  try {
+    const sourceRoot = await realpath(resolve(sourceDirectory))
+    const sourcePath = resolve(sourceRoot, secret.path)
+    const relativePath = relative(sourceRoot, sourcePath)
+    if (relativePath === '' || relativePath === '..' || relativePath.startsWith(`..${posix.sep}`) || isAbsolute(relativePath)) {
+      return false
+    }
+    const stats = await lstat(sourcePath)
+    if (!stats.isFile() || stats.size > MAX_SECRET_CONTEXT_BYTES) return false
+    const content = await readFile(sourcePath, 'utf8')
+    const findingLine = content.split(/\r?\n/)[secret.line - 1] ?? ''
+    return /\btoken\s*[:=]/i.test(findingLine)
+      && /static\.cloudflareinsights\.com\/beacon\.min\.js/i.test(content)
+      && /data-cf-beacon/i.test(content)
+  } catch {
+    return false
+  }
+}
+
+async function triageKnownPublicClientIdentifiers(
+  result: ScannerResults['gitleaks'],
+  sourceDirectory: string,
+): Promise<ScannerResults['gitleaks']> {
+  return {
+    ...result,
+    secrets: await Promise.all(result.secrets.map(async (secret) => (
+      secret.triage === undefined && await hasKnownPublicClientContext(sourceDirectory, secret)
+        ? { ...secret, triage: 'public-client-identifier' as const }
+        : secret
+    ))),
+  }
 }
 
 export function parseTrivyReport(value: unknown): ScannerResults['trivy'] {
@@ -175,9 +253,16 @@ export function parseGitleaksReport(value: unknown): ScannerResults['gitleaks'] 
   for (const raw of findings) {
     const finding = asRecord(raw)
     if (!finding || typeof finding.RuleID !== 'string') continue
+    const path = typeof finding.File === 'string' ? normalizedScannerPath(finding.File) : null
+    const line = Number.isSafeInteger(finding.StartLine) && Number(finding.StartLine) > 0
+      ? Number(finding.StartLine)
+      : undefined
+    const triage = gitleaksFindingTriage(finding.RuleID, path, finding.Match)
     secrets.push({
       ruleId: finding.RuleID,
-      ...(typeof finding.File === 'string' ? { path: finding.File } : {}),
+      ...(path ? { path } : {}),
+      ...(line === undefined ? {} : { line }),
+      ...(triage === undefined ? {} : { triage }),
     })
   }
   return { status: secrets.length > 0 ? 'findings' : 'passed', secrets }
@@ -313,7 +398,7 @@ export async function runScannerCommands(
       const parsedResult = parseOsvReport(parsed)
       if (!nonZeroExit || hasScannerFindings(command.tool, parsedResult)) result.osv = parsedResult
     } else {
-      const parsedResult = parseGitleaksReport(parsed)
+      const parsedResult = await triageKnownPublicClientIdentifiers(parseGitleaksReport(parsed), sourceDirectory)
       if (!nonZeroExit || hasScannerFindings(command.tool, parsedResult)) result.gitleaks = parsedResult
     }
   }

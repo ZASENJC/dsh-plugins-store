@@ -25,6 +25,8 @@ export interface ScannerVulnerability {
 export interface ScannerSecret {
   ruleId: string
   path?: string
+  line?: number
+  triage?: 'generic-non-runtime' | 'generic-syntax-noise' | 'public-client-identifier'
 }
 
 export interface RepositoryStructureSnapshot {
@@ -140,6 +142,22 @@ function externalCredentialPath(files: RepositoryStructureSnapshot['files']): st
     && typeof content === 'string'
     && /npm\.pkg\.github\.com|_authToken\s*=|\$\{(?:NODE_AUTH_TOKEN|NPM_TOKEN|GITHUB_TOKEN)\}/i.test(content)
   ))?.[0]
+}
+
+function normalizedScannerPath(value: string | undefined): string | null {
+  if (value === undefined) return null
+  const unixPath = value.replace(/\\/g, '/')
+  const workspaceRelative = unixPath.startsWith('/workspace/')
+    ? unixPath.slice('/workspace/'.length)
+    : unixPath.replace(/^\.\//, '')
+  const normalized = posix.normalize(workspaceRelative)
+  return normalized !== '.'
+    && normalized !== '..'
+    && !normalized.startsWith('../')
+    && !posix.isAbsolute(normalized)
+    && !normalized.includes('\0')
+    ? normalized
+    : null
 }
 
 function fingerprint(repositoryId: number, sourceSha: string, code: string): string {
@@ -498,7 +516,16 @@ export function runStructureCheck(
   const gitleaksSecrets = snapshot.scans.gitleaks?.secrets ?? []
   const trivyVulnerabilities = snapshot.scans.trivy.vulnerabilities
   const osvVulnerabilities = snapshot.scans.osv.vulnerabilities
-  const secretFindings = trivySecrets.length + gitleaksSecrets.length
+  const trivySecretPaths = new Set(trivySecrets
+    .map((secret) => normalizedScannerPath(secret.path))
+    .filter((path): path is string => path !== null))
+  const ignoredGitleaksSecrets = gitleaksSecrets.filter((secret) => {
+    if (secret.triage === undefined) return false
+    const path = normalizedScannerPath(secret.path)
+    return path !== null && !trivySecretPaths.has(path)
+  })
+  const blockingGitleaksSecrets = gitleaksSecrets.filter((secret) => !ignoredGitleaksSecrets.includes(secret))
+  const secretFindings = trivySecrets.length + blockingGitleaksSecrets.length
   if (snapshot.scans.trivy.status === 'unavailable') {
     check(checks, 'TRIVY_SCAN_UNAVAILABLE', 'not-run', 'security', 'Trivy result is unavailable.', undefined, 'trivy')
   } else if (trivySecrets.length > 0) {
@@ -517,10 +544,20 @@ export function runStructureCheck(
   }
   if (snapshot.scans.gitleaks?.status === 'unavailable') {
     check(checks, 'GITLEAKS_SCAN_UNAVAILABLE', 'not-run', 'security', 'Gitleaks result is unavailable.', undefined, 'gitleaks')
-  } else if (gitleaksSecrets.length > 0) {
+  } else if (blockingGitleaksSecrets.length > 0) {
     check(checks, 'GITLEAKS_SCAN_QUARANTINE', 'quarantined', 'security', 'Potential secret material requires private human review.', undefined, 'gitleaks')
   } else if (snapshot.scans.gitleaks) {
-    check(checks, 'GITLEAKS_SCAN_CLEAN', 'passed', 'security', 'Gitleaks scan produced no secret findings.', undefined, 'gitleaks')
+    check(
+      checks,
+      ignoredGitleaksSecrets.length > 0 ? 'GITLEAKS_LOW_CONFIDENCE_IGNORED' : 'GITLEAKS_SCAN_CLEAN',
+      ignoredGitleaksSecrets.length > 0 ? 'warning' : 'passed',
+      'security',
+      ignoredGitleaksSecrets.length > 0
+        ? 'Low-confidence non-runtime or public-client signals were retained as warnings and did not enter security review.'
+        : 'Gitleaks scan produced no secret findings.',
+      undefined,
+      'gitleaks',
+    )
   }
 
   const requiredFailure = checks.find(({ status, severity }) => status === 'failed' && severity === 'required')
