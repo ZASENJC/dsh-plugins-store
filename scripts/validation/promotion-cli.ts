@@ -60,7 +60,7 @@ export async function readReports(directory: string): Promise<ValidationReport[]
   for (const entry of entries) {
     const path = join(directory, entry.name)
     if (entry.isDirectory()) reports.push(...await readReports(path))
-    else if (entry.isFile() && entry.name.endsWith('.json')) {
+    else if (entry.isFile() && entry.name.endsWith('.json') && !/^shadow-summary-\d+\.json$/.test(entry.name)) {
       reports.push(parseValidationReport(JSON.parse(await readFile(path, 'utf8'))))
     }
   }

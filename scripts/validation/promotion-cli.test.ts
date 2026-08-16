@@ -1,10 +1,10 @@
-import { access, mkdtemp, readFile } from 'node:fs/promises'
+import { access, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { parsePromotionOptions, runPromotionCli, writePromotionOutput } from './promotion-cli'
+import { parsePromotionOptions, readReports, runPromotionCli, writePromotionOutput } from './promotion-cli'
 
 const emptyFeed = {
   schemaVersion: 1 as const,
@@ -51,5 +51,19 @@ describe('P4 promotion CLI', () => {
     ])).resolves.toBeUndefined()
     expect(stdout).toHaveBeenCalledWith(expect.stringContaining('BASELINE_COVERAGE_INSUFFICIENT'))
     stdout.mockRestore()
+  })
+
+  it('ignores shard summaries when loading individual validation reports', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dsh-promotion-summary-'))
+    const reportDirectory = join(root, 'reports')
+    await mkdir(reportDirectory, { recursive: true })
+    await writeFile(join(reportDirectory, 'shadow-summary-0.json'), JSON.stringify({
+      mode: 'shadow',
+      discovered: 1,
+      reportsWritten: 0,
+      loadFailures: [{ repositoryId: 1, code: 'SNAPSHOT_LOAD_FAILED' }],
+    }))
+
+    await expect(readReports(reportDirectory)).resolves.toEqual([])
   })
 })
