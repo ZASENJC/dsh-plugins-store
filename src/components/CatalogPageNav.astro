@@ -27,7 +27,7 @@ const { active, baseUrl } = Astro.props
   </a>
   <a
     class:list={{ 'is-active': active === 'verified' }}
-    href={`${baseUrl}verified/`}
+    href={`${baseUrl}verified`}
     role="tab"
     aria-selected={active === 'verified'}
     aria-current={active === 'verified' ? 'page' : undefined}
@@ -36,7 +36,7 @@ const { active, baseUrl } = Astro.props
   </a>
   <a
     class:list={{ 'is-active': active === 'ranking' }}
-    href={`${baseUrl}ranking/`}
+    href={`${baseUrl}ranking`}
     role="tab"
     aria-selected={active === 'ranking'}
     aria-current={active === 'ranking' ? 'page' : undefined}

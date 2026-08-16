@@ -25,8 +25,8 @@ describe('catalog page navigation', () => {
     expect(navigationSource).toContain('class="catalog-view-switch"')
     expect(navigationSource).toContain('role="tablist"')
     expect(navigationSource).toContain('href={baseUrl}')
-    expect(navigationSource).toContain('href={`${baseUrl}verified/`}')
-    expect(navigationSource).toContain('href={`${baseUrl}ranking/`}')
+    expect(navigationSource).toContain('href={`${baseUrl}verified`}')
+    expect(navigationSource).toContain('href={`${baseUrl}ranking`}')
     expect(navigationSource).not.toContain('disabled')
   })
 

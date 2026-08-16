@@ -41,6 +41,10 @@ const serializedCatalog = JSON.stringify(catalog.repositories).replace(/</g, '\\
 const serializedCategories = JSON.stringify(CATEGORIES).replace(/</g, '\\u003c')
 const serializedTypes = JSON.stringify(PROJECT_TYPES).replace(/</g, '\\u003c')
 const serializedValidationStatuses = JSON.stringify(VALIDATION_STATUS_DEFINITIONS).replace(/</g, '\\u003c')
+const validationFilterStatuses = [
+  ...VALIDATION_STATUS_DEFINITIONS.filter(({ id }) => id === 'verified'),
+  ...VALIDATION_STATUS_DEFINITIONS.filter(({ id }) => id !== 'verified'),
+]
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const storeInstallCommand = 'dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store'
 const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugin-store#一键安装'
@@ -193,7 +197,7 @@ const pageTitleKey = isVerifiedPage
                     <span class="category-filter__label" data-i18n="home.allValidation">全部验证状态</span>
                     <span class="category-filter__count">{catalog.stats.fetched}</span>
                   </button>
-                  {VALIDATION_STATUS_DEFINITIONS.map((status) => (
+                  {validationFilterStatuses.map((status) => (
                     <button
                       class:list={{ 'category-filter': true, 'is-active': status.id === 'verified' }}
                       type="button"

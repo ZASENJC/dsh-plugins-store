@@ -31,7 +31,7 @@ describe('catalog filter navigation', () => {
     expect(detailSource).toContain('data-catalog-back')
     expect(detailSource).toContain("const catalogFilterParamNames = ['q', 'category', 'type', 'validation']")
     expect(detailSource).toContain("currentParams.get('from') === 'verified'")
-    expect(detailSource).toContain('catalogBackLink.href = `${catalogBackLink.href}verified/`')
+    expect(detailSource).toContain('catalogBackLink.href = `${catalogBackLink.href}verified`')
     expect(detailSource).toContain('catalogBackLink.href = `${catalogBackLink.href}${catalogFilterSearch}`')
   })
 })

@@ -17,6 +17,8 @@ describe('validation ladder presentation', () => {
   it('offers validation filters only on the independent verified page', () => {
     expect(indexSource).toContain('id="validation-filter"')
     expect(indexSource).toContain('data-validation="all"')
+    expect(indexSource).toContain("VALIDATION_STATUS_DEFINITIONS.filter(({ id }) => id === 'verified')")
+    expect(indexSource).toContain('validationFilterStatuses.map((status)')
     expect(indexSource).toContain('data-validation={status.id}')
     expect(indexSource).toContain("let selectedValidation = isVerifiedPage ? 'verified' : 'all'")
     expect(indexSource).toContain("!isVerifiedPage || selectedValidation === 'all' || repository.validation.overall === selectedValidation")
