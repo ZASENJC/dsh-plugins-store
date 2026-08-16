@@ -21,6 +21,7 @@ jobs:
     env:
       VALIDATION_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
       VALIDATION_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
+      SOURCE_CLASSIFIER_VERSION: '0.2.0'
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -240,72 +241,73 @@ jobs:
           const archivePath = 'src/data/source-classification.json'
           if (fs.existsSync(archivePath)) {
             const archive = read(archivePath)
-            const sourceById = new Map(source.repositories.map((entry) => [entry.repositoryId, entry]))
-            const archiveById = new Map(archive.records.map((record) => [record.repositoryId, record]))
-            const expectedVisibleIds = new Set(discovery.repositories
-              .filter((repository) => {
-                const record = archiveById.get(repository.id)
-                return record
-                  && record.disposition === 'include'
-                  && record.sourcePushedAt === repository.pushed_at
-                  && record.classification?.dshRelevance === 'recognized'
-              })
-              .map((repository) => repository.id))
-            const actualVisibleIds = new Set(source.repositories.map((entry) => entry.repositoryId))
-            if (expectedVisibleIds.size !== actualVisibleIds.size
-              || [...expectedVisibleIds].some((repositoryId) => !actualVisibleIds.has(repositoryId))) {
-              throw new Error(`Catalog visibility does not match source archive: expected ${expectedVisibleIds.size}, got ${actualVisibleIds.size}`)
-            }
-            const excludedIds = archive.records
-              .filter((record) => record.disposition !== 'include'
-                || record.classification?.dshRelevance !== 'recognized')
-              .map((record) => record.repositoryId)
-            if (excludedIds.some((repositoryId) => sourceById.has(repositoryId))) {
-              throw new Error('Catalog contains a repository excluded by source classification')
-            }
-            const expectedVerified = new Set(archive.records
-              .filter((record) => record.disposition === 'include'
-                && record.validation?.status === 'passed'
-                && record.validation?.sourceSha === record.sourceSha)
-              .filter((record) => sourceById.get(record.repositoryId)?.pushedAt === record.sourcePushedAt)
-              .map((record) => record.repositoryId))
-            const actualVerified = new Set(source.repositories
-              .filter((entry) => entry.validation.overall === 'verified')
-              .map((entry) => entry.repositoryId))
-            if (expectedVerified.size !== actualVerified.size
-              || [...expectedVerified].some((repositoryId) => !actualVerified.has(repositoryId))) {
-              throw new Error(`Catalog validation conclusions do not match source archive: expected ${expectedVerified.size}, got ${actualVerified.size}`)
-            }
-            for (const record of archive.records) {
-              if (record.disposition !== 'include'
-                || record.classification?.dshRelevance !== 'recognized'
-                || record.classification.typeConfidence === 'low') continue
-              const entry = sourceById.get(record.repositoryId)
-              // The archive intentionally retains historical records. A
-              // repository that is no longer in the current Topic discovery
-              // must not make the current catalog refresh fail.
-              if (!entry) continue
-              if (entry.pushedAt !== record.sourcePushedAt) {
-                if (record.validation && entry.validation.overall !== 'expired') {
-                  throw new Error(`Changed repository ${record.repositoryId} did not expire archived validation`)
+            if (archive.classifierVersion !== process.env.SOURCE_CLASSIFIER_VERSION) {
+              console.log('Source classification archive is stale. Last valid catalog remains published; no new Topic candidate is admitted.')
+            } else {
+              const sourceById = new Map(source.repositories.map((entry) => [entry.repositoryId, entry]))
+              const archiveById = new Map(archive.records.map((record) => [record.repositoryId, record]))
+              const expectedVisibleIds = new Set(discovery.repositories
+                .filter((repository) => {
+                  const record = archiveById.get(repository.id)
+                  return record
+                    && record.disposition === 'include'
+                    && record.sourcePushedAt === repository.pushed_at
+                    && record.classification?.dshRelevance === 'recognized'
+                })
+                .map((repository) => repository.id))
+              const actualVisibleIds = new Set(source.repositories.map((entry) => entry.repositoryId))
+              if (expectedVisibleIds.size !== actualVisibleIds.size
+                || [...expectedVisibleIds].some((repositoryId) => !actualVisibleIds.has(repositoryId))) {
+                throw new Error(`Catalog visibility does not match source archive: expected ${expectedVisibleIds.size}, got ${actualVisibleIds.size}`)
+              }
+              const excludedIds = archive.records
+                .filter((record) => record.disposition !== 'include'
+                  || record.classification?.dshRelevance !== 'recognized')
+                .map((record) => record.repositoryId)
+              if (excludedIds.some((repositoryId) => sourceById.has(repositoryId))) {
+                throw new Error('Catalog contains a repository excluded by source classification')
+              }
+              const expectedVerified = new Set(archive.records
+                .filter((record) => record.disposition === 'include'
+                  && record.validation?.status === 'passed'
+                  && record.validation?.sourceSha === record.sourceSha)
+                .filter((record) => sourceById.get(record.repositoryId)?.pushedAt === record.sourcePushedAt)
+                .map((record) => record.repositoryId))
+              const actualVerified = new Set(source.repositories
+                .filter((entry) => entry.validation.overall === 'verified')
+                .map((entry) => entry.repositoryId))
+              if (expectedVerified.size !== actualVerified.size
+                || [...expectedVerified].some((repositoryId) => !actualVerified.has(repositoryId))) {
+                throw new Error(`Catalog validation conclusions do not match source archive: expected ${expectedVerified.size}, got ${actualVerified.size}`)
+              }
+              for (const record of archive.records) {
+                if (record.disposition !== 'include'
+                  || record.classification?.dshRelevance !== 'recognized'
+                  || record.classification.typeConfidence === 'low') continue
+                const entry = sourceById.get(record.repositoryId)
+                // The archive intentionally retains historical records. A
+                // repository that is no longer in the current Topic discovery
+                // must not make the current catalog refresh fail.
+                if (!entry) continue
+                if (entry.pushedAt !== record.sourcePushedAt) {
+                  if (record.validation && entry.validation.overall !== 'expired') {
+                    throw new Error(`Changed repository ${record.repositoryId} did not expire archived validation`)
+                  }
+                  continue
                 }
-                continue
-              }
-              if (entry.classificationSource !== 'source') {
-                throw new Error(`Catalog is missing source classification for repository ${record.repositoryId}`)
-              }
-              if (record.classification.projectType !== 'unknown' && entry.projectType !== record.classification.projectType) {
-                throw new Error(`Catalog project type disagrees with source archive for repository ${record.repositoryId}`)
-              }
-              if (record.classification.category !== 'other' && entry.category !== record.classification.category) {
-                throw new Error(`Catalog category disagrees with source archive for repository ${record.repositoryId}`)
+                if (entry.classificationSource !== 'source') {
+                  throw new Error(`Catalog is missing source classification for repository ${record.repositoryId}`)
+                }
+                if (record.classification.projectType !== 'unknown' && entry.projectType !== record.classification.projectType) {
+                  throw new Error(`Catalog project type disagrees with source archive for repository ${record.repositoryId}`)
+                }
+                if (record.classification.category !== 'other' && entry.category !== record.classification.category) {
+                  throw new Error(`Catalog category disagrees with source archive for repository ${record.repositoryId}`)
+                }
               }
             }
           } else {
-            if (source.repositories.length !== 0) {
-              throw new Error('Catalog must fail closed when no source classification archive is available')
-            }
-            console.log('No source classification archive was restored; public admission failed closed.')
+            console.log('No source classification archive was restored. Last valid catalog remains published; no new Topic candidate is admitted.')
           }
           console.log(`Catalog archive check passed: ${source.stats.verified} verified, ${source.repositories.length} included repositories`)
           NODE

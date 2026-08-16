@@ -409,11 +409,17 @@ export function selectSourceClassificationTargets(
   })
 }
 
+export function isCurrentSourceClassificationArchive(
+  archive: SourceClassificationArchive | null,
+): archive is SourceClassificationArchive {
+  return archive !== null && archive.classifierVersion === SOURCE_CLASSIFIER_VERSION
+}
+
 function currentRecord(
   repository: Pick<SourceDiscoveryRepository, 'repositoryId' | 'pushedAt'>,
   archive: SourceClassificationArchive | null,
 ): SourceClassificationArchiveRecord | undefined {
-  if (archive === null || archive.classifierVersion !== SOURCE_CLASSIFIER_VERSION) return undefined
+  if (!isCurrentSourceClassificationArchive(archive)) return undefined
   const record = archive.records.find(({ repositoryId }) => repositoryId === repository.repositoryId)
   return record?.sourcePushedAt === repository.pushedAt ? record : undefined
 }

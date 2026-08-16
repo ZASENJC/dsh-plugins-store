@@ -17,6 +17,7 @@ import {
 import {
   currentSourceClassification,
   filterCatalogRepositoriesByArchive,
+  isCurrentSourceClassificationArchive,
   parseSourceClassificationArchive,
   validationRecordsFromArchive,
   type SourceClassificationArchive,
@@ -187,21 +188,29 @@ async function sync() {
   const previousCatalog = await readPreviousCatalog()
   const { repositories, allRepositories, reportedByGitHub } = await fetchRepositories()
   const classificationArchive = await readClassificationArchive()
-  const validationRecords = validationRecordsFromArchive(classificationArchive)
+  const currentClassificationArchive = isCurrentSourceClassificationArchive(classificationArchive)
+    ? classificationArchive
+    : null
+  const validationRecords = validationRecordsFromArchive(currentClassificationArchive)
   const verifiedRepositoryNames = await readHistoricalVerifiedRepositoryNames()
-  const catalogRepositories = filterCatalogRepositoriesByArchive(allRepositories, classificationArchive)
-  const installReferences = await fetchInstallReferences(catalogRepositories, classificationArchive)
+  const catalogRepositories = filterCatalogRepositoriesByArchive(allRepositories, currentClassificationArchive)
+  const installReferences = currentClassificationArchive === null
+    ? new Map<number, InstallReference>()
+    : await fetchInstallReferences(catalogRepositories, currentClassificationArchive)
   const generatedAt = new Date().toISOString()
-  const catalog = buildCatalog(
+  const refreshedCatalog = buildCatalog(
     catalogRepositories,
     generatedAt,
     reportedByGitHub,
     verifiedRepositoryNames,
     validationRecords,
     installReferences,
-    classificationArchive,
+    currentClassificationArchive,
     previousCatalog,
   )
+  const catalog = currentClassificationArchive === null && previousCatalog !== null
+    ? previousCatalog
+    : refreshedCatalog
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
 
@@ -219,7 +228,12 @@ async function sync() {
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
   console.log(`验证状态文件匹配 ${validationRecords.size} 个仓库；当前完整验证 ${catalog.stats.validationStatuses.verified ?? 0} 个`)
   console.log(`README 安装特征匹配 ${installReferences.size} 个仓库；失败或无明确命令不影响目录同步`)
-  console.log(`源码分类档案${classificationArchive ? '已应用' : '尚未可用，已按 fail-closed 规则停止公开准入'}；Topic 候选 ${repositories.length} 个；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
+  const archiveState = currentClassificationArchive
+    ? '已应用'
+    : previousCatalog
+      ? '缺失或版本过期，未接纳新项目并保留最后有效目录'
+      : '缺失或版本过期，已按 fail-closed 规则停止公开准入'
+  console.log(`源码分类档案${archiveState}；Topic 候选 ${repositories.length} 个；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
 }
 
 await sync()
