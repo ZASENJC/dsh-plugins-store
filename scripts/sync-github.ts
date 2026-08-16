@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import {
   buildCatalog,
   VERIFIED_REPOSITORY_OVERRIDES,
+  type Catalog,
   type GitHubRepository,
 } from '../src/lib/catalog'
 import { extractVerifiedRepositoryNames } from '../src/lib/github-content'
@@ -173,7 +174,17 @@ async function readHistoricalVerifiedRepositoryNames(): Promise<Set<string>> {
   }
 }
 
+async function readPreviousCatalog(): Promise<Catalog | null> {
+  try {
+    return JSON.parse(await readFile(outputPath, 'utf8')) as Catalog
+  } catch (error) {
+    console.warn(`上一份目录不可用，Star 趋势将从当前刷新重新积累：${String(error)}`)
+    return null
+  }
+}
+
 async function sync() {
+  const previousCatalog = await readPreviousCatalog()
   const { repositories, allRepositories, reportedByGitHub } = await fetchRepositories()
   const classificationArchive = await readClassificationArchive()
   const validationRecords = validationRecordsFromArchive(classificationArchive)
@@ -191,6 +202,7 @@ async function sync() {
     validationRecords,
     installReferences,
     classificationArchive,
+    previousCatalog,
   )
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')

@@ -38,10 +38,10 @@ describe('catalog page navigation', () => {
     expect(homepageSource).toContain('mixRecommendedRepositories(priority, discovery, createSeededRandom(recommendationSeed))')
   })
 
-  it('keeps ranking content empty and exposes no additional catalog API', () => {
+  it('renders ranking on its own route and exposes no additional catalog API', () => {
     expect(homepageSource).toContain('const isRankingPage = catalogPage === \'ranking\'')
-    expect(homepageSource).toContain('{!isRankingPage && (')
-    expect(homepageSource).not.toContain('id="ranking-content"')
+    expect(homepageSource).toContain('id="ranking-content"')
+    expect(homepageSource).toContain('id="ranking-list"')
     expect(existsSync(fileURLToPath(new URL('../pages/catalog.json.ts', import.meta.url)))).toBe(true)
     expect(existsSync(fileURLToPath(new URL('../pages/verified.json.ts', import.meta.url)))).toBe(false)
     expect(existsSync(fileURLToPath(new URL('../pages/ranking.json.ts', import.meta.url)))).toBe(false)

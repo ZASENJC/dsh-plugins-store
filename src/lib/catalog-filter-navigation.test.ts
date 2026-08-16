@@ -29,8 +29,9 @@ describe('catalog filter navigation', () => {
 
   it('returns detail navigation to the originating independent catalog page', () => {
     expect(detailSource).toContain('data-catalog-back')
-    expect(detailSource).toContain("const catalogFilterParamNames = ['q', 'category', 'type', 'validation']")
+    expect(detailSource).toContain("const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'rank']")
     expect(detailSource).toContain("currentParams.get('from') === 'verified'")
+    expect(detailSource).toContain("currentParams.get('from') === 'ranking'")
     expect(detailSource).toContain('catalogBackLink.href = `${catalogBackLink.href}verified`')
     expect(detailSource).toContain('catalogBackLink.href = `${catalogBackLink.href}${catalogFilterSearch}`')
   })

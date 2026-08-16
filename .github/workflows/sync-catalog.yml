@@ -36,6 +36,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Restore latest catalog snapshot for Star history
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          restore_root="$(mktemp -d)"
+          restored=false
+          run_ids="$(gh run list --workflow sync-catalog.yml --branch "$VALIDATION_BRANCH" --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
+          for run_id in $run_ids; do
+            artifact_dir="$restore_root/$run_id"
+            if gh run download "$run_id" --name plugin-catalog-snapshot --dir "$artifact_dir" 2>/dev/null \
+              && test -f "$artifact_dir/catalog.json" \
+              && node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$artifact_dir/catalog.json"; then
+              cp "$artifact_dir/catalog.json" src/data/catalog.json
+              restored=true
+              break
+            fi
+          done
+          rm -rf "$restore_root"
+          if test "$restored" = false; then
+            echo "Star history will restart from the checked-in catalog; catalog publication will continue."
+          fi
+
       - name: Restore source classification archive from upstream workflows
         continue-on-error: true
         env:

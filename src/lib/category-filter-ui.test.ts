@@ -13,6 +13,7 @@ describe('homepage category filter', () => {
     expect(homepageSource).not.toContain('<select id="type-filter"')
     expect(homepageSource).toContain('data-filter-group="type"')
     expect(homepageSource).toContain('data-filter-group="category"')
+    expect(homepageSource).toContain('data-filter-group="ranking"')
     expect(homepageSource).toContain('data-filter-group="validation"')
     expect(homepageSource).toMatch(/\{isVerifiedPage && \([\s\S]*data-filter-group="validation"/)
     expect(homepageSource).toContain('data-type="all"')

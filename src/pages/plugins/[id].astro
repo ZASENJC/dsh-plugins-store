@@ -392,11 +392,13 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
     const catalogBackLink = document.querySelector<HTMLAnchorElement>('[data-catalog-back]')
     if (catalogBackLink) {
-      const catalogFilterParamNames = ['q', 'category', 'type', 'validation']
+      const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'rank']
       const currentParams = new URLSearchParams(window.location.search)
       const catalogFilterParams = new URLSearchParams()
       if (currentParams.get('from') === 'verified') {
         catalogBackLink.href = `${catalogBackLink.href}verified`
+      } else if (currentParams.get('from') === 'ranking') {
+        catalogBackLink.href = `${catalogBackLink.href}ranking`
       }
       catalogFilterParamNames.forEach((param) => {
         const value = currentParams.get(param)

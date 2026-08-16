@@ -26,6 +26,7 @@ import {
   resolveCatalogInstallReference,
   type InstallReference,
 } from './install-reference'
+import { buildStarTrend, type StarTrend } from './star-history'
 
 export const VERIFICATION_DIRECTORY_URL = 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95'
 export const VERIFIED_REPOSITORY_OVERRIDES: ReadonlyMap<string, string> = new Map([
@@ -75,6 +76,7 @@ export interface CatalogEntry {
   language: string | null
   license: string | null
   stars: number
+  starTrend: StarTrend
   forks: number
   openIssues: number
   size: number
@@ -141,6 +143,8 @@ export function createCatalogEntry(
   validationRecord?: ValidationRecord,
   installReference?: InstallReference,
   sourceClassificationOverride?: SourceClassification,
+  previousStarTrend?: StarTrend,
+  capturedAt = new Date().toISOString(),
 ): CatalogEntry {
   const topicClassification = classifyRepository({
     fullName: repository.full_name,
@@ -202,6 +206,7 @@ export function createCatalogEntry(
     language: repository.language,
     license: repository.license?.spdx_id || null,
     stars: repository.stargazers_count,
+    starTrend: buildStarTrend(previousStarTrend, capturedAt, repository.stargazers_count),
     forks: repository.forks_count,
     openIssues: repository.open_issues_count,
     size: repository.size,
@@ -237,6 +242,7 @@ export function buildCatalog(
   validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
   installReferences: ReadonlyMap<number, InstallReference> = new Map(),
   classificationArchive: SourceClassificationArchive | null = null,
+  previousCatalog: Pick<Catalog, 'repositories'> | null = null,
 ): Catalog {
   const uniqueRepositories = new Map<number, GitHubRepository>()
   for (const repository of repositories) {
@@ -245,6 +251,9 @@ export function buildCatalog(
 
   const normalizedVerifiedNames = new Set(
     [...verifiedRepositoryNames].map((name) => name.toLowerCase()),
+  )
+  const previousEntries = new Map(
+    (previousCatalog?.repositories ?? []).map((entry) => [entry.repositoryId, entry]),
   )
   const entries = sortCatalogEntries(
     [...uniqueRepositories.values()]
@@ -261,6 +270,8 @@ export function buildCatalog(
         repositoryId: repository.id,
         pushedAt: repository.pushed_at,
       }, classificationArchive),
+      previousEntries.get(repository.id)?.starTrend,
+      generatedAt,
     )),
     'recommended',
     generatedAt,
@@ -299,7 +310,12 @@ export function hydrateCatalogValidation(
   catalog: Catalog,
   validationRecords: ReadonlyMap<number, ValidationRecord> = new Map(),
 ): Catalog {
-  const repositories = catalog.repositories.map((entry) => {
+  const repositories = catalog.repositories
+    .map((entry) => ({
+      ...entry,
+      starTrend: buildStarTrend(entry.starTrend, catalog.generatedAt, entry.stars),
+    }))
+    .map((entry) => {
     const existingValidation = entry.validation ?? buildValidationStatus({
       repositoryId: entry.repositoryId,
       projectType: entry.projectType,
@@ -352,7 +368,7 @@ export function hydrateCatalogValidation(
         verification: verified ? 'verified' as const : 'not-verified' as const,
       },
     }
-  })
+    })
   const validationStatuses: Partial<Record<ValidationOverall, number>> = {}
   for (const entry of repositories) {
     validationStatuses[entry.validation.overall] = (validationStatuses[entry.validation.overall] ?? 0) + 1

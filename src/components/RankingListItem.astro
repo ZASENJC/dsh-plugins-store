@@ -1,0 +1,282 @@
+---
+import { ArrowUpRight, Star } from '@lucide/astro'
+
+import type { CatalogEntry } from '../lib/catalog'
+import { formatCompactNumber, formatRelativeDate } from '../lib/catalog'
+import { getCategory, getProjectTypeLabel } from '../lib/classification'
+import { buildSparklinePoints, type RankingMode } from '../lib/ranking'
+
+interface Props {
+  repository: CatalogEntry
+  rank: number
+  mode: RankingMode
+}
+
+const { repository, rank, mode } = Astro.props
+const category = getCategory(repository.category)
+const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
+const detailUrl = `${baseUrl}plugins/${repository.slug}?from=ranking`
+const starChange = repository.starTrend?.change24h ?? null
+const metric = mode === 'stars'
+  ? { key: 'ranking.metric.stars', value: formatCompactNumber(repository.stars), date: null }
+  : mode === 'newest'
+    ? { key: 'ranking.metric.newest', value: formatRelativeDate(repository.createdAt), date: repository.createdAt }
+    : mode === 'updated'
+      ? { key: 'ranking.metric.updated', value: formatRelativeDate(repository.pushedAt), date: repository.pushedAt }
+      : {
+          key: 'ranking.metric.stars24h',
+          value: starChange === null ? '数据积累中' : `${starChange >= 0 ? '+' : ''}${formatCompactNumber(starChange)}`,
+          date: null,
+        }
+---
+
+<li
+  class="ranking-row"
+  data-ranking-row
+  data-mode={mode}
+  data-category={repository.category}
+  data-type={repository.projectType}
+>
+  <span class="ranking-row__rank" data-field="rank">{String(rank).padStart(2, '0')}</span>
+  <div class="ranking-row__identity">
+    <img data-field="avatar" src={repository.owner.avatarUrl} width="42" height="42" alt="" loading="lazy" decoding="async" />
+    <div>
+      <h2><a data-field="detail-link" href={detailUrl}>{repository.name}</a></h2>
+      <p>
+        <span data-field="owner">{repository.owner.login}</span>
+        <i aria-hidden="true"></i>
+        <span data-field="category" data-i18n={`category.${repository.category}`}>{category.label}</span>
+        <i aria-hidden="true"></i>
+        <span data-field="project-type" data-i18n={`projectType.${repository.projectType}`}>{getProjectTypeLabel(repository.projectType)}</span>
+      </p>
+    </div>
+  </div>
+  <div class="ranking-row__trend" data-field="sparkline-wrap" hidden={mode !== 'stars24h'}>
+    <svg class="ranking-sparkline" viewBox="0 0 96 28" width="96" height="28" aria-hidden="true">
+      <polyline data-field="sparkline" points={buildSparklinePoints(repository.starTrend?.points ?? [])}></polyline>
+    </svg>
+  </div>
+  <div class="ranking-row__metric">
+    <span data-field="metric-label" data-i18n={metric.key}>
+      {mode === 'stars24h' ? '24h 增长' : mode === 'stars' ? 'Star 数' : mode === 'newest' ? '发布于' : '更新于'}
+    </span>
+    <strong
+      data-field={mode === 'stars24h' ? 'star-change' : 'metric-value'}
+      data-i18n={mode === 'stars24h' && starChange === null ? 'ranking.collecting' : undefined}
+      data-i18n-relative-date={metric.date ?? undefined}
+    >{metric.value}</strong>
+    <small><Star size={13} stroke-width={1.6} /> <span data-field="total-stars">{formatCompactNumber(repository.stars)}</span></small>
+  </div>
+  <a
+    class="ranking-row__open"
+    data-field="open-link"
+    href={detailUrl}
+    aria-label={`查看 ${repository.name} 详情`}
+    data-i18n-aria-label="card.openDetails"
+    data-i18n-param-name={repository.name}
+  >
+    <ArrowUpRight size={18} stroke-width={1.6} />
+  </a>
+</li>
+
+<style>
+  .ranking-row {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: 96px;
+    grid-template-columns: 54px minmax(260px, 1fr) 120px 136px 42px;
+    gap: 18px;
+    align-items: center;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--canvas);
+    padding: 14px 16px 14px 0;
+    transition: background-color 160ms ease;
+  }
+
+  .ranking-row:first-child {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .ranking-row:hover {
+    background: var(--canvas-soft);
+  }
+
+  .ranking-row__rank {
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .ranking-row__identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ranking-row__identity img {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--canvas-soft);
+  }
+
+  .ranking-row__identity div {
+    min-width: 0;
+  }
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    overflow: hidden;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 24px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  h2 a::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+  }
+
+  p {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    overflow: hidden;
+    color: var(--mute);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+  }
+
+  p span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  p i {
+    width: 3px;
+    height: 3px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--outline-strong);
+  }
+
+  .ranking-row__trend {
+    display: grid;
+    width: 120px;
+    place-items: center;
+  }
+
+  .ranking-row__trend[hidden] {
+    visibility: hidden;
+  }
+
+  .ranking-sparkline {
+    display: block;
+    overflow: visible;
+  }
+
+  .ranking-sparkline polyline {
+    fill: none;
+    stroke: #9fdda9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .ranking-row__metric {
+    display: grid;
+    justify-items: end;
+  }
+
+  .ranking-row__metric > span {
+    color: var(--mute);
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  .ranking-row__metric strong {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 26px;
+  }
+
+  .ranking-row__metric small {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .ranking-row__open {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid var(--outline);
+    border-radius: 50%;
+    color: var(--body);
+  }
+
+  @media (max-width: 767px) {
+    .ranking-row {
+      min-height: 126px;
+      grid-template-columns: 34px minmax(0, 1fr) 96px 34px;
+      gap: 10px;
+      padding: 14px 4px 14px 0;
+    }
+
+    .ranking-row__rank {
+      font-size: 11px;
+    }
+
+    .ranking-row__identity img {
+      width: 36px;
+      height: 36px;
+    }
+
+    h2 {
+      font-size: 15px;
+      line-height: 22px;
+    }
+
+    p span:nth-of-type(n + 2),
+    p i:nth-of-type(n + 2) {
+      display: none;
+    }
+
+    .ranking-row__trend {
+      position: absolute;
+      bottom: 12px;
+      left: 44px;
+      width: 92px;
+    }
+
+    .ranking-row__metric strong {
+      font-size: 15px;
+    }
+
+    .ranking-row__open {
+      width: 34px;
+      height: 34px;
+    }
+  }
+</style>

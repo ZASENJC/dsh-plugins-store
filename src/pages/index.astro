@@ -4,11 +4,13 @@ import { ArrowUpRight, Check, ChevronDown, Copy, Search, Terminal } from '@lucid
 import CatalogPageNav from '../components/CatalogPageNav.astro'
 import DeepSeekGridMark from '../components/DeepSeekGridMark.astro'
 import ProjectCard from '../components/ProjectCard.astro'
+import RankingListItem from '../components/RankingListItem.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { sortCatalogEntries, type Catalog } from '../lib/catalog'
 import { catalogData } from '../lib/catalog-data'
 import { CATEGORIES, PROJECT_TYPES } from '../lib/classification'
 import { buildHomepageStructuredData } from '../lib/seo'
+import { RANKING_MODES, sortRankingEntries } from '../lib/ranking'
 import { VALIDATION_STATUS_DEFINITIONS } from '../lib/validation'
 
 type CatalogPage = 'directory' | 'verified' | 'ranking'
@@ -28,6 +30,9 @@ const initialCatalog = isVerifiedPage
 const initialRepositories = isRankingPage
   ? []
   : sortCatalogEntries(initialCatalog, 'recommended', catalog.generatedAt).slice(0, 24)
+const initialRankingRepositories = isRankingPage
+  ? sortRankingEntries(catalog.repositories, 'stars24h').slice(0, 40)
+  : []
 const initialResultCount = isVerifiedPage ? (catalog.stats.validationStatuses.verified ?? 0) : catalog.stats.fetched
 const generatedDate = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
@@ -135,26 +140,23 @@ const pageTitleKey = isVerifiedPage
 
   <section class="catalog-tools" aria-label="目录筛选" data-i18n-aria-label="home.filters">
     <div class="container">
-      <div class:list={{ 'search-row': true, 'search-row--navigation-only': isRankingPage }}>
-        {!isRankingPage && (
-          <label class="search-field">
-            <span class="visually-hidden" data-i18n="home.search">搜索项目</span>
-            <Search size={19} stroke-width={1.6} />
-            <input
-              id="catalog-search"
-              type="search"
-              placeholder="搜索名称、作者、描述或标签"
-              data-i18n-placeholder="home.searchPlaceholder"
-              autocomplete="off"
-            />
-          </label>
-        )}
+      <div class="search-row">
+        <label class="search-field">
+          <span class="visually-hidden" data-i18n="home.search">搜索项目</span>
+          <Search size={19} stroke-width={1.6} />
+          <input
+            id="catalog-search"
+            type="search"
+            placeholder="搜索名称、作者、描述或标签"
+            data-i18n-placeholder="home.searchPlaceholder"
+            autocomplete="off"
+          />
+        </label>
 
         <CatalogPageNav active={catalogPage} baseUrl={baseUrl} />
       </div>
 
-      {!isRankingPage && (
-        <div class="category-filter-panel" data-category-filter-panel>
+      <div class="category-filter-panel" data-category-filter-panel>
           <div class="filter-groups" id="classification-filter-groups">
             <div class="filter-group" data-filter-group="type">
               <span class="filter-group__title" id="type-filter-label" data-i18n="home.projectType">项目类型</span>
@@ -188,6 +190,24 @@ const pageTitleKey = isVerifiedPage
                 ))}
               </div>
             </div>
+
+            {isRankingPage && (
+              <div class="filter-group" data-filter-group="ranking">
+                <span class="filter-group__title" id="ranking-filter-label" data-i18n="ranking.dimension">榜单维度</span>
+                <div class="filter-group__options" id="ranking-filter" role="group" aria-labelledby="ranking-filter-label">
+                  {RANKING_MODES.map((mode, index) => (
+                    <button
+                      class:list={{ 'category-filter': true, 'is-active': index === 0 }}
+                      type="button"
+                      data-ranking-mode={mode.id}
+                      aria-pressed={index === 0}
+                    >
+                      <span class="category-filter__label" data-i18n={`ranking.mode.${mode.id}`}>{mode.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {isVerifiedPage && (
               <div class="filter-group" data-filter-group="validation">
@@ -225,10 +245,44 @@ const pageTitleKey = isVerifiedPage
           >
             <ChevronDown size={17} stroke-width={1.8} aria-hidden="true" />
           </button>
-        </div>
-      )}
+      </div>
     </div>
   </section>
+
+  {isRankingPage && (
+    <section class="catalog-results" id="ranking-content">
+      <div class="container">
+        <div class="results-head">
+          <p id="ranking-result-count">{catalog.stats.fetched} 个项目</p>
+          <p><i></i> <span data-i18n="ranking.snapshotNote">24h 数据随目录刷新积累</span></p>
+        </div>
+
+        <ol class="ranking-list" id="ranking-list" aria-label="插件排行榜" data-i18n-aria-label="ranking.listLabel">
+          {initialRankingRepositories.map((repository, index) => (
+            <RankingListItem repository={repository} rank={index + 1} mode="stars24h" />
+          ))}
+        </ol>
+
+        <template id="ranking-row-template">
+          <RankingListItem repository={catalog.repositories[0]} rank={1} mode="stars24h" />
+        </template>
+
+        <div class="empty-state" id="ranking-empty-state" hidden>
+          <p class="mono-label">NO MATCHES</p>
+          <h2 data-i18n="home.emptyTitle">没有找到匹配项目</h2>
+          <p data-i18n="home.emptyBody">当前筛选条件下没有结果。</p>
+          <button class="outline-button" id="ranking-clear-filters" type="button" data-i18n="home.clearFilters">清除筛选</button>
+        </div>
+
+        <div class="load-row">
+          <button class="outline-button" id="ranking-load-more" type="button">
+            <span data-i18n="home.loadMore">加载更多</span>
+            <span id="ranking-remaining-count">{Math.max(0, catalog.stats.fetched - initialRankingRepositories.length)}</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  )}
 
   {!isRankingPage && (
     <section class="catalog-results">
@@ -263,17 +317,13 @@ const pageTitleKey = isVerifiedPage
     </section>
   )}
 
-  {!isRankingPage && (
-    <>
-      <script id="catalog-data" type="application/json" set:html={serializedCatalog} is:inline></script>
-      <script id="catalog-generated-at" type="application/json" set:html={JSON.stringify(catalog.generatedAt)} is:inline></script>
-      <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
-      <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
-      <script id="validation-status-data" type="application/json" set:html={serializedValidationStatuses} is:inline></script>
-      <script id="catalog-page-data" type="application/json" set:html={JSON.stringify(catalogPage)} is:inline></script>
-      <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
-    </>
-  )}
+  <script id="catalog-data" type="application/json" set:html={serializedCatalog} is:inline></script>
+  <script id="catalog-generated-at" type="application/json" set:html={JSON.stringify(catalog.generatedAt)} is:inline></script>
+  <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
+  <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
+  <script id="validation-status-data" type="application/json" set:html={serializedValidationStatuses} is:inline></script>
+  <script id="catalog-page-data" type="application/json" set:html={JSON.stringify(catalogPage)} is:inline></script>
+  <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
 
   <script>
     import { getHeroMotion } from '../lib/hero-motion'
@@ -710,6 +760,331 @@ const pageTitleKey = isVerifiedPage
     resetAndRender()
     </script>
   )}
+
+  {isRankingPage && (
+    <script is:inline>
+    const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
+    const categories = JSON.parse(document.getElementById('category-data').textContent)
+    const projectTypes = JSON.parse(document.getElementById('type-data').textContent)
+    const baseUrl = JSON.parse(document.getElementById('base-url').textContent)
+    const categoryById = new Map(categories.map((category) => [category.id, category]))
+    const typeById = new Map(projectTypes.map((type) => [type.id, type]))
+    const rankingModeIds = new Set(['stars24h', 'stars', 'newest', 'updated'])
+    const list = document.getElementById('ranking-list')
+    const sourceRow = document.getElementById('ranking-row-template').content
+      .querySelector('[data-ranking-row]').cloneNode(true)
+    const searchInput = document.getElementById('catalog-search')
+    const typeFilter = document.getElementById('type-filter')
+    const categoryFilter = document.getElementById('category-filter')
+    const rankingFilter = document.getElementById('ranking-filter')
+    const categoryFilterPanel = document.querySelector('[data-category-filter-panel]')
+    const categoryFilterToggle = document.getElementById('category-filter-toggle')
+    const resultCount = document.getElementById('ranking-result-count')
+    const loadMore = document.getElementById('ranking-load-more')
+    const remainingCount = document.getElementById('ranking-remaining-count')
+    const emptyState = document.getElementById('ranking-empty-state')
+    const clearFilters = document.getElementById('ranking-clear-filters')
+    const pageSize = 40
+    const rankingParamNames = ['q', 'category', 'type', 'rank']
+    let selectedRankingMode = 'stars24h'
+    let selectedType = 'all'
+    let selectedCategory = 'all'
+    let visibleCount = pageSize
+
+    const t = (key, params = {}, fallback = key) => window.dshI18n?.t(key, params) ?? fallback
+
+    const compactNumber = (value) => {
+      if (value < 1000) return String(value)
+      if (value < 1000000) return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k`
+      return `${(value / 1000000).toFixed(1).replace(/\.0$/, '')}m`
+    }
+
+    const relativeDate = (value) => window.dshI18n?.relativeDate(value) ?? '未知'
+
+    const buildSparkline = (points, width = 96, height = 28, padding = 2) => {
+      if (points.length === 0) return ''
+      if (points.length === 1) return `${padding},${height / 2} ${width - padding},${height / 2}`
+      const timestamps = points.map(({ capturedAt }) => Date.parse(capturedAt))
+      const stars = points.map((point) => point.stars)
+      const minTime = Math.min(...timestamps)
+      const maxTime = Math.max(...timestamps)
+      const minStars = Math.min(...stars)
+      const maxStars = Math.max(...stars)
+      const usableWidth = width - padding * 2
+      const usableHeight = height - padding * 2
+      return points.map((point, index) => {
+        const x = maxTime === minTime
+          ? padding + usableWidth * index / (points.length - 1)
+          : padding + usableWidth * (timestamps[index] - minTime) / (maxTime - minTime)
+        const y = maxStars === minStars
+          ? height / 2
+          : padding + usableHeight * (maxStars - point.stars) / (maxStars - minStars)
+        return `${Number(x.toFixed(1))},${Number(y.toFixed(1))}`
+      }).join(' ')
+    }
+
+    const getRankingParams = () => {
+      const params = new URLSearchParams()
+      const query = searchInput.value.trim()
+      if (query) params.set('q', query)
+      if (selectedCategory !== 'all') params.set('category', selectedCategory)
+      if (selectedType !== 'all') params.set('type', selectedType)
+      if (selectedRankingMode !== 'stars24h') params.set('rank', selectedRankingMode)
+      return params
+    }
+
+    const getRankingDetailSearch = () => {
+      const params = getRankingParams()
+      params.set('rank', selectedRankingMode)
+      params.set('from', 'ranking')
+      return `?${params.toString()}`
+    }
+
+    const syncFiltersToUrl = () => {
+      const url = new URL(window.location.href)
+      rankingParamNames.forEach((param) => url.searchParams.delete(param))
+      getRankingParams().forEach((value, param) => url.searchParams.set(param, value))
+      window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+    }
+
+    const setText = (row, selector, value) => {
+      const target = row.querySelector(selector)
+      if (target) target.textContent = value
+    }
+
+    const createRow = (repository, rank) => {
+      const row = sourceRow.cloneNode(true)
+      const category = categoryById.get(repository.category)
+      const projectType = typeById.get(repository.projectType)
+      const detailUrl = `${baseUrl}plugins/${repository.slug}${getRankingDetailSearch()}`
+      const change24h = repository.starTrend?.change24h ?? null
+
+      row.dataset.mode = selectedRankingMode
+      row.dataset.category = repository.category
+      row.dataset.type = repository.projectType
+      setText(row, '[data-field="rank"]', String(rank).padStart(2, '0'))
+      setText(row, '[data-field="owner"]', repository.owner.login)
+      setText(row, '[data-field="total-stars"]', compactNumber(repository.stars))
+
+      const avatar = row.querySelector('[data-field="avatar"]')
+      avatar.src = repository.owner.avatarUrl
+      avatar.alt = ''
+      const detailLink = row.querySelector('[data-field="detail-link"]')
+      detailLink.href = detailUrl
+      detailLink.textContent = repository.name
+      const openLink = row.querySelector('[data-field="open-link"]')
+      openLink.href = detailUrl
+      openLink.dataset.i18nAriaLabel = 'card.openDetails'
+      openLink.dataset.i18nParamName = repository.name
+      openLink.setAttribute('aria-label', t('card.openDetails', { name: repository.name }, `查看 ${repository.name} 详情`))
+
+      const categoryLabel = row.querySelector('[data-field="category"]')
+      categoryLabel.dataset.i18n = `category.${repository.category}`
+      categoryLabel.textContent = t(categoryLabel.dataset.i18n, {}, category?.label ?? repository.category)
+      const projectTypeLabel = row.querySelector('[data-field="project-type"]')
+      projectTypeLabel.dataset.i18n = `projectType.${repository.projectType}`
+      projectTypeLabel.textContent = t(projectTypeLabel.dataset.i18n, {}, projectType?.label ?? repository.projectType)
+
+      const metricLabel = row.querySelector('[data-field="metric-label"]')
+      const metricValue = row.querySelector('[data-field="star-change"], [data-field="metric-value"]')
+      const sparklineWrap = row.querySelector('[data-field="sparkline-wrap"]')
+      const sparkline = row.querySelector('[data-field="sparkline"]')
+      metricValue.removeAttribute('data-i18n')
+      metricValue.removeAttribute('data-i18n-relative-date')
+
+      if (selectedRankingMode === 'stars24h') {
+        metricLabel.dataset.i18n = 'ranking.metric.stars24h'
+        metricLabel.textContent = t('ranking.metric.stars24h', {}, '24h 增长')
+        metricValue.dataset.field = 'star-change'
+        if (change24h === null) {
+          metricValue.dataset.i18n = 'ranking.collecting'
+          metricValue.textContent = t('ranking.collecting', {}, '数据积累中')
+        } else {
+          metricValue.textContent = `${change24h >= 0 ? '+' : ''}${compactNumber(change24h)}`
+        }
+        sparklineWrap.hidden = false
+        sparkline.setAttribute('points', buildSparkline(repository.starTrend?.points ?? []))
+      } else if (selectedRankingMode === 'stars') {
+        metricLabel.dataset.i18n = 'ranking.metric.stars'
+        metricLabel.textContent = t('ranking.metric.stars', {}, 'Star 数')
+        metricValue.dataset.field = 'metric-value'
+        metricValue.textContent = compactNumber(repository.stars)
+        sparklineWrap.hidden = true
+      } else {
+        const date = selectedRankingMode === 'newest' ? repository.createdAt : repository.pushedAt
+        const metricKey = selectedRankingMode === 'newest' ? 'ranking.metric.newest' : 'ranking.metric.updated'
+        metricLabel.dataset.i18n = metricKey
+        metricLabel.textContent = t(metricKey, {}, selectedRankingMode === 'newest' ? '发布于' : '更新于')
+        metricValue.dataset.field = 'metric-value'
+        metricValue.dataset.i18nRelativeDate = date
+        metricValue.textContent = relativeDate(date)
+        sparklineWrap.hidden = true
+      }
+
+      window.dshI18n?.translate(row)
+      return row
+    }
+
+    const getFilteredRepositories = () => {
+      const query = searchInput.value.trim().toLocaleLowerCase('zh-CN')
+      const filtered = repositories.filter((repository) => {
+        const searchable = [
+          repository.name,
+          repository.fullName,
+          repository.description,
+          repository.language || '',
+          ...repository.topics,
+        ].join(' ').toLocaleLowerCase('zh-CN')
+        return (!query || searchable.includes(query))
+          && (selectedCategory === 'all' || repository.category === selectedCategory)
+          && (selectedType === 'all' || repository.projectType === selectedType)
+      })
+
+      return filtered.sort((left, right) => {
+        if (selectedRankingMode === 'stars24h') {
+          const leftChange = left.starTrend?.change24h
+          const rightChange = right.starTrend?.change24h
+          const measuredPriority = Number(rightChange !== null && rightChange !== undefined)
+            - Number(leftChange !== null && leftChange !== undefined)
+          if (measuredPriority !== 0) return measuredPriority
+          if (leftChange !== null && leftChange !== undefined
+            && rightChange !== null && rightChange !== undefined
+            && leftChange !== rightChange) return rightChange - leftChange
+        }
+        if (selectedRankingMode === 'newest') {
+          const createdPriority = Date.parse(right.createdAt) - Date.parse(left.createdAt)
+          if (createdPriority !== 0) return createdPriority
+        }
+        if (selectedRankingMode === 'updated') {
+          const updatedPriority = Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
+          if (updatedPriority !== 0) return updatedPriority
+        }
+        return right.stars - left.stars || left.fullName.localeCompare(right.fullName)
+      })
+    }
+
+    const render = () => {
+      const filtered = getFilteredRepositories()
+      const visible = filtered.slice(0, visibleCount)
+      list.replaceChildren(...visible.map((repository, index) => createRow(repository, index + 1)))
+      resultCount.textContent = t('home.projectCount', { count: filtered.length }, `${filtered.length} 个项目`)
+      emptyState.hidden = filtered.length !== 0
+      list.hidden = filtered.length === 0
+      const remaining = Math.max(0, filtered.length - visible.length)
+      loadMore.hidden = remaining === 0
+      remainingCount.textContent = String(remaining)
+    }
+
+    const resetAndRender = () => {
+      visibleCount = pageSize
+      render()
+    }
+
+    const syncFilterButtons = () => {
+      typeFilter.querySelectorAll('[data-type]').forEach((item) => {
+        const active = item.dataset.type === selectedType
+        item.classList.toggle('is-active', active)
+        item.setAttribute('aria-pressed', String(active))
+      })
+      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
+        const active = item.dataset.category === selectedCategory
+        item.classList.toggle('is-active', active)
+        item.setAttribute('aria-pressed', String(active))
+      })
+      rankingFilter.querySelectorAll('[data-ranking-mode]').forEach((item) => {
+        const active = item.dataset.rankingMode === selectedRankingMode
+        item.classList.toggle('is-active', active)
+        item.setAttribute('aria-pressed', String(active))
+      })
+    }
+
+    const commitFilters = () => {
+      syncFiltersToUrl()
+      resetAndRender()
+    }
+
+    const setCategoryExpanded = (expanded) => {
+      categoryFilterPanel.classList.add('is-collapsible')
+      categoryFilterPanel.classList.toggle('is-expanded', expanded)
+      categoryFilterToggle.setAttribute('aria-expanded', String(expanded))
+      const labelKey = expanded ? 'home.collapseCategories' : 'home.expandCategories'
+      const fallback = expanded ? '收起全部分类' : '展开全部分类'
+      const label = t(labelKey, {}, fallback)
+      categoryFilterToggle.dataset.i18nAriaLabel = labelKey
+      categoryFilterToggle.dataset.i18nTitle = labelKey
+      categoryFilterToggle.setAttribute('aria-label', label)
+      categoryFilterToggle.setAttribute('title', label)
+    }
+
+    const restoreFiltersFromUrl = () => {
+      const filters = new URLSearchParams(window.location.search)
+      const requestedCategory = filters.get('category')
+      const requestedType = filters.get('type')
+      const requestedRankingMode = filters.get('rank')
+      searchInput.value = filters.get('q') ?? ''
+      selectedCategory = categoryById.has(requestedCategory) ? requestedCategory : 'all'
+      selectedType = typeById.has(requestedType) ? requestedType : 'all'
+      selectedRankingMode = rankingModeIds.has(requestedRankingMode) ? requestedRankingMode : 'stars24h'
+      syncFilterButtons()
+      setCategoryExpanded(selectedType !== 'all' || selectedCategory !== 'all')
+    }
+
+    setCategoryExpanded(false)
+    categoryFilterToggle.addEventListener('click', () => {
+      setCategoryExpanded(categoryFilterToggle.getAttribute('aria-expanded') !== 'true')
+    })
+    searchInput.addEventListener('input', commitFilters)
+    typeFilter.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-type]')
+      if (!button) return
+      selectedType = button.dataset.type
+      syncFilterButtons()
+      commitFilters()
+    })
+    categoryFilter.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-category]')
+      if (!button) return
+      selectedCategory = button.dataset.category
+      syncFilterButtons()
+      commitFilters()
+    })
+    rankingFilter.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-ranking-mode]')
+      if (!button) return
+      selectedRankingMode = button.dataset.rankingMode
+      syncFilterButtons()
+      commitFilters()
+    })
+    loadMore.addEventListener('click', () => {
+      visibleCount += pageSize
+      render()
+    })
+    clearFilters.addEventListener('click', () => {
+      searchInput.value = ''
+      selectedType = 'all'
+      selectedCategory = 'all'
+      selectedRankingMode = 'stars24h'
+      syncFilterButtons()
+      setCategoryExpanded(false)
+      commitFilters()
+      searchInput.focus()
+    })
+    document.addEventListener('keydown', (event) => {
+      if (event.key === '/' && document.activeElement !== searchInput) {
+        event.preventDefault()
+        searchInput.focus()
+      }
+      if (event.key === 'Escape' && document.activeElement === searchInput) {
+        searchInput.value = ''
+        searchInput.blur()
+        commitFilters()
+      }
+    })
+    document.addEventListener('dsh:locale-change', render)
+    restoreFiltersFromUrl()
+    resetAndRender()
+    </script>
+  )}
 </BaseLayout>
 
 <style>
@@ -1011,6 +1386,10 @@ const pageTitleKey = isVerifiedPage
     max-height: 38px;
   }
 
+  .category-filter-panel.is-collapsible:not(.is-expanded) [data-filter-group='ranking'] .filter-group__options {
+    max-height: none;
+  }
+
   .category-filter-panel.is-collapsible.is-expanded .filter-group__options {
     max-height: 600px;
   }
@@ -1127,6 +1506,12 @@ const pageTitleKey = isVerifiedPage
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
+  }
+
+  .ranking-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
   .load-row {
