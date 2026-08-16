@@ -1,4 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   buildScannerCommands,
@@ -7,6 +11,12 @@ import {
   parseTrivyReport,
   runScannerCommands,
 } from './scanner-adapters'
+
+const temporaryRoots: string[] = []
+
+afterEach(async () => {
+  await Promise.all(temporaryRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })))
+})
 
 describe('pinned scanner adapters', () => {
   it('builds version-pinned Docker commands with read-only source mounts and no shell', () => {
@@ -36,6 +46,7 @@ describe('pinned scanner adapters', () => {
     const osvImageIndex = commands[1].args.indexOf('ghcr.io/google/osv-scanner:v2.5.0')
     expect(commands[1].args.slice(osvImageIndex + 1, osvImageIndex + 3)).toEqual(['scan', 'source'])
     expect(commands[2].args).toContain('ghcr.io/gitleaks/gitleaks:v8.30.1')
+    expect(commands[2].args).toContain('--redact=100')
   })
 
   it('normalizes scanner reports without leaking secret content', () => {
@@ -46,6 +57,111 @@ describe('pinned scanner adapters', () => {
     const gitleaks = parseGitleaksReport([{ RuleID: 'generic-api-key', File: '.env', Secret: 'must-not-escape' }])
     expect(gitleaks).toEqual({ status: 'findings', secrets: [{ ruleId: 'generic-api-key', path: '.env' }] })
     expect(JSON.stringify(gitleaks)).not.toContain('must-not-escape')
+  })
+
+  it('marks only generic non-runtime Gitleaks signals as low-confidence', () => {
+    const result = parseGitleaksReport([
+      {
+        RuleID: 'generic-api-key',
+        File: '/workspace/tests/plugin.test.ts',
+        StartLine: 12,
+        Match: "secret = 'REDACTED'",
+        Secret: 'must-not-escape',
+      },
+      {
+        RuleID: 'private-key',
+        File: '/workspace/tests/fixtures/key.pem',
+        StartLine: 1,
+        Match: 'REDACTED',
+        Secret: 'must-not-escape',
+      },
+    ])
+
+    expect(result).toEqual({
+      status: 'findings',
+      secrets: [
+        {
+          ruleId: 'generic-api-key',
+          path: 'tests/plugin.test.ts',
+          line: 12,
+          triage: 'generic-non-runtime',
+        },
+        {
+          ruleId: 'private-key',
+          path: 'tests/fixtures/key.pem',
+          line: 1,
+        },
+      ],
+    })
+    expect(JSON.stringify(result)).not.toContain('must-not-escape')
+  })
+
+  it('marks malformed generic matches as syntax noise without weakening runtime assignments', () => {
+    const result = parseGitleaksReport([
+      {
+        RuleID: 'generic-api-key',
+        File: '/workspace/src/index.ts',
+        StartLine: 5,
+        Match: 'parseAesKey, REDACTED',
+      },
+      {
+        RuleID: 'generic-api-key',
+        File: '/workspace/src/config.ts',
+        StartLine: 9,
+        Match: "apiKey = 'REDACTED'",
+      },
+    ])
+
+    expect(result.secrets).toEqual([
+      {
+        ruleId: 'generic-api-key',
+        path: 'src/index.ts',
+        line: 5,
+        triage: 'generic-syntax-noise',
+      },
+      {
+        ruleId: 'generic-api-key',
+        path: 'src/config.ts',
+        line: 9,
+      },
+    ])
+  })
+
+  it('recognizes a Cloudflare Web Analytics token as a public client identifier', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dsh-public-client-'))
+    temporaryRoots.push(root)
+    await mkdir(join(root, 'src'), { recursive: true })
+    await writeFile(join(root, 'src/layout.astro'), [
+      'const analytics = JSON.stringify({',
+      "  token: 'public-client-value',",
+      '})',
+      '<script src="https://static.cloudflareinsights.com/beacon.min.js"',
+      '  data-cf-beacon={analytics}></script>',
+    ].join('\n'))
+    const executor = vi.fn(async (_file: string, args: string[]) => {
+      const image = args.find((value) => value.includes(':v') || value.includes('/trivy:')) ?? ''
+      if (image.includes('trivy')) return JSON.stringify({ Results: [] })
+      if (image.includes('osv-scanner')) return JSON.stringify({ results: [] })
+      return JSON.stringify([{
+        RuleID: 'generic-api-key',
+        File: '/workspace/src/layout.astro',
+        StartLine: 2,
+        Match: "token: 'REDACTED'",
+        Secret: 'REDACTED',
+      }])
+    })
+
+    const result = await runScannerCommands(root, { executor })
+
+    expect(result.gitleaks).toEqual({
+      status: 'findings',
+      secrets: [{
+        ruleId: 'generic-api-key',
+        path: 'src/layout.astro',
+        line: 2,
+        triage: 'public-client-identifier',
+      }],
+    })
   })
 
   it('marks only the failed scanner unavailable and continues collecting results', async () => {

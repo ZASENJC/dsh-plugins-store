@@ -345,6 +345,100 @@ describe('shadow structure check', () => {
     }))
   })
 
+  it('downgrades a Gitleaks-only generic non-runtime signal to an automated warning', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      scans: {
+        ...validScans,
+        gitleaks: {
+          status: 'findings',
+          secrets: [{
+            ruleId: 'generic-api-key',
+            path: 'tests/plugin.test.ts',
+            line: 12,
+            triage: 'generic-non-runtime',
+          }],
+        },
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result).toMatchObject({ decision: 'passed', queueSandbox: true, publicReason: null })
+    expect(result.report.structureChecks).toContainEqual(expect.objectContaining({
+      code: 'GITLEAKS_LOW_CONFIDENCE_IGNORED',
+      status: 'warning',
+      severity: 'security',
+      tool: 'gitleaks',
+    }))
+  })
+
+  it('re-escalates a low-confidence Gitleaks signal corroborated by Trivy on the same path', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      scans: {
+        trivy: {
+          status: 'findings',
+          vulnerabilities: [],
+          secrets: [{ ruleId: 'generic-api-key', path: 'tests/plugin.test.ts' }],
+        },
+        osv: validScans.osv,
+        gitleaks: {
+          status: 'findings',
+          secrets: [{
+            ruleId: 'generic-api-key',
+            path: '/workspace/tests/plugin.test.ts',
+            line: 12,
+            triage: 'generic-non-runtime',
+          }],
+        },
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('quarantined')
+    expect(result.report.failure).toMatchObject({
+      attribution: 'policy',
+      code: 'SECURITY_REVIEW_REQUIRED',
+    })
+    expect(result.report.structureChecks).toContainEqual(expect.objectContaining({
+      code: 'GITLEAKS_SCAN_QUARANTINE',
+      status: 'quarantined',
+      tool: 'gitleaks',
+    }))
+  })
+
+  it('keeps a private-key finding quarantined even when it is in a test fixture', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      scans: {
+        ...validScans,
+        gitleaks: {
+          status: 'findings',
+          secrets: [{ ruleId: 'private-key', path: 'tests/fixtures/key.pem', line: 1 }],
+        },
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result.decision).toBe('quarantined')
+    expect(result.report.failure?.code).toBe('SECURITY_REVIEW_REQUIRED')
+  })
+
   it('records a Trivy vulnerability warning while an unavailable scanner remains inconclusive', () => {
     const result = runStructureCheck({
       ...hostToolSnapshot,
