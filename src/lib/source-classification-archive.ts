@@ -359,6 +359,38 @@ export function parseSourceClassificationArchive(value: unknown): SourceClassifi
   }
 }
 
+export function mergeSourceValidationHistory(
+  currentValue: SourceClassificationArchive,
+  historyValues: readonly SourceClassificationArchive[],
+): SourceClassificationArchive {
+  const current = parseSourceClassificationArchive(currentValue)
+  const currentById = new Map(current.records.map((record) => [record.repositoryId, record]))
+  const latestById = new Map<number, SourceValidationResult>()
+
+  for (const archive of [...historyValues.map(parseSourceClassificationArchive), current]) {
+    for (const record of archive.records) {
+      const target = currentById.get(record.repositoryId)
+      const validation = record.validation
+      if (!target || !validation || target.sourceSha === null
+        || record.sourcePushedAt !== target.sourcePushedAt
+        || record.sourceSha !== target.sourceSha
+        || validation.sourceSha !== target.sourceSha) continue
+      const latest = latestById.get(record.repositoryId)
+      if (!latest || Date.parse(validation.checkedAt) >= Date.parse(latest.checkedAt)) {
+        latestById.set(record.repositoryId, validation)
+      }
+    }
+  }
+
+  return parseSourceClassificationArchive({
+    ...current,
+    records: current.records.map((record) => {
+      const validation = latestById.get(record.repositoryId)
+      return validation ? { ...record, validation } : record
+    }),
+  })
+}
+
 export function selectSourceClassificationTargets(
   discovery: SourceDiscoverySnapshot,
   previous: SourceClassificationArchive | null,

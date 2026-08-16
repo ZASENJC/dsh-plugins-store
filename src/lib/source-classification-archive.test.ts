@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildSourceClassificationArchive,
   buildValidationCatalog,
+  mergeSourceValidationHistory,
   parseSourceClassificationArchive,
   selectSourceClassificationTargets,
   type SourceClassificationArchive,
@@ -200,6 +201,67 @@ describe('source classification archive', () => {
       disposition: 'inconclusive',
       failureCode: 'CLASSIFICATION_NOT_OBSERVED',
     })
+  })
+
+  it('carries the newest exact-SHA validation history without reviving changed source evidence', () => {
+    const validation = (sourceSha: string, checkedAt: string, disposition: 'verified' | 'auto_failed') => ({
+      status: disposition === 'verified' ? 'passed' as const : 'failed' as const,
+      disposition,
+      stage: 'sandbox' as const,
+      sourceSha,
+      checkedAt,
+      dshVersion: '0.1.0-rc.6',
+      platform: 'linux-x64',
+      validatorVersion: '0.1.2',
+      executionType: 'host-tool',
+      ...(disposition === 'auto_failed'
+        ? { errorCode: 'PLUGIN_LOAD_FAILED', attribution: 'plugin' as const }
+        : {}),
+    })
+    const current = parseSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T04:00:00Z',
+      mode: 'incremental',
+      classifierVersion: '0.1.0',
+      records: [{
+        repositoryId: 1,
+        fullName: 'owner/plugin',
+        sourcePushedAt: discovery.repositories[0].pushedAt,
+        sourceSha: 'a'.repeat(40),
+        disposition: 'include',
+      }, {
+        repositoryId: 3,
+        fullName: 'owner/changed',
+        sourcePushedAt: discovery.repositories[2].pushedAt,
+        sourceSha: 'c'.repeat(40),
+        disposition: 'include',
+      }],
+    })
+    const older = parseSourceClassificationArchive({
+      ...current,
+      generatedAt: '2026-08-16T01:00:00Z',
+      records: [{ ...current.records[0], validation: validation('a'.repeat(40), '2026-08-16T01:00:00Z', 'verified') }, {
+        ...current.records[1],
+        sourceSha: 'd'.repeat(40),
+        validation: validation('d'.repeat(40), '2026-08-16T01:00:00Z', 'verified'),
+      }],
+    })
+    const newerPartial = parseSourceClassificationArchive({
+      ...current,
+      generatedAt: '2026-08-16T02:00:00Z',
+      records: [{
+        ...current.records[0],
+        validation: validation('a'.repeat(40), '2026-08-16T02:00:00Z', 'auto_failed'),
+      }],
+    })
+
+    const merged = mergeSourceValidationHistory(current, [older, newerPartial])
+
+    expect(merged.records[0].validation).toMatchObject({
+      checkedAt: '2026-08-16T02:00:00Z',
+      disposition: 'auto_failed',
+    })
+    expect(merged.records[1].validation).toBeUndefined()
   })
 
   it('migrates legacy manual-review validation outcomes by attribution and error code', () => {

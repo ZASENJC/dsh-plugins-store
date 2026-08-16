@@ -51,6 +51,10 @@ jobs:
       - name: Resolve latest catalog, discovery, validation, and classification artifacts
         run: |
           mkdir -p validation-input/previous
+          mkdir -p /tmp/dsh-validation-history
+          if test -f src/data/source-classification.json; then
+            cp src/data/source-classification.json /tmp/dsh-validation-history/checked-in.json
+          fi
           catalog_found=false
           discovery_found=false
           sync_run_ids="$(gh run list --workflow sync-catalog.yml --branch main --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
@@ -81,10 +85,13 @@ jobs:
             if gh run download "$run_id" --name plugin-validation-state --dir "$artifact_dir" 2>/dev/null \
               && test -f "$artifact_dir/state.json" \
               && test -f "$artifact_dir/validation.json" \
+              && test -f "$artifact_dir/source-classification.json" \
               && find "$artifact_dir/canary" -type f -name '*.json' -print -quit | grep -q .; then
-              cp -R "$artifact_dir/." validation-input/previous/
-              state_found=true
-              break
+              cp "$artifact_dir/source-classification.json" "/tmp/dsh-validation-history/$run_id.json"
+              if test "$state_found" = false; then
+                cp -R "$artifact_dir/." validation-input/previous/
+                state_found=true
+              fi
             fi
           done
           if test "$state_found" = true; then
@@ -135,10 +142,12 @@ jobs:
           fi
 
       - name: Verify atomic validation input snapshots
-        run: >-
-          npm run --silent validate:input --
-          --discovery validation-input/discovery.json
-          --validation-catalog validation-input/validation-catalog.json
+        run: |
+          npm run --silent validate:input -- \
+            --discovery validation-input/discovery.json \
+            --validation-catalog validation-input/validation-catalog.json \
+            --classification validation-input/source-classification.json \
+            --validation-history-directory /tmp/dsh-validation-history
 
       - name: Upload immutable validation input
         uses: actions/upload-artifact@v6
