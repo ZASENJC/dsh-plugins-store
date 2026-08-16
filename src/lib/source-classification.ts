@@ -10,7 +10,7 @@ import {
   type ProjectType,
 } from './classification'
 
-export const SOURCE_CLASSIFIER_VERSION = '0.2.0'
+export const SOURCE_CLASSIFIER_VERSION = '0.2.1'
 
 export type DshRelevance = 'recognized' | 'unrecognized'
 
@@ -31,6 +31,7 @@ export interface SourceClassification {
 
 export interface SourceClassificationInput {
   sourceSha: string
+  repositoryFullName?: string
   files: Readonly<Record<string, string | undefined>>
 }
 
@@ -110,6 +111,14 @@ function recognizeDshContract(files: Readonly<Record<string, string | undefined>
     dshRelevance: 'recognized',
     relevanceSignals: ['package.json:dsh.bundle.patch', `${patchPath}:parsed`],
   }
+}
+
+function recognizeDshRepositoryName(repositoryFullName: string | undefined): string[] {
+  if (repositoryFullName === undefined) return []
+  const repositoryName = repositoryFullName.slice(repositoryFullName.lastIndexOf('/') + 1)
+  return /^dsh-/i.test(repositoryName)
+    ? [`repository-name:${repositoryName.toLowerCase()}`]
+    : []
 }
 
 function addManifestSignals(topics: Set<string>, manifest: Record<string, unknown>): void {
@@ -201,7 +210,7 @@ function classifyProjectType({
   return { projectType: 'unknown', confidence: 'low' }
 }
 
-export function classifySource({ sourceSha, files }: SourceClassificationInput): SourceClassification {
+export function classifySource({ sourceSha, repositoryFullName, files }: SourceClassificationInput): SourceClassification {
   if (!/^[a-f0-9]{40}$/i.test(sourceSha)) throw new Error('Source classification SHA is invalid')
 
   const paths = Object.keys(files).sort()
@@ -209,7 +218,15 @@ export function classifySource({ sourceSha, files }: SourceClassificationInput):
   const manifests = packagePaths.map((path) => parseJson(files[path])).filter((manifest): manifest is Record<string, unknown> => manifest !== null)
   const rootManifest = parseJson(files['package.json'])
   const topicSignals = new Set<string>()
-  const relevance = recognizeDshContract(files)
+  const contractRelevance = recognizeDshContract(files)
+  const relevanceSignals = [
+    ...contractRelevance.relevanceSignals,
+    ...recognizeDshRepositoryName(repositoryFullName),
+  ]
+  const relevance = {
+    dshRelevance: relevanceSignals.length > 0 ? 'recognized' as const : 'unrecognized' as const,
+    relevanceSignals,
+  }
   const matchedSignals: string[] = [...relevance.relevanceSignals]
 
   for (const path of paths) {

@@ -167,7 +167,11 @@ async function classifyRepository(repository: SourceDiscoveryRepository): Promis
         gitleaks: { status: 'unavailable', secrets: [] },
       },
     })
-    return classificationRecord(repository, sourceSha, classifySourceSnapshot({ sourceSha, files: snapshot.files }))
+    return classificationRecord(repository, sourceSha, classifySourceSnapshot({
+      sourceSha,
+      repositoryFullName: repository.fullName,
+      files: snapshot.files,
+    }))
   } catch (error) {
     return classificationRecord(repository, sourceSha, undefined, classificationFailureCode(error))
   } finally {
@@ -254,12 +258,14 @@ if (import.meta.url === entrypoint) await runSourceClassificationCli()
 
 export function classifySourceSnapshot({
   sourceSha,
+  repositoryFullName,
   files,
 }: {
   sourceSha: string
+  repositoryFullName: string
   files: Readonly<Record<string, string | undefined>>
 }): SourceClassification {
-  return classifySource({ sourceSha, files })
+  return classifySource({ sourceSha, repositoryFullName, files })
 }
 
 export function shouldExcludeSourceClassification(classification: SourceClassification): boolean {

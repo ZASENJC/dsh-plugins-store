@@ -350,6 +350,7 @@ export function runStructureCheck(
 
   const sourceClassification = classifySource({
     sourceSha: repository.sourceSha,
+    repositoryFullName: repository.fullName,
     files: snapshot.files,
   })
   const dshContractRecognized = sourceClassification.dshRelevance === 'recognized'
@@ -359,9 +360,8 @@ export function runStructureCheck(
     dshContractRecognized ? 'passed' : 'not-run',
     'required',
     dshContractRecognized
-      ? 'A valid root package.json declares an existing DSH YAML patch list.'
-      : 'No valid fixed-SHA DSH plugin contract was recognized.',
-    'package.json',
+      ? 'A valid DSH source contract or dsh-prefixed repository name was recognized.'
+      : 'No valid DSH source contract or dsh-prefixed repository name was recognized.',
   )
   if (!dshContractRecognized) {
     return {

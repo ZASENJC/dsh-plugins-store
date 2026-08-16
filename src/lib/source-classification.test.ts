@@ -127,7 +127,7 @@ describe('source classification', () => {
   ])('admits the case-insensitive dsh- repository name prefix without a source contract: %s', (repositoryName) => {
     const result = classifySource({
       sourceSha,
-      repositoryName,
+      repositoryFullName: `fixture/${repositoryName}`,
       files: {
         'README.md': '# Community plugin\n',
       },
@@ -142,14 +142,14 @@ describe('source classification', () => {
   })
 
   it.each([
-    'dsh',
-    'dshplugin',
-    'not-dsh-plugin',
-  ])('requires dsh- at the beginning of the repository name: %s', (repositoryName) => {
+    'fixture/dsh',
+    'fixture/dshplugin',
+    'fixture/not-dsh-plugin',
+    'dsh-owner/plugin',
+  ])('requires dsh- at the beginning of the repository name segment: %s', (repositoryFullName) => {
     expect(classifySource({
       sourceSha,
-      repositoryName,
-      topics: ['dsh-plugin'],
+      repositoryFullName,
       files: {},
     })).toMatchObject({
       dshRelevance: 'unrecognized',

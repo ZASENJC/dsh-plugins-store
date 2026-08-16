@@ -21,7 +21,7 @@ jobs:
     env:
       VALIDATION_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
       VALIDATION_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
-      SOURCE_CLASSIFIER_VERSION: '0.2.0'
+      SOURCE_CLASSIFIER_VERSION: '0.2.1'
     steps:
       - name: Checkout
         uses: actions/checkout@v5

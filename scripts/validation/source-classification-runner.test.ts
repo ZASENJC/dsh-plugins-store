@@ -9,8 +9,7 @@ describe('source classification runner', () => {
   it('classifies from structural files without requiring scanner or runtime output', () => {
     const result = classifySourceSnapshot({
       sourceSha: 'a'.repeat(40),
-      repositoryName: 'fixture-tool',
-      topics: ['dsh-plugin'],
+      repositoryFullName: 'fixture/fixture-tool',
       files: {
         'package.json': JSON.stringify({ dsh: { bundle: { patch: './config/cordis.yml' } } }),
         'config/cordis.yml': '- insert: []\n',
@@ -27,8 +26,7 @@ describe('source classification runner', () => {
   it('excludes an unrelated static site even when filenames resemble category or channel signals', () => {
     const result = classifySourceSnapshot({
       sourceSha: 'c'.repeat(40),
-      repositoryName: 'redirect-site',
-      topics: ['dsh-plugin', 'deepseek-harness'],
+      repositoryFullName: 'fixture/redirect-site',
       files: {
         'robots.txt': 'User-agent: *\nAllow: /\n',
         'og-image.jpg': undefined,
@@ -43,8 +41,7 @@ describe('source classification runner', () => {
   it('passes the repository name into the source relevance decision', () => {
     const result = classifySourceSnapshot({
       sourceSha: 'd'.repeat(40),
-      repositoryName: 'DSH-Community',
-      topics: ['deepseek-harness'],
+      repositoryFullName: 'fixture/DSH-Community',
       files: {},
     })
 
