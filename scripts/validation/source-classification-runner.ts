@@ -5,7 +5,6 @@ import {
 import {
   buildSourceClassificationArchive,
   buildValidationCatalog,
-  excludedSourceTypes,
   parseSourceClassificationArchive,
   parseSourceDiscovery,
   selectSourceClassificationTargets,
@@ -127,7 +126,7 @@ function classificationRecord(
     sourcePushedAt: repository.pushedAt,
     sourceSha,
     disposition: classification === undefined ? 'inconclusive' : excluded ? 'exclude' : 'include',
-    ...(excluded ? { exclusionReason: `source project type is ${classification!.projectType}` } : {}),
+    ...(excluded ? { exclusionReason: 'NO_DSH_CONTRACT' } : {}),
     ...(failureCode ? { failureCode } : {}),
     ...(classification ? { classification } : {}),
   }
@@ -264,6 +263,5 @@ export function classifySourceSnapshot({
 }
 
 export function shouldExcludeSourceClassification(classification: SourceClassification): boolean {
-  return classification.confidence !== 'low'
-    && excludedSourceTypes().has(classification.projectType)
+  return classification.dshRelevance !== 'recognized'
 }

@@ -147,7 +147,7 @@ jobs:
             if test -f src/data/source-classification.json; then
               echo "No newer source classification archive is available; sync will use the persisted archive."
             else
-              echo "No completed source classification archive is available; sync will use the topic full-catalog fallback."
+              echo "No completed source classification archive is available; sync will fail closed for public admission."
             fi
           fi
 
@@ -245,7 +245,10 @@ jobs:
             const expectedVisibleIds = new Set(discovery.repositories
               .filter((repository) => {
                 const record = archiveById.get(repository.id)
-                return record && record.disposition !== 'exclude'
+                return record
+                  && record.disposition === 'include'
+                  && record.sourcePushedAt === repository.pushed_at
+                  && record.classification?.dshRelevance === 'recognized'
               })
               .map((repository) => repository.id))
             const actualVisibleIds = new Set(source.repositories.map((entry) => entry.repositoryId))
@@ -254,7 +257,8 @@ jobs:
               throw new Error(`Catalog visibility does not match source archive: expected ${expectedVisibleIds.size}, got ${actualVisibleIds.size}`)
             }
             const excludedIds = archive.records
-              .filter((record) => record.disposition === 'exclude')
+              .filter((record) => record.disposition !== 'include'
+                || record.classification?.dshRelevance !== 'recognized')
               .map((record) => record.repositoryId)
             if (excludedIds.some((repositoryId) => sourceById.has(repositoryId))) {
               throw new Error('Catalog contains a repository excluded by source classification')
@@ -273,7 +277,9 @@ jobs:
               throw new Error(`Catalog validation conclusions do not match source archive: expected ${expectedVerified.size}, got ${actualVerified.size}`)
             }
             for (const record of archive.records) {
-              if (record.disposition !== 'include' || !record.classification || record.classification.confidence === 'low') continue
+              if (record.disposition !== 'include'
+                || record.classification?.dshRelevance !== 'recognized'
+                || record.classification.typeConfidence === 'low') continue
               const entry = sourceById.get(record.repositoryId)
               // The archive intentionally retains historical records. A
               // repository that is no longer in the current Topic discovery
@@ -296,7 +302,10 @@ jobs:
               }
             }
           } else {
-            console.log('No source classification archive was restored; topic full-catalog fallback remains authoritative.')
+            if (source.repositories.length !== 0) {
+              throw new Error('Catalog must fail closed when no source classification archive is available')
+            }
+            console.log('No source classification archive was restored; public admission failed closed.')
           }
           console.log(`Catalog archive check passed: ${source.stats.verified} verified, ${source.repositories.length} included repositories`)
           NODE

@@ -96,6 +96,11 @@
       "properties": {
         "sourceSha": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" },
         "classifierVersion": { "type": "string", "minLength": 1 },
+        "dshRelevance": { "enum": ["recognized", "unrecognized"] },
+        "relevanceSignals": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
         "projectType": { "enum": ["plugin", "skill", "collection", "channel", "application", "infrastructure", "directory", "unknown"] },
         "category": { "enum": ["ui", "agent-session", "development", "communication", "data", "model-mcp", "security", "operations", "lifestyle", "research", "other"] },
         "categories": {
@@ -107,6 +112,8 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "typeConfidence": { "enum": ["high", "medium", "low"] },
+        "categoryConfidence": { "enum": ["high", "medium", "low"] },
         "confidence": { "enum": ["high", "medium", "low"] }
       }
     },

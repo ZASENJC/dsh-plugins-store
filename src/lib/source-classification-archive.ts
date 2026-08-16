@@ -466,8 +466,8 @@ export function buildValidationCatalog(
     // A validation target must have a current source classification. Keep
     // inconclusive records in the central archive for retry, but do not send
     // them to the sandbox using only coarse Topic metadata.
-    if (record?.disposition !== 'include') return []
-    const sourceType = record?.classification && record.classification.confidence !== 'low'
+    if (record?.disposition !== 'include' || record.classification?.dshRelevance !== 'recognized') return []
+    const sourceType = record.classification.typeConfidence !== 'low'
       ? record.classification.projectType
       : undefined
     return [{
@@ -532,16 +532,15 @@ export function validationRecordsFromArchive(
   return records
 }
 
-export function filterCatalogRepositoriesByArchive<T extends { id: number }>(
+export function filterCatalogRepositoriesByArchive<T extends { id: number, pushed_at: string }>(
   repositories: readonly T[],
   archive: SourceClassificationArchive | null,
 ): T[] {
-  if (archive === null) return [...repositories]
-  const dispositions = new Map(archive.records.map((record) => [record.repositoryId, record.disposition]))
-  return repositories.filter((repository) => {
-    const disposition = dispositions.get(repository.id)
-    return disposition !== undefined && disposition !== 'exclude'
-  })
+  if (archive === null) return []
+  return repositories.filter((repository) => isIncludedByCurrentArchive({
+    repositoryId: repository.id,
+    pushedAt: repository.pushed_at,
+  }, archive))
 }
 
 export function currentSourceClassification(
@@ -549,7 +548,18 @@ export function currentSourceClassification(
   archive: SourceClassificationArchive | null,
 ): SourceClassification | undefined {
   const record = currentRecord(repository, archive)
-  return record?.classification
+  return record?.disposition === 'include' && record.classification?.dshRelevance === 'recognized'
+    ? record.classification
+    : undefined
+}
+
+export function isIncludedByCurrentArchive(
+  repository: Pick<SourceDiscoveryRepository, 'repositoryId' | 'pushedAt'>,
+  archive: SourceClassificationArchive | null,
+): boolean {
+  const record = currentRecord(repository, archive)
+  return record?.disposition === 'include'
+    && record.classification?.dshRelevance === 'recognized'
 }
 
 export function isExcludedByCurrentArchive(

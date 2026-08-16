@@ -10,6 +10,7 @@ import {
   type SourceClassificationArchive,
   type SourceDiscoverySnapshot,
 } from './source-classification-archive'
+import { SOURCE_CLASSIFIER_VERSION } from './source-classification'
 
 const discovery: SourceDiscoverySnapshot = {
   schemaVersion: 1,
@@ -57,17 +58,23 @@ const discovery: SourceDiscoverySnapshot = {
 
 const pluginClassification = {
   sourceSha: 'a'.repeat(40),
-  classifierVersion: '0.1.0',
+  classifierVersion: SOURCE_CLASSIFIER_VERSION,
+  dshRelevance: 'recognized' as const,
+  relevanceSignals: ['package.json:dsh.bundle.patch', 'cordis.patch.yml:parsed'],
   projectType: 'plugin' as const,
   category: 'development' as const,
   categories: ['development' as const],
   matchedSignals: ['package.json:dsh'],
+  typeConfidence: 'high' as const,
+  categoryConfidence: 'high' as const,
   confidence: 'high' as const,
 }
 
 const appClassification = {
   ...pluginClassification,
   sourceSha: 'b'.repeat(40),
+  dshRelevance: 'unrecognized' as const,
+  relevanceSignals: [],
   projectType: 'application' as const,
   category: 'development' as const,
 }
@@ -78,13 +85,14 @@ describe('source classification archive', () => {
       schemaVersion: 1,
       generatedAt: '2026-08-16T01:00:00Z',
       mode: 'full',
-      classifierVersion: '0.1.0',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
       records: [{
         repositoryId: 1,
         fullName: 'owner/plugin',
         sourcePushedAt: '2026-08-15T00:00:00Z',
         sourceSha: 'a'.repeat(40),
         disposition: 'include',
+        classification: pluginClassification,
       }, {
         repositoryId: 2,
         fullName: 'owner/excluded',
@@ -119,7 +127,7 @@ describe('source classification archive', () => {
       schemaVersion: 1,
       generatedAt: '2026-08-15T00:00:00Z',
       mode: 'full',
-      classifierVersion: '0.1.0',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
       records: discovery.repositories.map((repository) => ({
         repositoryId: repository.repositoryId,
         fullName: repository.fullName,
@@ -140,7 +148,7 @@ describe('source classification archive', () => {
       schemaVersion: 1,
       generatedAt: '2026-08-15T00:00:00Z',
       mode: 'full',
-      classifierVersion: '0.1.0',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
       records: [{
         repositoryId: 2,
         fullName: 'owner/app',
@@ -209,7 +217,7 @@ describe('source classification archive', () => {
         sourcePushedAt: discovery.repositories[0].pushedAt,
         sourceSha: pluginClassification.sourceSha,
         disposition: 'include',
-        classification: { ...pluginClassification, confidence: 'low' },
+        classification: { ...pluginClassification, typeConfidence: 'low', confidence: 'low' },
       }],
       mode: 'full',
       generatedAt: '2026-08-16T03:30:00Z',

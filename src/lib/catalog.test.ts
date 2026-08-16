@@ -12,6 +12,7 @@ import {
   sortCatalogEntries,
 } from './catalog'
 import type { SourceClassificationArchive } from './source-classification-archive'
+import { SOURCE_CLASSIFIER_VERSION } from './source-classification'
 import { extractInstallReference } from './install-reference'
 
 const githubRepository = {
@@ -326,11 +327,15 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
         sandbox: { status: 'inconclusive' as const },
         sourceClassification: {
           sourceSha: 'a'.repeat(40),
-          classifierVersion: '0.1.0',
+          classifierVersion: SOURCE_CLASSIFIER_VERSION,
+          dshRelevance: 'recognized' as const,
+          relevanceSignals: ['package.json:dsh.bundle.patch', 'cordis.patch.yml:parsed'],
           projectType: 'plugin' as const,
           category: 'model-mcp' as const,
           categories: ['model-mcp' as const],
           matchedSignals: ['package.json:dsh.bundle.patch'],
+          typeConfidence: 'high' as const,
+          categoryConfidence: 'high' as const,
           confidence: 'high' as const,
         },
       }]]),
@@ -361,11 +366,15 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
         sandbox: { status: 'inconclusive' as const },
         sourceClassification: {
           sourceSha: 'b'.repeat(40),
-          classifierVersion: '0.1.0',
+          classifierVersion: SOURCE_CLASSIFIER_VERSION,
+          dshRelevance: 'recognized' as const,
+          relevanceSignals: ['package.json:dsh.bundle.patch', 'cordis.patch.yml:parsed'],
           projectType: 'application' as const,
           category: 'development' as const,
           categories: ['development' as const],
           matchedSignals: ['package.json:application'],
+          typeConfidence: 'high' as const,
+          categoryConfidence: 'high' as const,
           confidence: 'high' as const,
         },
       }]]),
@@ -384,13 +393,26 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       schemaVersion: 1,
       generatedAt: '2026-08-16T09:00:00Z',
       mode: 'full',
-      classifierVersion: '0.1.0',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
       records: [{
         repositoryId: githubRepository.id,
         fullName: githubRepository.full_name,
         sourcePushedAt: previousPushedAt,
         sourceSha: 'a'.repeat(40),
         disposition: 'include',
+        classification: {
+          sourceSha: 'a'.repeat(40),
+          classifierVersion: SOURCE_CLASSIFIER_VERSION,
+          dshRelevance: 'recognized',
+          relevanceSignals: ['package.json:dsh.bundle.patch', 'cordis.patch.yml:parsed'],
+          projectType: 'plugin',
+          category: 'communication',
+          categories: ['communication'],
+          matchedSignals: ['package.json:dsh.bundle.patch'],
+          typeConfidence: 'high',
+          categoryConfidence: 'high',
+          confidence: 'high',
+        },
       }],
     }
     const catalog = buildCatalog(
@@ -421,7 +443,7 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       schemaVersion: 1,
       generatedAt: '2026-08-16T09:00:00Z',
       mode: 'full',
-      classifierVersion: '0.1.0',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
       records: [{
         repositoryId: githubRepository.id,
         fullName: githubRepository.full_name,
@@ -430,11 +452,15 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
         disposition: 'include',
         classification: {
           sourceSha: 'a'.repeat(40),
-          classifierVersion: '0.1.0',
+          classifierVersion: SOURCE_CLASSIFIER_VERSION,
+          dshRelevance: 'recognized',
+          relevanceSignals: ['package.json:dsh.bundle.patch', 'cordis.patch.yml:parsed'],
           projectType: 'plugin',
           category: 'model-mcp',
           categories: ['model-mcp'],
           matchedSignals: ['package.json:dsh'],
+          typeConfidence: 'high',
+          categoryConfidence: 'high',
           confidence: 'high',
         },
       }, {

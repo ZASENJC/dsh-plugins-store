@@ -12,7 +12,7 @@ import {
 } from './source-classification'
 import {
   currentSourceClassification,
-  isExcludedByCurrentArchive,
+  isIncludedByCurrentArchive,
   type SourceClassificationArchive,
 } from './source-classification-archive'
 import {
@@ -155,18 +155,22 @@ export function createCatalogEntry(
   const sourceClassification = sourceClassificationOverride
     ?? usableSourceClassification(validationRecord, repository.pushed_at)
   const useSourceType = sourceClassification !== null
+    && sourceClassification.dshRelevance === 'recognized'
     && sourceClassification.projectType !== 'unknown'
-    && sourceClassification.confidence !== 'low'
+    && sourceClassification.typeConfidence !== 'low'
   const useSourceCategory = sourceClassification !== null
+    && sourceClassification.dshRelevance === 'recognized'
     && sourceClassification.category !== 'other'
-    && sourceClassification.confidence !== 'low'
+    && sourceClassification.categoryConfidence !== 'low'
   const classification = {
     projectType: useSourceType ? sourceClassification!.projectType : topicClassification.projectType,
     category: useSourceCategory ? sourceClassification!.category : topicClassification.category,
     categories: useSourceCategory ? sourceClassification!.categories : topicClassification.categories,
     matchedTopics: topicClassification.matchedTopics,
-    confidence: useSourceType || useSourceCategory
-      ? sourceClassification!.confidence
+    confidence: useSourceType
+      ? sourceClassification!.typeConfidence
+      : useSourceCategory
+        ? sourceClassification!.categoryConfidence
       : topicClassification.confidence,
   }
   const normalizedFullName = repository.full_name.toLowerCase()
@@ -257,7 +261,7 @@ export function buildCatalog(
   )
   const entries = sortCatalogEntries(
     [...uniqueRepositories.values()]
-      .filter((repository) => !isExcludedByCurrentArchive({
+      .filter((repository) => classificationArchive === null || isIncludedByCurrentArchive({
         repositoryId: repository.id,
         pushedAt: repository.pushed_at,
       }, classificationArchive))

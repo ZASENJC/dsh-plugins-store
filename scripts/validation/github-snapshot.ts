@@ -1,6 +1,7 @@
 import type { ShadowCatalogRepository } from './shadow-runner'
 import type { ScannerResults } from './scanner-adapters'
 import type { RepositoryStructureSnapshot } from './structure-check'
+import { resolveDshBundlePatchPath } from '../../src/lib/source-classification'
 
 const API_URL = 'https://api.github.com'
 export const MAX_STRUCTURAL_BLOB_BYTES = 1_000_000
@@ -130,6 +131,25 @@ export async function loadGitHubSnapshot(
     )
     files[entry.path] = decodeBlob(blob, entry.path)
   }))
+
+  const patchPath = resolveDshBundlePatchPath(files['package.json'])
+  const patchEntry = patchPath === null
+    ? undefined
+    : tree.tree.find((entry) => entry.type === 'blob' && entry.path === patchPath)
+  if (patchEntry && files[patchEntry.path] === '') {
+    const size = patchEntry.size ?? 0
+    if (size > MAX_STRUCTURAL_BLOB_BYTES) {
+      throw new Error(`Structural blob exceeds size limit: ${patchEntry.path}`)
+    }
+    structuralBytes += size
+    if (structuralBytes > MAX_STRUCTURAL_BYTES) throw new Error('Structural blob total exceeds size limit')
+    const blob = await fetchJson<GitHubBlobResponse>(
+      fetchImpl,
+      `/repositories/${repositoryId}/git/blobs/${patchEntry.sha}`,
+      token,
+    )
+    files[patchEntry.path] = decodeBlob(blob, patchEntry.path)
+  }
 
   return {
     repository: {

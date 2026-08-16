@@ -352,7 +352,27 @@ export function runStructureCheck(
     sourceSha: repository.sourceSha,
     files: snapshot.files,
   })
-  const sourceProjectType = sourceClassification.projectType !== 'unknown' && sourceClassification.confidence !== 'low'
+  const dshContractRecognized = sourceClassification.dshRelevance === 'recognized'
+  check(
+    checks,
+    'DSH_CONTRACT_RECOGNIZED',
+    dshContractRecognized ? 'passed' : 'not-run',
+    'required',
+    dshContractRecognized
+      ? 'A valid root package.json declares an existing DSH YAML patch list.'
+      : 'No valid fixed-SHA DSH plugin contract was recognized.',
+    'package.json',
+  )
+  if (!dshContractRecognized) {
+    return {
+      decision: 'inconclusive',
+      queueSandbox: false,
+      publicReason: '未识别到有效 DSH 插件合约',
+      report: createUnrecognizedReport(snapshot, target, checks, sourceClassification),
+    }
+  }
+
+  const sourceProjectType = sourceClassification.projectType !== 'unknown' && sourceClassification.typeConfidence !== 'low'
     ? sourceClassification.projectType
     : snapshot.projectType
   const classifiedSnapshot = sourceProjectType === snapshot.projectType

@@ -4,6 +4,7 @@ import { join, posix, resolve } from 'node:path'
 import type { ScannerResults } from './scanner-adapters'
 import type { ShadowCatalogRepository } from './shadow-runner'
 import type { RepositoryStructureSnapshot } from './structure-check'
+import { resolveDshBundlePatchPath } from '../../src/lib/source-classification'
 import {
   isStructuralContentPath,
   MAX_STRUCTURAL_BLOB_BYTES,
@@ -54,6 +55,18 @@ async function inventoryFiles(sourceDirectory: string): Promise<Record<string, s
   const files: Record<string, string> = {}
   let structuralBytes = 0
 
+  async function readStructuralFile(relativePath: string): Promise<void> {
+    const absolutePath = join(sourceDirectory, relativePath)
+    const stats = await lstat(absolutePath)
+    if (!stats.isFile()) return
+    if (stats.size > MAX_STRUCTURAL_BLOB_BYTES) {
+      throw new Error(`Structural file exceeds size limit: ${relativePath}`)
+    }
+    structuralBytes += stats.size
+    if (structuralBytes > MAX_STRUCTURAL_BYTES) throw new Error('Structural file total exceeds size limit')
+    files[relativePath] = await readFile(absolutePath, 'utf8')
+  }
+
   async function visit(relativeDirectory: string): Promise<void> {
     const directory = join(sourceDirectory, relativeDirectory)
     const entries = (await readdir(directory, { withFileTypes: true }))
@@ -69,18 +82,13 @@ async function inventoryFiles(sourceDirectory: string): Promise<Record<string, s
       if (!entry.isFile()) continue
       files[relativePath] = ''
       if (!isStructuralContentPath(relativePath)) continue
-      const absolutePath = join(sourceDirectory, relativePath)
-      const stats = await lstat(absolutePath)
-      if (stats.size > MAX_STRUCTURAL_BLOB_BYTES) {
-        throw new Error(`Structural file exceeds size limit: ${relativePath}`)
-      }
-      structuralBytes += stats.size
-      if (structuralBytes > MAX_STRUCTURAL_BYTES) throw new Error('Structural file total exceeds size limit')
-      files[relativePath] = await readFile(absolutePath, 'utf8')
+      await readStructuralFile(relativePath)
     }
   }
 
   await visit('')
+  const patchPath = resolveDshBundlePatchPath(files['package.json'])
+  if (patchPath !== null && files[patchPath] === '') await readStructuralFile(patchPath)
   return files
 }
 

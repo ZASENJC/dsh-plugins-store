@@ -152,10 +152,10 @@ async function readClassificationArchive(): Promise<SourceClassificationArchive 
     return parseSourceClassificationArchive(JSON.parse(await readFile(classificationArchivePath, 'utf8')))
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-      console.warn('源码分类档案暂不可用，目录同步回退到 topic 全量目录')
+      console.warn('源码分类档案暂不可用，目录同步将严格关闭未分类项目的公开准入')
       return null
     }
-    console.warn('源码分类档案无效，目录同步回退到 topic 全量目录')
+    console.warn('源码分类档案无效，目录同步将严格关闭未分类项目的公开准入')
     return null
   }
 }
@@ -189,9 +189,7 @@ async function sync() {
   const classificationArchive = await readClassificationArchive()
   const validationRecords = validationRecordsFromArchive(classificationArchive)
   const verifiedRepositoryNames = await readHistoricalVerifiedRepositoryNames()
-  const catalogRepositories = classificationArchive === null
-    ? repositories
-    : filterCatalogRepositoriesByArchive(allRepositories, classificationArchive)
+  const catalogRepositories = filterCatalogRepositoriesByArchive(allRepositories, classificationArchive)
   const installReferences = await fetchInstallReferences(catalogRepositories, classificationArchive)
   const generatedAt = new Date().toISOString()
   const catalog = buildCatalog(
@@ -221,7 +219,7 @@ async function sync() {
   console.log(`Verified 有效收录 ${verifiedRepositoryNames.size} 个仓库；站内覆盖 ${VERIFIED_REPOSITORY_OVERRIDES.size} 个；商店匹配 ${catalog.stats.verified} 个`)
   console.log(`验证状态文件匹配 ${validationRecords.size} 个仓库；当前完整验证 ${catalog.stats.validationStatuses.verified ?? 0} 个`)
   console.log(`README 安装特征匹配 ${installReferences.size} 个仓库；失败或无明确命令不影响目录同步`)
-  console.log(`源码分类档案${classificationArchive ? '已应用' : '尚未可用，已回退 topic 全量目录'}；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
+  console.log(`源码分类档案${classificationArchive ? '已应用' : '尚未可用，已按 fail-closed 规则停止公开准入'}；Topic 候选 ${repositories.length} 个；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
 }
 
 await sync()

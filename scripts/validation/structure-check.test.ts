@@ -205,8 +205,8 @@ describe('shadow structure check', () => {
   })
 
   it.each([
-    ['PACKAGE_MANIFEST_VALID', { ...hostToolSnapshot, files: {} }],
-    ['DSH_BUNDLE_PATCH_VALID', {
+    ['a missing package manifest', { ...hostToolSnapshot, files: {} }],
+    ['an invalid DSH patch declaration', {
       ...hostToolSnapshot,
       files: {
         ...hostToolSnapshot.files,
@@ -217,13 +217,13 @@ describe('shadow structure check', () => {
         }),
       },
     }],
-    ['SKILL_DOCUMENT_PRESENT', { ...hostToolSnapshot, projectType: 'skill' as const, files: {} }],
-    ['COLLECTION_MEMBERS_PRESENT', {
+    ['only a Skill document', { ...hostToolSnapshot, projectType: 'skill' as const, files: { 'SKILL.md': '# Skill\n' } }],
+    ['only a workspace manifest', {
       ...hostToolSnapshot,
       projectType: 'collection' as const,
-      files: { 'package.json': JSON.stringify({ name: '@example/collection' }) },
+      files: { 'package.json': JSON.stringify({ name: '@example/collection', workspaces: ['packages/*'] }) },
     }],
-  ] as const)('keeps %s as advisory evidence instead of a P1 blocker', (code, snapshot) => {
+  ] as const)('stops %s before sandbox validation because it is not a DSH contract', (_label, snapshot) => {
     const result = runStructureCheck(snapshot, {
       now: '2026-08-14T08:10:00Z',
       dshVersion: '0.1.0-rc.6',
@@ -232,12 +232,15 @@ describe('shadow structure check', () => {
       platform: 'linux-x64',
     })
 
-    expect(result.decision).toBe('passed')
-    expect(result.report).toMatchObject({ currentStatus: 'structure_passed', failure: null })
+    expect(result).toMatchObject({
+      decision: 'inconclusive',
+      queueSandbox: false,
+      report: { currentStatus: 'unrecognized', failure: null },
+    })
     expect(result.report.structureChecks).toContainEqual(expect.objectContaining({
-      code,
-      status: 'warning',
-      severity: 'advisory',
+      code: 'DSH_CONTRACT_RECOGNIZED',
+      status: 'not-run',
+      severity: 'required',
     }))
   })
 

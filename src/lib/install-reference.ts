@@ -62,9 +62,11 @@ export function canExtractInstallReference(
   sourceClassification?: SourceClassification,
 ): boolean {
   const topicProjectType = classifyRepository(repository).projectType
+  if (sourceClassification?.dshRelevance === 'unrecognized') return false
   const sourceProjectType = sourceClassification
+    && sourceClassification.dshRelevance === 'recognized'
     && sourceClassification.projectType !== 'unknown'
-    && sourceClassification.confidence !== 'low'
+    && sourceClassification.typeConfidence !== 'low'
     ? sourceClassification.projectType
     : undefined
   return INSTALLABLE_PROJECT_TYPES.has(sourceProjectType ?? topicProjectType)
