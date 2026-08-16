@@ -39,6 +39,7 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).toContain('CLASSIFICATION_ARCHIVE_PATH')
     expect(syncWorkflow).toContain('plugin-validation-state')
     expect(syncWorkflow).toContain('gh run view "$run_id"')
+    expect(syncWorkflow).toContain('metadata.conclusion === "success"')
     expect(syncWorkflow).toContain('Retry archive download')
     expect(syncWorkflow).toContain('sleep 10')
     expect(syncWorkflow).toContain('dist/catalog.json')

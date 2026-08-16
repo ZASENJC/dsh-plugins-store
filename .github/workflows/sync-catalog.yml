@@ -105,7 +105,7 @@ jobs:
                 process.exit(metadata.workflowName === (process.env.EXPECTED_WORKFLOW === "validate-plugins.yml" ? "Validate plugins" : "Classify plugins")
                   && metadata.headBranch === process.env.EXPECTED_BRANCH
                   && metadata.status === "completed"
-                  && ["success", "failure", "cancelled", "timed_out", "action_required", "stale", "neutral"].includes(metadata.conclusion) ? 0 : 1)
+                  && metadata.conclusion === "success" ? 0 : 1)
               '; then
                 continue
               fi
