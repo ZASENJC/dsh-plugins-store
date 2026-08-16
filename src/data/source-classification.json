@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-16T23:14:58.235Z",
+  "generatedAt": "2026-08-16T23:43:15.469Z",
   "mode": "incremental",
   "classifierVersion": "0.2.1",
   "records": [
@@ -402,12 +402,12 @@
     {
       "repositoryId": 1158472225,
       "fullName": "edison7009/EchoBird",
-      "sourcePushedAt": "2026-08-16T20:36:56Z",
-      "sourceSha": "0e0a91bfca50131eaa4f34a5226ab23718c47d51",
+      "sourcePushedAt": "2026-08-16T22:36:00Z",
+      "sourceSha": "cf1c2e7e0c2372bea81830baec45986c6bce1435",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "0e0a91bfca50131eaa4f34a5226ab23718c47d51",
+        "sourceSha": "cf1c2e7e0c2372bea81830baec45986c6bce1435",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -672,7 +672,7 @@
     {
       "repositoryId": 1190390511,
       "fullName": "agentrq/agentrq",
-      "sourcePushedAt": "2026-08-16T21:49:16Z",
+      "sourcePushedAt": "2026-08-16T22:27:28Z",
       "sourceSha": "b63a82b6228e61034a9a6cc37f551b2e912f1aa5",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
@@ -3603,11 +3603,11 @@
     {
       "repositoryId": 1306637593,
       "fullName": "linhut/gongwen-skill",
-      "sourcePushedAt": "2026-08-16T17:34:22Z",
-      "sourceSha": "ebec1862bd556f54b62b47360f1f8d4cfe114d92",
+      "sourcePushedAt": "2026-08-16T23:06:15Z",
+      "sourceSha": "2c7446e653ada2d31a1f485a23c5bf76bff69c9f",
       "disposition": "include",
       "classification": {
-        "sourceSha": "ebec1862bd556f54b62b47360f1f8d4cfe114d92",
+        "sourceSha": "2c7446e653ada2d31a1f485a23c5bf76bff69c9f",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -3641,18 +3641,17 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "failed",
-        "disposition": "auto_failed",
+        "status": "inconclusive",
+        "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "ebec1862bd556f54b62b47360f1f8d4cfe114d92",
-        "checkedAt": "2026-08-16T22:51:41.864Z",
+        "sourceSha": "2c7446e653ada2d31a1f485a23c5bf76bff69c9f",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 282223,
-        "errorCode": "PLUGIN_SMOKE_FAILED",
-        "attribution": "plugin"
+        "executionType": null,
+        "errorCode": "SOURCE_CHANGED_DURING_RUN",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -7429,7 +7428,7 @@
     {
       "repositoryId": 1333100071,
       "fullName": "Anionex/dsh-vision-toolkit",
-      "sourcePushedAt": "2026-08-16T22:21:16Z",
+      "sourcePushedAt": "2026-08-16T23:24:30Z",
       "sourceSha": "2ad06820b848e3075e1ab8b74d152c870e43d31c",
       "disposition": "include",
       "classification": {
@@ -7475,12 +7474,12 @@
         "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "2ad06820b848e3075e1ab8b74d152c870e43d31c",
-        "checkedAt": "2026-08-16T23:10:42.319Z",
+        "checkedAt": "2026-08-16T23:36:52.418Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 86292
+        "durationMs": 98269
       }
     },
     {
@@ -7539,7 +7538,7 @@
     {
       "repositoryId": 1333111893,
       "fullName": "ccch1mneyyy/dsh-TUI",
-      "sourcePushedAt": "2026-08-16T22:22:31Z",
+      "sourcePushedAt": "2026-08-16T23:24:09Z",
       "sourceSha": "dc73aca7ad1e8d32b157db9c1ef858812396a9b8",
       "disposition": "include",
       "classification": {
@@ -7589,12 +7588,12 @@
         "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "dc73aca7ad1e8d32b157db9c1ef858812396a9b8",
-        "checkedAt": "2026-08-16T23:12:35.091Z",
+        "checkedAt": "2026-08-16T23:39:02.752Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "command",
-        "durationMs": 86135,
+        "durationMs": 92901,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -8052,17 +8051,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "28cf1046275e78b5e1a552327197c469e2d4839d",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:13.994Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 59431,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -8455,17 +8455,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "82990a0e980418cddb9f6f026150cd6831c621ac",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:24.879Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 68104,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -8883,11 +8884,11 @@
     {
       "repositoryId": 1333152408,
       "fullName": "whyihaveyou/dsh-suite",
-      "sourcePushedAt": "2026-08-16T21:35:43Z",
-      "sourceSha": "0f099159968e8728520933dfe8b0d319267e499b",
+      "sourcePushedAt": "2026-08-16T22:38:34Z",
+      "sourceSha": "8cbb2b745bb2e3c78a16c1161757f2281053fb53",
       "disposition": "include",
       "classification": {
-        "sourceSha": "0f099159968e8728520933dfe8b0d319267e499b",
+        "sourceSha": "8cbb2b745bb2e3c78a16c1161757f2281053fb53",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -8940,8 +8941,8 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "0f099159968e8728520933dfe8b0d319267e499b",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "8cbb2b745bb2e3c78a16c1161757f2281053fb53",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -10518,17 +10519,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "d8b29a13ed029207b6da8277b05091ceefcbe754",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:23.501Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 73873,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -11799,11 +11801,11 @@
     {
       "repositoryId": 1333239047,
       "fullName": "HackSing/dsh-plugins",
-      "sourcePushedAt": "2026-08-16T21:53:32Z",
-      "sourceSha": "6e76cdd2779cb9400e89f043caabec3b16237f19",
+      "sourcePushedAt": "2026-08-16T22:56:10Z",
+      "sourceSha": "1cc8ec0b185f6bd2ba5934dda9f6b5cec78f3212",
       "disposition": "include",
       "classification": {
-        "sourceSha": "6e76cdd2779cb9400e89f043caabec3b16237f19",
+        "sourceSha": "1cc8ec0b185f6bd2ba5934dda9f6b5cec78f3212",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -11830,13 +11832,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "6e76cdd2779cb9400e89f043caabec3b16237f19",
-        "checkedAt": "2026-08-16T22:37:25.487Z",
+        "sourceSha": "1cc8ec0b185f6bd2ba5934dda9f6b5cec78f3212",
+        "checkedAt": "2026-08-16T23:39:52.726Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 243407,
+        "durationMs": 58240,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -12610,16 +12612,17 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "structure",
         "sourceSha": "3bbb2534bd1d9ab4dcd46faf0ef4f0182797dfbd",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:29.851Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
+        "executionType": "host-tool",
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
         "attribution": "infrastructure"
       }
     },
@@ -12958,17 +12961,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "ba2edc1247c97c4b1bf129ed82ae22e4076f0215",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:53.266Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 58780,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -13979,17 +13983,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "742653bf3762715c5ab0867d8f0109494b4fc3e8",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:12.998Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 112080,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -14784,11 +14789,11 @@
     {
       "repositoryId": 1333295863,
       "fullName": "bradeGithub/DSH-Plugins-Marketplace",
-      "sourcePushedAt": "2026-08-16T21:01:45Z",
-      "sourceSha": "a22839e99a3cb898d0f2bb49e3102247713a4857",
+      "sourcePushedAt": "2026-08-16T23:02:49Z",
+      "sourceSha": "b3955db79e14d0c5e8b08e9cfeba753e2490c095",
       "disposition": "include",
       "classification": {
-        "sourceSha": "a22839e99a3cb898d0f2bb49e3102247713a4857",
+        "sourceSha": "b3955db79e14d0c5e8b08e9cfeba753e2490c095",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -14826,13 +14831,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "a22839e99a3cb898d0f2bb49e3102247713a4857",
-        "checkedAt": "2026-08-16T22:52:18.291Z",
+        "sourceSha": "b3955db79e14d0c5e8b08e9cfeba753e2490c095",
+        "checkedAt": "2026-08-16T23:36:41.830Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 220237
+        "durationMs": 87048
       }
     },
     {
@@ -15961,17 +15966,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "1bc0ed87dbb2d3e8554afc2040842f41c190b26a",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:03.037Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 68551,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -16595,17 +16601,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
+        "status": "failed",
+        "disposition": "manual_review",
+        "stage": "structure",
         "sourceSha": "b1b2c04f203e9c7cd5c930c9f3658c143db933c4",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:35:16.775Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 0,
+        "errorCode": "SECURITY_REVIEW_REQUIRED",
+        "attribution": "policy"
       }
     },
     {
@@ -17956,17 +17963,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "943b37aa11a143ac77a14352ac83452cbbbb797d",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:54.922Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 60436,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -19496,17 +19504,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "5eccfdcf3852a5d946133148c59bbe2804cc79e5",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:26.558Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 69783,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -20571,17 +20580,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "32dfc3fa93e327ad861d0965d1fab3654ac5929b",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:36.846Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 82064,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -22371,7 +22381,7 @@
     {
       "repositoryId": 1333446374,
       "fullName": "ysr666/dsh-vision-router",
-      "sourcePushedAt": "2026-08-16T21:29:14Z",
+      "sourcePushedAt": "2026-08-16T23:24:08Z",
       "sourceSha": "7c0ac17a252a9b56a3d363a0a26f33709e277309",
       "disposition": "include",
       "classification": {
@@ -22416,7 +22426,7 @@
         "disposition": "manual_review",
         "stage": "structure",
         "sourceSha": "7c0ac17a252a9b56a3d363a0a26f33709e277309",
-        "checkedAt": "2026-08-16T22:33:25.625Z",
+        "checkedAt": "2026-08-16T23:39:05.369Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -25119,11 +25129,11 @@
     {
       "repositoryId": 1333522020,
       "fullName": "ZK-Andy/dsh-continual-evolve",
-      "sourcePushedAt": "2026-08-16T22:06:48Z",
-      "sourceSha": "68732f6469a35d24e3499f9849b7576c6e350039",
+      "sourcePushedAt": "2026-08-16T22:38:51Z",
+      "sourceSha": "427992191e7fbf90634682eda4d2daedb5fdffe5",
       "disposition": "include",
       "classification": {
-        "sourceSha": "68732f6469a35d24e3499f9849b7576c6e350039",
+        "sourceSha": "427992191e7fbf90634682eda4d2daedb5fdffe5",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -25158,17 +25168,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "68732f6469a35d24e3499f9849b7576c6e350039",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "427992191e7fbf90634682eda4d2daedb5fdffe5",
+        "checkedAt": "2026-08-16T23:41:53.291Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 74414
       }
     },
     {
@@ -25347,11 +25356,11 @@
     {
       "repositoryId": 1333528857,
       "fullName": "WSL043/dsh-codex-subscription",
-      "sourcePushedAt": "2026-08-16T02:48:10Z",
-      "sourceSha": "33d8b213d52ae690f73f93feddf60c598ee7057d",
+      "sourcePushedAt": "2026-08-16T23:05:43Z",
+      "sourceSha": "7ce2cab5027b4eb73473e87d594cba70650b837b",
       "disposition": "include",
       "classification": {
-        "sourceSha": "33d8b213d52ae690f73f93feddf60c598ee7057d",
+        "sourceSha": "7ce2cab5027b4eb73473e87d594cba70650b837b",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -25390,16 +25399,17 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
-        "sourceSha": "33d8b213d52ae690f73f93feddf60c598ee7057d",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "structure",
+        "sourceSha": "7ce2cab5027b4eb73473e87d594cba70650b837b",
+        "checkedAt": "2026-08-16T23:35:14.563Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
+        "executionType": "web",
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
         "attribution": "infrastructure"
       }
     },
@@ -25969,11 +25979,11 @@
     {
       "repositoryId": 1333568633,
       "fullName": "zp-home/dsh-recommend",
-      "sourcePushedAt": "2026-08-16T20:52:13Z",
-      "sourceSha": "167412963ad2c7d97030ba26445a85324de77a77",
+      "sourcePushedAt": "2026-08-16T22:50:57Z",
+      "sourceSha": "31d0d7dd0da22d9f3d167f8319adacb2a2c0d4e8",
       "disposition": "include",
       "classification": {
-        "sourceSha": "167412963ad2c7d97030ba26445a85324de77a77",
+        "sourceSha": "31d0d7dd0da22d9f3d167f8319adacb2a2c0d4e8",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -26019,13 +26029,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "167412963ad2c7d97030ba26445a85324de77a77",
-        "checkedAt": "2026-08-16T22:37:57.579Z",
+        "sourceSha": "31d0d7dd0da22d9f3d167f8319adacb2a2c0d4e8",
+        "checkedAt": "2026-08-16T23:36:33.669Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 274121,
+        "durationMs": 76894,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -26257,11 +26267,11 @@
     {
       "repositoryId": 1333579278,
       "fullName": "ZASENJC/dsh-plugins-store",
-      "sourcePushedAt": "2026-08-16T22:24:21Z",
-      "sourceSha": "11584291eb9fb03b41d5dde79293745300019293",
+      "sourcePushedAt": "2026-08-16T23:15:30Z",
+      "sourceSha": "d7f7a44bb7129ca7027fae228a8f6808f0ab9278",
       "disposition": "include",
       "classification": {
-        "sourceSha": "11584291eb9fb03b41d5dde79293745300019293",
+        "sourceSha": "d7f7a44bb7129ca7027fae228a8f6808f0ab9278",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -26299,17 +26309,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "11584291eb9fb03b41d5dde79293745300019293",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "d7f7a44bb7129ca7027fae228a8f6808f0ab9278",
+        "checkedAt": "2026-08-16T23:38:48.121Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 115838,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -27201,11 +27212,11 @@
     {
       "repositoryId": 1333612974,
       "fullName": "Fishsb/dsh-prompt-enhancer",
-      "sourcePushedAt": "2026-08-16T22:17:39Z",
-      "sourceSha": "8de8fced305bcdeaacdb29fe0b7cf9dffac44a47",
+      "sourcePushedAt": "2026-08-16T23:17:03Z",
+      "sourceSha": "10dc930bbba8447429be5f7e50623b0c059967d9",
       "disposition": "include",
       "classification": {
-        "sourceSha": "8de8fced305bcdeaacdb29fe0b7cf9dffac44a47",
+        "sourceSha": "10dc930bbba8447429be5f7e50623b0c059967d9",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -27241,8 +27252,8 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "8de8fced305bcdeaacdb29fe0b7cf9dffac44a47",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "10dc930bbba8447429be5f7e50623b0c059967d9",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -27944,17 +27955,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "a4d74e6b53db172bd89e831f909b924d58de2eb5",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:24.101Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 74473,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -28190,17 +28202,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "1b527bc4cee5e77039ac459fff940fde2437bc7e",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:25.253Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 75625,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -28480,7 +28493,7 @@
     {
       "repositoryId": 1333662860,
       "fullName": "BlockRunAI/dsh-clawrouter",
-      "sourcePushedAt": "2026-08-16T22:24:16Z",
+      "sourcePushedAt": "2026-08-16T22:32:05Z",
       "sourceSha": "18fc2466cdea00d3854323b01756b51eec190029",
       "disposition": "include",
       "classification": {
@@ -28523,12 +28536,12 @@
         "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "18fc2466cdea00d3854323b01756b51eec190029",
-        "checkedAt": "2026-08-16T23:13:54.596Z",
+        "checkedAt": "2026-08-16T23:40:52.817Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 72841
+        "durationMs": 91899
       }
     },
     {
@@ -29301,17 +29314,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "5c852f3f211b028e91f272ec0fbdfa4ffbe7c4c1",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:13.990Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 59427,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -31581,16 +31595,17 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "structure",
         "sourceSha": "8bdfefc3724cb73337da6a66016f0904a7741135",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:33.097Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
+        "executionType": "host-tool",
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
         "attribution": "infrastructure"
       }
     },
@@ -33260,17 +33275,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "2ae301cefbc2c1512c0205ee9ddda96ed454c060",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:10.737Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 71229,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -38366,17 +38382,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "703e912adba83fcf82666e122a5d7cad8541b576",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:42.108Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 63710,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -38717,17 +38734,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "6a37336b0de46b85d7b9292f0aa24365f231d7ea",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:52.923Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 66097,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -40729,17 +40747,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "086836d04d8be90c94b13562b1cbc4a90df59bda",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:35.179Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 65328,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -41885,17 +41904,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "3c43cc2428dc71ac5d3538677ab8a1b6edd4273c",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:37.666Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 84059,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -42026,17 +42046,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "8c0cdd658dc3dafc481b5406c6954703edbd18fe",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:58.485Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 88634,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -43079,17 +43100,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "002a9b19e40682b8109c4670c360fc7507db337c",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:35.881Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 83027,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -44881,17 +44903,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "0a5ea8a406a771a737fca21ea2ab67312daa7e76",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:18.539Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 63976,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -46122,17 +46145,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "55ae5996f05c5fc3ad4f707e526d01f6293cb3ea",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:28.382Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 71607,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -46658,17 +46682,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "0dca8390cb8a15307200d8ce17f6a5d4b9482f85",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:57.064Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 57556,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -47541,17 +47566,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "0a9345d13ea772e074be103bd620ccc83746ebfb",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:25.804Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 76176,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -47970,11 +47996,11 @@
     {
       "repositoryId": 1333928947,
       "fullName": "qwert702/dsh-token-viewer",
-      "sourcePushedAt": "2026-08-16T08:00:18Z",
-      "sourceSha": "dd7c0de3b12c81c49800c0aba72e660af09fc3e8",
+      "sourcePushedAt": "2026-08-16T23:13:43Z",
+      "sourceSha": "bdce98e30ad969f64e4490c1bbcf9fd214c3ec60",
       "disposition": "include",
       "classification": {
-        "sourceSha": "dd7c0de3b12c81c49800c0aba72e660af09fc3e8",
+        "sourceSha": "bdce98e30ad969f64e4490c1bbcf9fd214c3ec60",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -48003,18 +48029,17 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "failed",
-        "disposition": "auto_failed",
+        "status": "inconclusive",
+        "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "dd7c0de3b12c81c49800c0aba72e660af09fc3e8",
-        "checkedAt": "2026-08-16T22:53:31.246Z",
+        "sourceSha": "bdce98e30ad969f64e4490c1bbcf9fd214c3ec60",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": "web",
-        "durationMs": 293192,
-        "errorCode": "DEPENDENCY_INSTALL_FAILED",
-        "attribution": "plugin"
+        "executionType": null,
+        "errorCode": "SOURCE_CHANGED_DURING_RUN",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -48448,17 +48473,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "2363827c96198461f42972c1fdc2fb7cc6c030bc",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:54.498Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 67672,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -49476,17 +49502,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "b37fe17692e229343698915242864803df20e4d7",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:43.513Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 69741,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -49829,17 +49856,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "d13d87e8362be4f03c3439540b09256ed9065499",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:34.025Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 80418,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -50245,17 +50273,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "b8360d89c84319258d006858e5352a739bba5a96",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:57.049Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 70223,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -50416,11 +50445,11 @@
     {
       "repositoryId": 1333960398,
       "fullName": "chnjames/dsh-plugin-market",
-      "sourcePushedAt": "2026-08-16T20:36:48Z",
-      "sourceSha": "c810dec6339eb77a681596ed4a7d6d10ab770bc4",
+      "sourcePushedAt": "2026-08-16T22:36:01Z",
+      "sourceSha": "aef721eb61b6f707fca21a7a9cea4fdc2b0d1bc4",
       "disposition": "include",
       "classification": {
-        "sourceSha": "c810dec6339eb77a681596ed4a7d6d10ab770bc4",
+        "sourceSha": "aef721eb61b6f707fca21a7a9cea4fdc2b0d1bc4",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -50458,13 +50487,14 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "c810dec6339eb77a681596ed4a7d6d10ab770bc4",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "aef721eb61b6f707fca21a7a9cea4fdc2b0d1bc4",
+        "checkedAt": "2026-08-16T23:38:56.794Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
+        "executionType": "web",
+        "durationMs": 120295,
+        "errorCode": "SANDBOX_TIMEOUT",
         "attribution": "infrastructure"
       }
     },
@@ -55823,12 +55853,12 @@
     {
       "repositoryId": 1334020733,
       "fullName": "beancookie/awesome-dsh-plugin",
-      "sourcePushedAt": "2026-08-16T15:03:52Z",
-      "sourceSha": "150edef724abfc82ef059e19c536fb7f090ced84",
+      "sourcePushedAt": "2026-08-16T23:08:00Z",
+      "sourceSha": "6058a238326f0b3b1571aed521736b7f6ffc25a0",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "150edef724abfc82ef059e19c536fb7f090ced84",
+        "sourceSha": "6058a238326f0b3b1571aed521736b7f6ffc25a0",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -55852,20 +55882,6 @@
         "typeConfidence": "medium",
         "categoryConfidence": "high",
         "confidence": "medium"
-      },
-      "validation": {
-        "status": "failed",
-        "disposition": "manual_review",
-        "stage": "structure",
-        "sourceSha": "150edef724abfc82ef059e19c536fb7f090ced84",
-        "checkedAt": "2026-08-16T15:45:39.482Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "channel-mcp",
-        "durationMs": 0,
-        "errorCode": "SECURITY_REVIEW_REQUIRED",
-        "attribution": "policy"
       }
     },
     {
@@ -56948,17 +56964,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "e66b7227ae7cf82c3b7e26635d67c773f55e9f0f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:30.824Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 76675,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -60654,17 +60671,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
+        "status": "failed",
+        "disposition": "manual_review",
+        "stage": "structure",
         "sourceSha": "cb934a61442ef0b2971cec9c28a42a3f3bdca5ca",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:38.877Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 0,
+        "errorCode": "SECURITY_REVIEW_REQUIRED",
+        "attribution": "policy"
       }
     },
     {
@@ -66543,17 +66561,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "004f8bd0c157e0f59bbdaa0e74883b5cbc07f2ea",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:45.968Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 91186,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -67710,17 +67729,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "ae737ca8324e0eece4878f86fac2692b1fa6336f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:35.303Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 81154,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -67752,17 +67772,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "e02d44d64f5249909eb3b3769679194d8ea4f770",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:59.294Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 64808,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -68033,17 +68054,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "0bbf0228bac86b29cc1b394de364157261f95083",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:48.914Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 70037,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -68494,12 +68516,12 @@
         "disposition": "retryable",
         "stage": "sandbox",
         "sourceSha": "0398c5a018e9c9a7f109ff3d908291874a7563d2",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
+        "errorCode": "SOURCE_CHANGED_DURING_RUN",
         "attribution": "infrastructure"
       }
     },
@@ -71582,17 +71604,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "1448609ad4b3df49ed9f1c27e42564290eb0d181",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:07.813Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 80987,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -72126,17 +72149,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "fff20703eeeb517af2d1c019e83d2b824ae50e35",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:51.083Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 54584,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -72178,17 +72202,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "b6e5943c879977f57fb4568382b986df13eb4ef0",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:31.045Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 104219,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -73611,17 +73636,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "9fc5014b36eb20e08d546eeb1104f3d4db72b263",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:12.105Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 85279,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -75741,11 +75767,11 @@
     {
       "repositoryId": 1334404537,
       "fullName": "majiayu000/dsh-plugin-registry",
-      "sourcePushedAt": "2026-08-16T20:47:09Z",
-      "sourceSha": "3af4002ad9b18b412be2514abb9705e383b24a7f",
+      "sourcePushedAt": "2026-08-16T22:45:04Z",
+      "sourceSha": "634e1d4e34486226b619d7a4be3c59e3733036c8",
       "disposition": "include",
       "classification": {
-        "sourceSha": "3af4002ad9b18b412be2514abb9705e383b24a7f",
+        "sourceSha": "634e1d4e34486226b619d7a4be3c59e3733036c8",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -75778,13 +75804,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "3af4002ad9b18b412be2514abb9705e383b24a7f",
-        "checkedAt": "2026-08-16T22:44:05.488Z",
+        "sourceSha": "634e1d4e34486226b619d7a4be3c59e3733036c8",
+        "checkedAt": "2026-08-16T23:38:42.849Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 644524,
+        "durationMs": 69752,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -78881,17 +78907,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "b35d1d05de0b7387f26b7f8af28cb3d2674318af",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:02.233Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 67747,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -80070,11 +80097,11 @@
     {
       "repositoryId": 1334504487,
       "fullName": "1052326311/dsh-plan-lattice",
-      "sourcePushedAt": "2026-08-16T22:12:56Z",
-      "sourceSha": "60c0f25c4a812d635d0fcce02edcd1f614089ef9",
+      "sourcePushedAt": "2026-08-16T22:58:46Z",
+      "sourceSha": "0414dfa5035e6ca5cdc511964883b64be62ad44e",
       "disposition": "include",
       "classification": {
-        "sourceSha": "60c0f25c4a812d635d0fcce02edcd1f614089ef9",
+        "sourceSha": "0414dfa5035e6ca5cdc511964883b64be62ad44e",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -80109,17 +80136,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
-        "sourceSha": "60c0f25c4a812d635d0fcce02edcd1f614089ef9",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "status": "failed",
+        "disposition": "manual_review",
+        "stage": "structure",
+        "sourceSha": "0414dfa5035e6ca5cdc511964883b64be62ad44e",
+        "checkedAt": "2026-08-16T23:37:12.854Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 0,
+        "errorCode": "SECURITY_REVIEW_REQUIRED",
+        "attribution": "policy"
       }
     },
     {
@@ -80793,11 +80821,11 @@
     {
       "repositoryId": 1334533434,
       "fullName": "Tkingxiao/dsh-any-background",
-      "sourcePushedAt": "2026-08-16T10:23:53Z",
-      "sourceSha": "13acd6f4866dc3ce60a918b588ba38c4d4edd3ce",
+      "sourcePushedAt": "2026-08-16T23:05:00Z",
+      "sourceSha": "e58e9a43058c5e1b8f387b7382afd97a449e678d",
       "disposition": "include",
       "classification": {
-        "sourceSha": "13acd6f4866dc3ce60a918b588ba38c4d4edd3ce",
+        "sourceSha": "e58e9a43058c5e1b8f387b7382afd97a449e678d",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -80833,13 +80861,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "13acd6f4866dc3ce60a918b588ba38c4d4edd3ce",
-        "checkedAt": "2026-08-16T22:43:01.876Z",
+        "sourceSha": "e58e9a43058c5e1b8f387b7382afd97a449e678d",
+        "checkedAt": "2026-08-16T23:36:22.542Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 574532
+        "durationMs": 67888
       }
     },
     {
@@ -84725,11 +84753,11 @@
     {
       "repositoryId": 1334686379,
       "fullName": "chiro2001/dsh-oc",
-      "sourcePushedAt": "2026-08-16T22:25:08Z",
-      "sourceSha": "540e23e2bade76929ce8226526eeb84954a4ef08",
+      "sourcePushedAt": "2026-08-16T23:26:16Z",
+      "sourceSha": "44da669c3b9ef1a038831e5c56aad9ef26c20c9a",
       "disposition": "include",
       "classification": {
-        "sourceSha": "540e23e2bade76929ce8226526eeb84954a4ef08",
+        "sourceSha": "44da669c3b9ef1a038831e5c56aad9ef26c20c9a",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -84765,17 +84793,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
-        "sourceSha": "540e23e2bade76929ce8226526eeb84954a4ef08",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "status": "failed",
+        "disposition": "manual_review",
+        "stage": "structure",
+        "sourceSha": "44da669c3b9ef1a038831e5c56aad9ef26c20c9a",
+        "checkedAt": "2026-08-16T23:35:14.149Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 0,
+        "errorCode": "SECURITY_REVIEW_REQUIRED",
+        "attribution": "policy"
       }
     },
     {
@@ -84858,17 +84887,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "5b6830a4049d1c46496701cddaef1721cc1fef21",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:33.668Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 80814,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -85733,17 +85763,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "daf940edcb3a4fee1bd875c25d9b11d8933b6efd",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:05.199Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 95348,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -89047,17 +89078,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "11c164b087fabdb7014501de5c172d9a0b64955f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:47.051Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 92902,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -91213,17 +91245,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "906f2d2daa9b79657afb216bf4b77a82426986c3",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:00.929Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 68646,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -94643,17 +94676,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "366e4a2f01acab14fbeff9eece7f111498b37bd3",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:50.570Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 71693,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -94691,17 +94725,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "876eed9416114787109c94bbe0b1929db92faaa9",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:35.686Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 82079,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -96315,12 +96350,12 @@
     {
       "repositoryId": 1334862184,
       "fullName": "Shiyao-Huang/awesome-deepseek-harness-plugin",
-      "sourcePushedAt": "2026-08-16T20:51:43Z",
-      "sourceSha": "1271e4b4be3f7e1e1486e1094ef28c9572a249e1",
+      "sourcePushedAt": "2026-08-16T22:50:47Z",
+      "sourceSha": "f60ebefad5a80e9b5b01ddfe55e9cec12321a6aa",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "1271e4b4be3f7e1e1486e1094ef28c9572a249e1",
+        "sourceSha": "f60ebefad5a80e9b5b01ddfe55e9cec12321a6aa",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -97336,17 +97371,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "e9c395e8e982e69322a93f583233f409a556b7b2",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:12.903Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 58249,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -97483,17 +97519,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "8f6928978d839766e72a6988038a851f2117ea10",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:32.400Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 75625,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -99194,17 +99231,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "71a935872d44d286ce9ab8e47febbf89ef8dc2c7",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:31.480Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 58383,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -100372,17 +100410,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "381f599ce6d473e474fca92681805aa9544906f8",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:52.710Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 56211,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -100418,17 +100457,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "5018ca6b8e7f74abe339bbc01df5e914570c3dad",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:01.499Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 61991,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -104867,17 +104907,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "f6225aa0a2a5df34f04887dabb78eb3c8af8ed6b",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:21.209Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 66646
       }
     },
     {
@@ -105339,11 +105378,11 @@
     {
       "repositoryId": 1334990187,
       "fullName": "jcs130/dsh-minecraft-agent",
-      "sourcePushedAt": "2026-08-16T20:01:54Z",
-      "sourceSha": "ad49fc7cdaa5854cd54a9a69f3bab3dd41b7980f",
+      "sourcePushedAt": "2026-08-16T23:14:02Z",
+      "sourceSha": "c65c001b300f2c1c39d8d5614637e7d893ee56a6",
       "disposition": "include",
       "classification": {
-        "sourceSha": "ad49fc7cdaa5854cd54a9a69f3bab3dd41b7980f",
+        "sourceSha": "c65c001b300f2c1c39d8d5614637e7d893ee56a6",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -105371,17 +105410,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "ad49fc7cdaa5854cd54a9a69f3bab3dd41b7980f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "c65c001b300f2c1c39d8d5614637e7d893ee56a6",
+        "checkedAt": "2026-08-16T23:40:03.828Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 64320,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -106073,11 +106113,11 @@
     {
       "repositoryId": 1335002252,
       "fullName": "aust24lzy/dsh-plugin-hub",
-      "sourcePushedAt": "2026-08-16T21:41:56Z",
-      "sourceSha": "15e4f9b8c06d674504dd925e584ea7073df7d59f",
+      "sourcePushedAt": "2026-08-16T22:44:17Z",
+      "sourceSha": "1c956bf0fa86c669cca04f47ba911f6c6ea61650",
       "disposition": "include",
       "classification": {
-        "sourceSha": "15e4f9b8c06d674504dd925e584ea7073df7d59f",
+        "sourceSha": "1c956bf0fa86c669cca04f47ba911f6c6ea61650",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -106105,17 +106145,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "15e4f9b8c06d674504dd925e584ea7073df7d59f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "1c956bf0fa86c669cca04f47ba911f6c6ea61650",
+        "checkedAt": "2026-08-16T23:38:02.917Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 70634,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -108866,17 +108907,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "9c80866c143d2057670acc9baa47698561a626e3",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:29.349Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 79721,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -109062,17 +109104,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "1edfb7a96c82c3dba4ce6fe84e4a1155ef500fd3",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:28.851Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 115079,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -110004,11 +110047,11 @@
     {
       "repositoryId": 1335058602,
       "fullName": "LaplaceYoung/dsh-directorx",
-      "sourcePushedAt": "2026-08-16T20:45:44Z",
-      "sourceSha": "7f297156c7b73134a1aab8f3191686f3123d9fb2",
+      "sourcePushedAt": "2026-08-16T22:40:33Z",
+      "sourceSha": "8f60c0b9b09f06d837196c54fdb7223a7aa90468",
       "disposition": "include",
       "classification": {
-        "sourceSha": "7f297156c7b73134a1aab8f3191686f3123d9fb2",
+        "sourceSha": "8f60c0b9b09f06d837196c54fdb7223a7aa90468",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -110055,13 +110098,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "7f297156c7b73134a1aab8f3191686f3123d9fb2",
-        "checkedAt": "2026-08-16T22:46:11.124Z",
+        "sourceSha": "8f60c0b9b09f06d837196c54fdb7223a7aa90468",
+        "checkedAt": "2026-08-16T23:36:54.731Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 763780,
+        "durationMs": 101124,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -110669,17 +110712,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "b925bedf1048c9edde253b90ce89960e203da44f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:00.261Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 105479,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -110966,17 +111010,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "455159f29e484989abdfb9f99099d50f06051256",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:36.527Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 63430
       }
     },
     {
@@ -116245,17 +116288,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "3ae4a7a3508ddf2a78089b0c0754d93acbe8cfd9",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:49.192Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 95585
       }
     },
     {
@@ -118143,17 +118185,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "c06d063b8cf584c93f03deaad1182a132de3bc75",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:52.214Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 73337,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -118391,17 +118434,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "f82ff96ef3b05aec6f17a915b1703fd72e51b88b",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:54.376Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 57877,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -118775,17 +118819,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "af1d567aef5e3a05a783b60ec3dc50e54b94c9f6",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:53.926Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 48557,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -120453,17 +120498,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "95774ff69f0735d0a370cb1c2c1f341a9e72aa20",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:55.977Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 59478,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -120493,17 +120539,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "7e7369d492f3bc2ec05694d2f91784fcc372e7b2",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:57.751Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 61252,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -122096,17 +122143,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "cc0bbd7d52ec075fc40e0d6aa3c0163457288ee8",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:57.522Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 96604,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -122238,17 +122286,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "4a6e863f6e39545c29256d2e6ebbcec17322c501",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:53.942Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 75065,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -122503,11 +122552,11 @@
     {
       "repositoryId": 1335254957,
       "fullName": "peterwangze/dsh-agent-router",
-      "sourcePushedAt": "2026-08-16T17:50:44Z",
-      "sourceSha": "c6ab506f67a1303b4efdf08f940cb685b4f3f17c",
+      "sourcePushedAt": "2026-08-16T23:23:10Z",
+      "sourceSha": "eb27cdf5f7ebdca3bdf5609057897a413971873c",
       "disposition": "include",
       "classification": {
-        "sourceSha": "c6ab506f67a1303b4efdf08f940cb685b4f3f17c",
+        "sourceSha": "eb27cdf5f7ebdca3bdf5609057897a413971873c",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -122538,17 +122587,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
-        "sourceSha": "c6ab506f67a1303b4efdf08f940cb685b4f3f17c",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "status": "failed",
+        "disposition": "manual_review",
+        "stage": "structure",
+        "sourceSha": "eb27cdf5f7ebdca3bdf5609057897a413971873c",
+        "checkedAt": "2026-08-16T23:35:14.654Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 0,
+        "errorCode": "SECURITY_REVIEW_REQUIRED",
+        "attribution": "policy"
       }
     },
     {
@@ -122782,17 +122832,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "417c54eccf3aa0ee18d93e28be7c8c9fea73583f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:41.014Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 67917,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -123344,17 +123395,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "2d4bff1f4861db5cfeeb8d613ecc1ba6b95b581c",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:12.273Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 77787,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -125314,17 +125366,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "c9349c785a47a4f4ad783a4c561bfadafbcd332a",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:29.823Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "channel-mcp",
+        "durationMs": 80195,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -125693,17 +125746,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "9cd2cf5b0880253cf6827f599e9e968eb47eb1e7",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:52.753Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 78981,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -126693,7 +126747,7 @@
     {
       "repositoryId": 1335336133,
       "fullName": "CharlotteN7/dsh-dlp",
-      "sourcePushedAt": "2026-08-16T22:18:45Z",
+      "sourcePushedAt": "2026-08-16T22:28:43Z",
       "sourceSha": "9738385d0f1f6bd94446b76229288a60a3f2513e",
       "disposition": "include",
       "classification": {
@@ -126734,7 +126788,7 @@
         "disposition": "manual_review",
         "stage": "structure",
         "sourceSha": "9738385d0f1f6bd94446b76229288a60a3f2513e",
-        "checkedAt": "2026-08-16T23:13:10.286Z",
+        "checkedAt": "2026-08-16T23:40:38.398Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -126747,7 +126801,7 @@
     {
       "repositoryId": 1335336153,
       "fullName": "CharlotteN7/dsh-ocsf-forwarder",
-      "sourcePushedAt": "2026-08-16T22:18:48Z",
+      "sourcePushedAt": "2026-08-16T22:28:45Z",
       "sourceSha": "3b0e21a23b05d8253386a99e0fdf54a50426b195",
       "disposition": "include",
       "classification": {
@@ -126785,23 +126839,23 @@
       },
       "validation": {
         "status": "failed",
-        "disposition": "auto_failed",
+        "disposition": "manual_review",
         "stage": "structure",
         "sourceSha": "3b0e21a23b05d8253386a99e0fdf54a50426b195",
-        "checkedAt": "2026-08-16T23:13:00.380Z",
+        "checkedAt": "2026-08-16T23:35:13.607Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
         "durationMs": 0,
-        "errorCode": "SCANNER_UNAVAILABLE",
-        "attribution": "infrastructure"
+        "errorCode": "SECURITY_REVIEW_REQUIRED",
+        "attribution": "policy"
       }
     },
     {
       "repositoryId": 1335336179,
       "fullName": "CharlotteN7/dsh-plugin-inspector",
-      "sourcePushedAt": "2026-08-16T22:18:50Z",
+      "sourcePushedAt": "2026-08-16T22:28:46Z",
       "sourceSha": "8eeeacf3a1948322c9c432089a463c428949a93a",
       "disposition": "include",
       "classification": {
@@ -126856,12 +126910,12 @@
         "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "8eeeacf3a1948322c9c432089a463c428949a93a",
-        "checkedAt": "2026-08-16T23:14:09.655Z",
+        "checkedAt": "2026-08-16T23:41:45.622Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "command",
-        "durationMs": 59369,
+        "durationMs": 67224,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -128432,17 +128486,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "a2b4ff2536ee57f465ef10690aca7241d7ecee32",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:13.933Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 87107,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -128735,17 +128790,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "bf88596c5dfc9a8d0dcf038c00504cb64370d1a0",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:59.265Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 98347,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -129238,17 +129294,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "d2cf4c129c3f77b3f0be5349ea675de3245c2db9",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:35.527Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 82673,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -129441,17 +129498,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "5fd3a5ea647ce7234dd4635dda98352e6dd92fdb",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:55.628Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "channel-mcp",
+        "durationMs": 81856,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -130255,11 +130313,11 @@
     {
       "repositoryId": 1335490343,
       "fullName": "AITabby/dockyard-dsh",
-      "sourcePushedAt": "2026-08-15T23:16:33Z",
-      "sourceSha": "bbc7c56c05c349f1ae531a17fbbdf91cd52678f2",
+      "sourcePushedAt": "2026-08-16T23:13:25Z",
+      "sourceSha": "1fae1deea99562c15d1a790f0e2d68bc3989b6d0",
       "disposition": "include",
       "classification": {
-        "sourceSha": "bbc7c56c05c349f1ae531a17fbbdf91cd52678f2",
+        "sourceSha": "1fae1deea99562c15d1a790f0e2d68bc3989b6d0",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -130271,9 +130329,9 @@
         "categories": [
           "development",
           "security",
+          "agent-session",
           "ui",
           "data",
-          "agent-session",
           "model-mcp"
         ],
         "matchedSignals": [
@@ -130283,9 +130341,9 @@
           "multiple-package.json",
           "development",
           "security",
+          "agent-session",
           "ui",
           "data",
-          "agent-session",
           "model-mcp"
         ],
         "typeConfidence": "high",
@@ -130296,13 +130354,13 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "bbc7c56c05c349f1ae531a17fbbdf91cd52678f2",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "1fae1deea99562c15d1a790f0e2d68bc3989b6d0",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
+        "errorCode": "SOURCE_CHANGED_DURING_RUN",
         "attribution": "infrastructure"
       }
     },
@@ -130977,11 +131035,11 @@
     {
       "repositoryId": 1335518462,
       "fullName": "Shiye-10Pages/dsh-whale-meter",
-      "sourcePushedAt": "2026-08-16T15:05:27Z",
-      "sourceSha": "cc6d2c05d772d4a8ce436c1ccd1b46ce71dfd409",
+      "sourcePushedAt": "2026-08-16T23:13:44Z",
+      "sourceSha": "c484500e6a00d26317dc71ee854ced26df6f2aaa",
       "disposition": "include",
       "classification": {
-        "sourceSha": "cc6d2c05d772d4a8ce436c1ccd1b46ce71dfd409",
+        "sourceSha": "c484500e6a00d26317dc71ee854ced26df6f2aaa",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -131016,17 +131074,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "cc6d2c05d772d4a8ce436c1ccd1b46ce71dfd409",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "c484500e6a00d26317dc71ee854ced26df6f2aaa",
+        "checkedAt": "2026-08-16T23:39:11.819Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 101968
       }
     },
     {
@@ -131461,6 +131518,60 @@
         "validatorVersion": "0.1.2",
         "executionType": "web",
         "durationMs": 765992
+      }
+    },
+    {
+      "repositoryId": 1335538935,
+      "fullName": "llmpolska/oh-my-dsh",
+      "sourcePushedAt": "2026-08-16T22:38:34Z",
+      "sourceSha": "38c826b30e1598dbd74a5f52a74ab3e7e9a7accd",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "38c826b30e1598dbd74a5f52a74ab3e7e9a7accd",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed"
+        ],
+        "projectType": "plugin",
+        "category": "data",
+        "categories": [
+          "data",
+          "development",
+          "agent-session",
+          "ui",
+          "communication",
+          "model-mcp",
+          "security"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "data",
+          "development",
+          "agent-session",
+          "ui",
+          "communication",
+          "model-mcp",
+          "security"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "passed",
+        "disposition": "verified",
+        "stage": "sandbox",
+        "sourceSha": "38c826b30e1598dbd74a5f52a74ab3e7e9a7accd",
+        "checkedAt": "2026-08-16T23:42:11.163Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "web",
+        "durationMs": 92286
       }
     },
     {
@@ -133276,17 +133387,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "30611e615735cc55abc6716e3dcbb6a8e88cbb7b",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:36.185Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 79410,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -133328,17 +133440,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "260acb6ff726be92fa06ca7e772b726f4fb20bcb",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:04.329Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 110180,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -134446,17 +134559,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "bc30561f8b3c1762d0d5121aa54af9c8dad76483",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:20.324Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 65761,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -135567,17 +135681,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "fdd5cbec0105dcd7169bf4b435086f21f49074bb",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:30.716Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 76153
       }
     },
     {
@@ -136222,17 +136335,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "77c9a1c239cc9923fabd6c83b71cfbc5af27f3b4",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:53.863Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 48494,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -137454,17 +137568,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "6eae76a50382edc7e1d3da416def0437c405e10e",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:45.685Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 72588,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -138730,17 +138845,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "f1ef9f70bd5d5fd8fb288d22d960c7cf6905a85f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:14.696Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 60042,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -140062,17 +140178,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "74fa65c54af3315ad0f3a514d770259f9ace0bd4",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:53.654Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 152736,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -141253,11 +141370,11 @@
     {
       "repositoryId": 1335718387,
       "fullName": "pengpengyi92/dsh-quant",
-      "sourcePushedAt": "2026-08-16T16:53:06Z",
-      "sourceSha": "e4ca02a3d09ccf2eb23dd4729aaac277bcea863f",
+      "sourcePushedAt": "2026-08-16T23:25:16Z",
+      "sourceSha": "41976ba3bed9bfef6dd1b9ab1b20dc1b5883bdeb",
       "disposition": "include",
       "classification": {
-        "sourceSha": "e4ca02a3d09ccf2eb23dd4729aaac277bcea863f",
+        "sourceSha": "41976ba3bed9bfef6dd1b9ab1b20dc1b5883bdeb",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -141298,17 +141415,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "e4ca02a3d09ccf2eb23dd4729aaac277bcea863f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "41976ba3bed9bfef6dd1b9ab1b20dc1b5883bdeb",
+        "checkedAt": "2026-08-16T23:38:19.262Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 86979
       }
     },
     {
@@ -142231,17 +142347,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "f20b9a28ae49218bd1620e53dd2bcc789d7a2bcd",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:59.209Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 85437,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -142774,17 +142891,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "8a8de84a4a9e8aee93442a47018193a9c945d28b",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:18.259Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 117341,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -143697,17 +143815,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "3e8306eaa5bd092e28e70ec507fa887c4f80a001",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:31.146Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 81518,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -145865,6 +145984,44 @@
       }
     },
     {
+      "repositoryId": 1335797219,
+      "fullName": "zdx8637-gitdog/dshmobile",
+      "sourcePushedAt": "2026-08-16T22:31:13Z",
+      "sourceSha": "3eac4fad44dc2f28e7e42b3010380f0bfc7e7aea",
+      "disposition": "exclude",
+      "exclusionReason": "NO_DSH_CONTRACT",
+      "classification": {
+        "sourceSha": "3eac4fad44dc2f28e7e42b3010380f0bfc7e7aea",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "unrecognized",
+        "relevanceSignals": [],
+        "projectType": "collection",
+        "category": "security",
+        "categories": [
+          "security",
+          "development",
+          "data",
+          "ui",
+          "agent-session",
+          "operations"
+        ],
+        "matchedSignals": [
+          "dshmobile-plugin/cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "multiple-package.json",
+          "security",
+          "development",
+          "data",
+          "ui",
+          "agent-session",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      }
+    },
+    {
       "repositoryId": 1335797601,
       "fullName": "xinspark/dsh-better-session-title",
       "sourcePushedAt": "2026-08-16T18:06:26Z",
@@ -145900,17 +146057,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "6a12c14bb70b467113b1f602aaee751083f0bb5f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:46.771Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 68373
       }
     },
     {
@@ -146918,11 +147074,11 @@
     {
       "repositoryId": 1335814717,
       "fullName": "Harzva/harness-flow-hub",
-      "sourcePushedAt": "2026-08-16T22:22:45Z",
-      "sourceSha": "0ea1969d072c06cdc18d4d8448ec7916e26f36f0",
+      "sourcePushedAt": "2026-08-16T23:10:16Z",
+      "sourceSha": "a31e3eaaac323c2b50080ee9a1e236321a4c710e",
       "disposition": "include",
       "classification": {
-        "sourceSha": "0ea1969d072c06cdc18d4d8448ec7916e26f36f0",
+        "sourceSha": "a31e3eaaac323c2b50080ee9a1e236321a4c710e",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -146964,8 +147120,8 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "0ea1969d072c06cdc18d4d8448ec7916e26f36f0",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "a31e3eaaac323c2b50080ee9a1e236321a4c710e",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -147338,11 +147494,11 @@
     {
       "repositoryId": 1335823380,
       "fullName": "changingwang/dsh-stage-gate",
-      "sourcePushedAt": "2026-08-16T10:37:49Z",
-      "sourceSha": "663f43e5b2e4678979fe9b9fd3683c3db44b2e12",
+      "sourcePushedAt": "2026-08-16T23:27:34Z",
+      "sourceSha": "2fd3d51c892dcb0f3fc4864bc329b9aba82da871",
       "disposition": "include",
       "classification": {
-        "sourceSha": "663f43e5b2e4678979fe9b9fd3683c3db44b2e12",
+        "sourceSha": "2fd3d51c892dcb0f3fc4864bc329b9aba82da871",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -147351,10 +147507,10 @@
           "repository-name:dsh-stage-gate"
         ],
         "projectType": "plugin",
-        "category": "development",
+        "category": "agent-session",
         "categories": [
-          "development",
           "agent-session",
+          "development",
           "data",
           "security"
         ],
@@ -147363,8 +147519,8 @@
           "cordis.patch.yml:parsed",
           "repository-name:dsh-stage-gate",
           "cordis.patch.yml",
-          "development",
           "agent-session",
+          "development",
           "data",
           "security"
         ],
@@ -147373,17 +147529,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "663f43e5b2e4678979fe9b9fd3683c3db44b2e12",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "2fd3d51c892dcb0f3fc4864bc329b9aba82da871",
+        "checkedAt": "2026-08-16T23:41:56.851Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 78453
       }
     },
     {
@@ -147695,17 +147850,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "75071fcfd49dc9ccc407d806cb684628a5a86720",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:39:55.519Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 50150,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -147737,17 +147893,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "cb97eff1f31f961f855a7c11c179fc1d81121180",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:45.049Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 71952,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -151995,17 +152152,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "582ced9445a142e8532513ff975f2e889f722185",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:16.515Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 61861,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -153161,17 +153319,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "eb3b947e786f15cb09ec9a9df816795da79ab99f",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:41:50.041Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 71643,
+        "errorCode": "PLUGIN_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -153409,17 +153568,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "be2f8f14d4632ae72ce85e85afc455c45fe67c3b",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:22.794Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 90511,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -154774,17 +154934,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "a0b67d4b3e4f2dff60a4f6261e41d9cf39029231",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:10.823Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 76337,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -155432,17 +155593,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "76c01885e15097907fb2e7c921322fc7f27ac7c1",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:05.415Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 65907,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -155895,17 +156057,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "a5751bad96deeb08b5fb7e996b190e28f5a01853",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:21.181Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 66527,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -158444,11 +158607,11 @@
     {
       "repositoryId": 1336026318,
       "fullName": "xiaowei2025cqu23phy/dsh-desktop",
-      "sourcePushedAt": "2026-08-16T22:27:04Z",
-      "sourceSha": "0052e13a49cf4ba1d99d441dc3ccf1e6f814847b",
+      "sourcePushedAt": "2026-08-16T23:26:08Z",
+      "sourceSha": "3e440c46ca3648ecfc15ed3bd305463daf5681f8",
       "disposition": "include",
       "classification": {
-        "sourceSha": "0052e13a49cf4ba1d99d441dc3ccf1e6f814847b",
+        "sourceSha": "3e440c46ca3648ecfc15ed3bd305463daf5681f8",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -158483,8 +158646,8 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "0052e13a49cf4ba1d99d441dc3ccf1e6f814847b",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "3e440c46ca3648ecfc15ed3bd305463daf5681f8",
+        "checkedAt": "2026-08-16T23:43:15.469Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -159948,6 +160111,60 @@
         "executionType": null,
         "errorCode": "SNAPSHOT_LOAD_FAILED",
         "attribution": "infrastructure"
+      }
+    },
+    {
+      "repositoryId": 1336055241,
+      "fullName": "CharlotteN7/dsh-netguard",
+      "sourcePushedAt": "2026-08-16T22:47:40Z",
+      "sourceSha": "2b91102f8059d2582383810eba332facb7842629",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "2b91102f8059d2582383810eba332facb7842629",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-netguard"
+        ],
+        "projectType": "plugin",
+        "category": "security",
+        "categories": [
+          "security",
+          "development",
+          "data",
+          "agent-session",
+          "operations"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-netguard",
+          "cordis.patch.yml",
+          "security",
+          "development",
+          "data",
+          "agent-session",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "2b91102f8059d2582383810eba332facb7842629",
+        "checkedAt": "2026-08-16T23:37:00.523Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "command",
+        "durationMs": 105741,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -163251,17 +163468,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "30e6a957c6187ba682b41203429c2a435393d0e0",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:37.162Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 84308,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -163759,17 +163977,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "42f3ee0dbb5efb3d0b65151746e72af5269deb80",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:53.471Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 99864,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -163823,17 +164042,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "7a4c53b6c1d8834358a914d22c04378d55b8c3fa",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:36:57.348Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 103199,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -165201,11 +165421,11 @@
     {
       "repositoryId": 1336127466,
       "fullName": "ywsldxk/dsh-plugin-stars",
-      "sourcePushedAt": "2026-08-16T22:14:33Z",
-      "sourceSha": "68fc2e15dadc9c06e4e38fe2de19900156a14cce",
+      "sourcePushedAt": "2026-08-16T23:13:53Z",
+      "sourceSha": "fd631c0e116197ef8f60c05ceff58b0022c0c17f",
       "disposition": "include",
       "classification": {
-        "sourceSha": "68fc2e15dadc9c06e4e38fe2de19900156a14cce",
+        "sourceSha": "fd631c0e116197ef8f60c05ceff58b0022c0c17f",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -165231,17 +165451,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "68fc2e15dadc9c06e4e38fe2de19900156a14cce",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "fd631c0e116197ef8f60c05ceff58b0022c0c17f",
+        "checkedAt": "2026-08-16T23:41:00.747Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 86975,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -168777,11 +168998,11 @@
     {
       "repositoryId": 1336241134,
       "fullName": "xiajiajun516/dsh-settings-organizer",
-      "sourcePushedAt": "2026-08-16T21:49:14Z",
-      "sourceSha": "5486c8aea1f0d219284ff62f2ab0216c3b3e9098",
+      "sourcePushedAt": "2026-08-16T22:29:17Z",
+      "sourceSha": "a8c0a4978031508c6a551df6446deb70b4debeae",
       "disposition": "include",
       "classification": {
-        "sourceSha": "5486c8aea1f0d219284ff62f2ab0216c3b3e9098",
+        "sourceSha": "a8c0a4978031508c6a551df6446deb70b4debeae",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -168808,27 +169029,28 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "5486c8aea1f0d219284ff62f2ab0216c3b3e9098",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "a8c0a4978031508c6a551df6446deb70b4debeae",
+        "checkedAt": "2026-08-16T23:36:23.994Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 69340,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
       "repositoryId": 1336252379,
       "fullName": "monotykamary/dsh-fovea",
-      "sourcePushedAt": "2026-08-16T21:54:42Z",
-      "sourceSha": "b0402291aeaa714eb39497749d8c9a55571ae7e8",
+      "sourcePushedAt": "2026-08-16T22:34:32Z",
+      "sourceSha": "49cf90a773cedbbb83265a1e0965e8a24c4f4fad",
       "disposition": "include",
       "classification": {
-        "sourceSha": "b0402291aeaa714eb39497749d8c9a55571ae7e8",
+        "sourceSha": "49cf90a773cedbbb83265a1e0965e8a24c4f4fad",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -168861,17 +169083,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "b0402291aeaa714eb39497749d8c9a55571ae7e8",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "49cf90a773cedbbb83265a1e0965e8a24c4f4fad",
+        "checkedAt": "2026-08-16T23:41:39.558Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 138640
       }
     },
     {
@@ -169194,11 +169415,11 @@
     {
       "repositoryId": 1336277903,
       "fullName": "dsh-tui-ecosystem/dsh-code-memory",
-      "sourcePushedAt": "2026-08-16T22:04:38Z",
-      "sourceSha": "fb4d9cbee58326f85094aa4b9909ac3e0b3dd323",
+      "sourcePushedAt": "2026-08-16T22:39:59Z",
+      "sourceSha": "047e7fe0d75c7c461d8a2b7ec21981e721d01cbb",
       "disposition": "include",
       "classification": {
-        "sourceSha": "fb4d9cbee58326f85094aa4b9909ac3e0b3dd323",
+        "sourceSha": "047e7fe0d75c7c461d8a2b7ec21981e721d01cbb",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -169229,17 +169450,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "fb4d9cbee58326f85094aa4b9909ac3e0b3dd323",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "047e7fe0d75c7c461d8a2b7ec21981e721d01cbb",
+        "checkedAt": "2026-08-16T23:40:22.410Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 82902
       }
     },
     {
@@ -169386,17 +169606,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "fca5f24627f668d88230e4e1bec50d2247322710",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:16.579Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 80080
       }
     },
     {
@@ -169561,11 +169780,11 @@
     {
       "repositoryId": 1336311718,
       "fullName": "chenyinrusi/dsh-llm-cost",
-      "sourcePushedAt": "2026-08-16T22:17:21Z",
-      "sourceSha": "83a924290d1b9894c99962b9cfa34f3f60c981af",
+      "sourcePushedAt": "2026-08-16T23:03:35Z",
+      "sourceSha": "f3541e6b39c11bf6efecdfb8b08252859c64dc3b",
       "disposition": "include",
       "classification": {
-        "sourceSha": "83a924290d1b9894c99962b9cfa34f3f60c981af",
+        "sourceSha": "f3541e6b39c11bf6efecdfb8b08252859c64dc3b",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -169602,17 +169821,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "83a924290d1b9894c99962b9cfa34f3f60c981af",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "f3541e6b39c11bf6efecdfb8b08252859c64dc3b",
+        "checkedAt": "2026-08-16T23:41:16.486Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 102714
       }
     },
     {
@@ -170055,17 +170273,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "9c1a1ed632b5a19f199a3f91877a9c18073f6181",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:41.024Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 88170,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -170160,17 +170379,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "581f7e993eba4234af679a0591cce98f5ed07506",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:05.285Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "command",
+        "durationMs": 110503
       }
     },
     {
@@ -170311,17 +170529,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "0f436c71b04af7b3770c4c3a0c008a6664ab83bd",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:37:04.892Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 110110
       }
     },
     {
@@ -170670,17 +170887,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "1b785f25e2f4a841bcaaa69adbe1110f220b83c0",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:38:26.726Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 94443
       }
     },
     {
@@ -170721,17 +170937,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "0cf0d19484f7bb01062487717a94fa587b7f5d32",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:20.146Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 80638
       }
     },
     {
@@ -170774,17 +170989,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "2bb02d1bd72168bd060694f3b44783458292bb01",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:12.513Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 67144
       }
     },
     {
@@ -170873,17 +171087,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "1c97f10fa0fca1cefcbf0496bf671b0be39a8032",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "checkedAt": "2026-08-16T23:40:16.154Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 70785,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -171012,29 +171227,29 @@
     {
       "repositoryId": 1336413130,
       "fullName": "SodaMem/dsh-plugin-sodamem",
-      "sourcePushedAt": "2026-08-16T22:23:05Z",
-      "sourceSha": "b82f095c79ad20d2c21a0276bdd0f3774822dbc2",
+      "sourcePushedAt": "2026-08-16T23:13:17Z",
+      "sourceSha": "ab06ea56093259f97ecc91433292670c0d671235",
       "disposition": "include",
       "classification": {
-        "sourceSha": "b82f095c79ad20d2c21a0276bdd0f3774822dbc2",
+        "sourceSha": "ab06ea56093259f97ecc91433292670c0d671235",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
           "repository-name:dsh-plugin-sodamem"
         ],
         "projectType": "plugin",
-        "category": "development",
+        "category": "agent-session",
         "categories": [
-          "development",
           "agent-session",
+          "development",
           "data",
           "security",
           "communication"
         ],
         "matchedSignals": [
           "repository-name:dsh-plugin-sodamem",
-          "development",
           "agent-session",
+          "development",
           "data",
           "security",
           "communication"
@@ -171044,17 +171259,282 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "b82f095c79ad20d2c21a0276bdd0f3774822dbc2",
-        "checkedAt": "2026-08-16T23:14:58.235Z",
+        "sourceSha": "ab06ea56093259f97ecc91433292670c0d671235",
+        "checkedAt": "2026-08-16T23:42:01.560Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 83162,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1336429080,
+      "fullName": "qq12346/dsh-review",
+      "sourcePushedAt": "2026-08-16T22:48:08Z",
+      "sourceSha": "21730d73b24c74a9f56d281e0c7a4ca455469a54",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "21730d73b24c74a9f56d281e0c7a4ca455469a54",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-review"
+        ],
+        "projectType": "plugin",
+        "category": "development",
+        "categories": [
+          "development",
+          "agent-session",
+          "data"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-review",
+          "cordis.patch.yml",
+          "development",
+          "agent-session",
+          "data"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "21730d73b24c74a9f56d281e0c7a4ca455469a54",
+        "checkedAt": "2026-08-16T23:37:00.696Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "web",
+        "durationMs": 106547,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1336433989,
+      "fullName": "Tang-mm95/dsh-single-instance-guard",
+      "sourcePushedAt": "2026-08-16T22:55:15Z",
+      "sourceSha": "666bad9ddedeb21d496ba96368bdbeb9d1752704",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "666bad9ddedeb21d496ba96368bdbeb9d1752704",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-single-instance-guard"
+        ],
+        "projectType": "plugin",
+        "category": "data",
+        "categories": [
+          "data",
+          "security",
+          "agent-session"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-single-instance-guard",
+          "cordis.patch.yml",
+          "data",
+          "security",
+          "agent-session"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "passed",
+        "disposition": "verified",
+        "stage": "sandbox",
+        "sourceSha": "666bad9ddedeb21d496ba96368bdbeb9d1752704",
+        "checkedAt": "2026-08-16T23:37:08.754Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "host-tool",
+        "durationMs": 113972
+      }
+    },
+    {
+      "repositoryId": 1336444834,
+      "fullName": "H97y/dsh-devflow",
+      "sourcePushedAt": "2026-08-16T23:13:19Z",
+      "sourceSha": "d08b10ae72ee8cd19a66aab4d31db8938ad008d9",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "d08b10ae72ee8cd19a66aab4d31db8938ad008d9",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "repository-name:dsh-devflow"
+        ],
+        "projectType": "plugin",
+        "category": "security",
+        "categories": [
+          "security",
+          "development",
+          "ui",
+          "data",
+          "agent-session",
+          "operations"
+        ],
+        "matchedSignals": [
+          "repository-name:dsh-devflow",
+          "multiple-package.json",
+          "security",
+          "development",
+          "ui",
+          "data",
+          "agent-session",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "d08b10ae72ee8cd19a66aab4d31db8938ad008d9",
+        "checkedAt": "2026-08-16T23:38:35.655Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "host-tool",
+        "durationMs": 103372,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1336446401,
+      "fullName": "hili986/dshpack",
+      "sourcePushedAt": "2026-08-16T23:25:45Z",
+      "sourceSha": "abd45dd4783c6ed021539905beb0e5b915eff3dc",
+      "disposition": "exclude",
+      "exclusionReason": "NO_DSH_CONTRACT",
+      "classification": {
+        "sourceSha": "abd45dd4783c6ed021539905beb0e5b915eff3dc",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "unrecognized",
+        "relevanceSignals": [],
+        "projectType": "collection",
+        "category": "data",
+        "categories": [
+          "data",
+          "development",
+          "security",
+          "model-mcp",
+          "operations",
+          "ui",
+          "agent-session",
+          "research"
+        ],
+        "matchedSignals": [
+          "packages/core/test/fixtures/real-dsh/e1-profile/cordis.patch.yml:parsed",
+          "packages/core/test/fixtures/real-dsh/e5-mcp/cordis.patch.yml:parsed",
+          "scripts/fixtures/w3-local-bundle/cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "multiple-package.json",
+          "data",
+          "development",
+          "security",
+          "model-mcp",
+          "operations",
+          "ui",
+          "agent-session",
+          "research"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      }
+    },
+    {
+      "repositoryId": 1336446815,
+      "fullName": "dsh-packs/web-dev",
+      "sourcePushedAt": "2026-08-16T23:16:50Z",
+      "sourceSha": "d2ec496a32041478f2469aa9c154bc486db5ba49",
+      "disposition": "exclude",
+      "exclusionReason": "NO_DSH_CONTRACT",
+      "classification": {
+        "sourceSha": "d2ec496a32041478f2469aa9c154bc486db5ba49",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "unrecognized",
+        "relevanceSignals": [],
+        "projectType": "skill",
+        "category": "development",
+        "categories": [
+          "development",
+          "security",
+          "ui",
+          "model-mcp",
+          "agent-session",
+          "data",
+          "operations"
+        ],
+        "matchedSignals": [
+          "patch/cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "SKILL.md",
+          "development",
+          "security",
+          "ui",
+          "model-mcp",
+          "agent-session",
+          "data",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      }
+    },
+    {
+      "repositoryId": 1336446878,
+      "fullName": "dsh-packs/research-writing",
+      "sourcePushedAt": "2026-08-16T23:16:54Z",
+      "sourceSha": "91e021d27b75fd260f200d3d9ed9d7bf6c71ff1b",
+      "disposition": "exclude",
+      "exclusionReason": "NO_DSH_CONTRACT",
+      "classification": {
+        "sourceSha": "91e021d27b75fd260f200d3d9ed9d7bf6c71ff1b",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "unrecognized",
+        "relevanceSignals": [],
+        "projectType": "skill",
+        "category": "research",
+        "categories": [
+          "research",
+          "development"
+        ],
+        "matchedSignals": [
+          "patch/cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "SKILL.md",
+          "research",
+          "development"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
       }
     }
   ]
