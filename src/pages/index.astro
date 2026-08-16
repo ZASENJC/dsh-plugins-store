@@ -1,6 +1,7 @@
 ---
 import { ArrowUpRight, Check, ChevronDown, Copy, Search, Terminal } from '@lucide/astro'
 
+import CatalogPageNav from '../components/CatalogPageNav.astro'
 import DeepSeekGridMark from '../components/DeepSeekGridMark.astro'
 import ProjectCard from '../components/ProjectCard.astro'
 import BaseLayout from '../layouts/BaseLayout.astro'
@@ -8,9 +9,26 @@ import { sortCatalogEntries, type Catalog } from '../lib/catalog'
 import { catalogData } from '../lib/catalog-data'
 import { CATEGORIES, PROJECT_TYPES } from '../lib/classification'
 import { buildHomepageStructuredData } from '../lib/seo'
+import { VALIDATION_STATUS_DEFINITIONS } from '../lib/validation'
 
+type CatalogPage = 'directory' | 'verified' | 'ranking'
+
+interface Props {
+  catalogPage?: CatalogPage
+}
+
+const { catalogPage = 'directory' } = Astro.props
+const isDirectoryPage = catalogPage === 'directory'
+const isVerifiedPage = catalogPage === 'verified'
+const isRankingPage = catalogPage === 'ranking'
 const catalog = catalogData as Catalog
-const initialRepositories = sortCatalogEntries(catalog.repositories, 'recommended', catalog.generatedAt).slice(0, 24)
+const initialCatalog = isVerifiedPage
+  ? catalog.repositories.filter((repository) => repository.validation.overall === 'verified')
+  : catalog.repositories
+const initialRepositories = isRankingPage
+  ? []
+  : sortCatalogEntries(initialCatalog, 'recommended', catalog.generatedAt).slice(0, 24)
+const initialResultCount = isVerifiedPage ? (catalog.stats.validationStatuses.verified ?? 0) : catalog.stats.fetched
 const generatedDate = new Intl.DateTimeFormat('zh-CN', {
   timeZone: 'Asia/Shanghai',
   month: '2-digit',
@@ -22,13 +40,28 @@ const generatedDate = new Intl.DateTimeFormat('zh-CN', {
 const serializedCatalog = JSON.stringify(catalog.repositories).replace(/</g, '\\u003c')
 const serializedCategories = JSON.stringify(CATEGORIES).replace(/</g, '\\u003c')
 const serializedTypes = JSON.stringify(PROJECT_TYPES).replace(/</g, '\\u003c')
+const serializedValidationStatuses = JSON.stringify(VALIDATION_STATUS_DEFINITIONS).replace(/</g, '\\u003c')
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const storeInstallCommand = 'dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store'
 const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugin-store#一键安装'
 const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched)
+const pageTitle = isVerifiedPage
+  ? '已验证插件 · DSH 插件市场'
+  : isRankingPage
+    ? '排行榜 · DSH 插件市场'
+    : undefined
+const pageTitleKey = isVerifiedPage
+  ? 'site.pageTitle.verified'
+  : isRankingPage
+    ? 'site.pageTitle.ranking'
+    : 'site.pageTitle.home'
 ---
 
-<BaseLayout structuredData={homepageStructuredData}>
+<BaseLayout
+  title={pageTitle}
+  structuredData={isDirectoryPage ? homepageStructuredData : undefined}
+  pageTitleKey={pageTitleKey}
+>
   <section class="store-install-strip" aria-labelledby="store-install-title">
     <div class="container store-install-strip__inner">
       <div class="store-install-label">
@@ -98,133 +131,145 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
   <section class="catalog-tools" aria-label="目录筛选" data-i18n-aria-label="home.filters">
     <div class="container">
-      <div class="search-row">
-        <label class="search-field">
-          <span class="visually-hidden" data-i18n="home.search">搜索项目</span>
-          <Search size={19} stroke-width={1.6} />
-          <input
-            id="catalog-search"
-            type="search"
-            placeholder="搜索名称、作者、描述或标签"
-            data-i18n-placeholder="home.searchPlaceholder"
-            autocomplete="off"
-          />
-        </label>
+      <div class:list={{ 'search-row': true, 'search-row--navigation-only': isRankingPage }}>
+        {!isRankingPage && (
+          <label class="search-field">
+            <span class="visually-hidden" data-i18n="home.search">搜索项目</span>
+            <Search size={19} stroke-width={1.6} />
+            <input
+              id="catalog-search"
+              type="search"
+              placeholder="搜索名称、作者、描述或标签"
+              data-i18n-placeholder="home.searchPlaceholder"
+              autocomplete="off"
+            />
+          </label>
+        )}
 
-        <div
-          class="catalog-view-switch"
-          id="catalog-view-switch"
-          role="tablist"
-          aria-label="目录视图"
-          data-i18n-aria-label="home.views"
-          data-active-view="directory"
-        >
-          <button class="is-active" type="button" role="tab" data-view="directory" aria-selected="true">
-            <span data-i18n="home.viewDirectory">目录</span>
-          </button>
-          <button type="button" role="tab" data-view="verified" aria-selected="false">
-            <span data-i18n="home.viewVerified">已验证</span>
-          </button>
+        <CatalogPageNav active={catalogPage} baseUrl={baseUrl} />
+      </div>
+
+      {!isRankingPage && (
+        <div class="category-filter-panel" data-category-filter-panel>
+          <div class="filter-groups" id="classification-filter-groups">
+            <div class="filter-group" data-filter-group="type">
+              <span class="filter-group__title" id="type-filter-label" data-i18n="home.projectType">项目类型</span>
+              <div class="filter-group__options" id="type-filter" role="group" aria-labelledby="type-filter-label">
+                <button class="category-filter is-active" type="button" data-type="all" aria-pressed="true">
+                  <span class="category-filter__label" data-i18n="home.allTypes">全部类型</span>
+                  <span class="category-filter__count">{catalog.stats.fetched}</span>
+                </button>
+                {PROJECT_TYPES.map((type) => (
+                  <button class="category-filter" type="button" data-type={type.id} aria-pressed="false">
+                    <span class="category-filter__label" data-i18n={`projectType.${type.id}`}>{type.label}</span>
+                    <span class="category-filter__count">{catalog.stats.projectTypes[type.id] ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div class="filter-group" data-filter-group="category">
+              <span class="filter-group__title" id="category-filter-label" data-i18n="home.category">功能分类</span>
+              <div class="filter-group__options" id="category-filter" role="group" aria-labelledby="category-filter-label">
+                <button class="category-filter is-active" type="button" data-category="all" aria-pressed="true">
+                  <span class="category-filter__label" data-i18n="home.all">全部</span>
+                  <span class="category-filter__count">{catalog.stats.fetched}</span>
+                </button>
+                {CATEGORIES.map((category) => (
+                  <button class="category-filter" type="button" data-category={category.id} aria-pressed="false">
+                    <i style={`--category-color: ${category.color}`}></i>
+                    <span class="category-filter__label" data-i18n={`category.${category.id}`}>{category.label}</span>
+                    <span class="category-filter__count">{catalog.stats.categories[category.id] ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {isVerifiedPage && (
+              <div class="filter-group" data-filter-group="validation">
+                <span class="filter-group__title" id="validation-filter-label" data-i18n="home.validation">验证状态</span>
+                <div class="filter-group__options" id="validation-filter" role="group" aria-labelledby="validation-filter-label">
+                  <button class="category-filter" type="button" data-validation="all" aria-pressed="false">
+                    <span class="category-filter__label" data-i18n="home.allValidation">全部验证状态</span>
+                    <span class="category-filter__count">{catalog.stats.fetched}</span>
+                  </button>
+                  {VALIDATION_STATUS_DEFINITIONS.map((status) => (
+                    <button
+                      class:list={{ 'category-filter': true, 'is-active': status.id === 'verified' }}
+                      type="button"
+                      data-validation={status.id}
+                      aria-pressed={status.id === 'verified'}
+                    >
+                      <span class="category-filter__label" data-i18n={`validation.status.${status.id}`}>{status.label}</span>
+                      <span class="category-filter__count">{catalog.stats.validationStatuses[status.id] ?? 0}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button
+            id="category-filter-toggle"
+            class="category-filter-toggle"
             type="button"
-            role="tab"
-            data-view="ranking"
-            aria-selected="false"
-            aria-label="排行榜即将上线"
-            title="排行榜即将上线"
-            data-i18n-aria-label="home.viewRankingSoon"
-            data-i18n-title="home.viewRankingSoon"
-            disabled
+            aria-controls="classification-filter-groups"
+            aria-expanded="false"
+            aria-label="展开全部分类"
+            title="展开全部分类"
+            data-i18n-aria-label="home.expandCategories"
+            data-i18n-title="home.expandCategories"
           >
-            <span data-i18n="home.viewRanking">排行榜</span>
+            <ChevronDown size={17} stroke-width={1.8} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+    </div>
+  </section>
+
+  {!isRankingPage && (
+    <section class="catalog-results">
+      <div class="container">
+        <div class="results-head">
+          <p id="result-count">{initialResultCount} 个项目</p>
+          <p><i></i> <span data-i18n="home.synced">标识随目录同步刷新</span></p>
+        </div>
+
+        <div class="project-grid" id="project-grid">
+          {initialRepositories.map((repository) => <ProjectCard repository={repository} />)}
+        </div>
+
+        <template id="project-card-template">
+          <ProjectCard repository={catalog.repositories[0]} />
+        </template>
+
+        <div class="empty-state" id="empty-state" hidden>
+          <p class="mono-label">NO MATCHES</p>
+          <h2 data-i18n="home.emptyTitle">没有找到匹配项目</h2>
+          <p data-i18n="home.emptyBody">当前筛选条件下没有结果。</p>
+          <button class="outline-button" id="clear-filters" type="button" data-i18n="home.clearFilters">清除筛选</button>
+        </div>
+
+        <div class="load-row">
+          <button class="outline-button" id="load-more" type="button">
+            <span data-i18n="home.loadMore">加载更多</span>
+            <span id="remaining-count">{Math.max(0, initialResultCount - initialRepositories.length)}</span>
           </button>
         </div>
       </div>
+    </section>
+  )}
 
-      <div class="category-filter-panel" data-category-filter-panel>
-        <div class="filter-groups" id="classification-filter-groups">
-          <div class="filter-group" data-filter-group="type">
-            <span class="filter-group__title" id="type-filter-label" data-i18n="home.projectType">项目类型</span>
-            <div class="filter-group__options" id="type-filter" role="group" aria-labelledby="type-filter-label">
-              <button class="category-filter is-active" type="button" data-type="all" aria-pressed="true">
-                <span class="category-filter__label" data-i18n="home.allTypes">全部类型</span>
-                <span class="category-filter__count">{catalog.stats.fetched}</span>
-              </button>
-              {PROJECT_TYPES.map((type) => (
-                <button class="category-filter" type="button" data-type={type.id} aria-pressed="false">
-                  <span class="category-filter__label" data-i18n={`projectType.${type.id}`}>{type.label}</span>
-                  <span class="category-filter__count">{catalog.stats.projectTypes[type.id] ?? 0}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div class="filter-group" data-filter-group="category">
-            <span class="filter-group__title" id="category-filter-label" data-i18n="home.category">功能分类</span>
-            <div class="filter-group__options" id="category-filter" role="group" aria-labelledby="category-filter-label">
-              <button class="category-filter is-active" type="button" data-category="all" aria-pressed="true">
-                <span class="category-filter__label" data-i18n="home.all">全部</span>
-                <span class="category-filter__count">{catalog.stats.fetched}</span>
-              </button>
-              {CATEGORIES.map((category) => (
-                <button class="category-filter" type="button" data-category={category.id} aria-pressed="false">
-                  <i style={`--category-color: ${category.color}`}></i>
-                  <span class="category-filter__label" data-i18n={`category.${category.id}`}>{category.label}</span>
-                  <span class="category-filter__count">{catalog.stats.categories[category.id] ?? 0}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <button
-          id="category-filter-toggle"
-          class="category-filter-toggle"
-          type="button"
-          aria-controls="classification-filter-groups"
-          aria-expanded="false"
-          aria-label="展开全部分类"
-          title="展开全部分类"
-          data-i18n-aria-label="home.expandCategories"
-          data-i18n-title="home.expandCategories"
-        >
-          <ChevronDown size={17} stroke-width={1.8} aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <section class="catalog-results">
-    <div class="container">
-      <div class="results-head">
-        <p id="result-count">{catalog.stats.fetched} 个项目</p>
-        <p><i></i> <span data-i18n="home.synced">标识随目录同步刷新</span></p>
-      </div>
-
-      <div class="project-grid" id="project-grid">
-        {initialRepositories.map((repository) => <ProjectCard repository={repository} />)}
-      </div>
-
-      <div class="empty-state" id="empty-state" hidden>
-        <p class="mono-label">NO MATCHES</p>
-        <h2 data-i18n="home.emptyTitle">没有找到匹配项目</h2>
-        <p data-i18n="home.emptyBody">当前筛选条件下没有结果。</p>
-        <button class="outline-button" id="clear-filters" type="button" data-i18n="home.clearFilters">清除筛选</button>
-      </div>
-
-      <div class="load-row">
-        <button class="outline-button" id="load-more" type="button">
-          <span data-i18n="home.loadMore">加载更多</span>
-          <span id="remaining-count">{Math.max(0, catalog.stats.fetched - initialRepositories.length)}</span>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <script id="catalog-data" type="application/json" set:html={serializedCatalog} is:inline></script>
-  <script id="catalog-generated-at" type="application/json" set:html={JSON.stringify(catalog.generatedAt)} is:inline></script>
-  <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
-  <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
-  <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
+  {!isRankingPage && (
+    <>
+      <script id="catalog-data" type="application/json" set:html={serializedCatalog} is:inline></script>
+      <script id="catalog-generated-at" type="application/json" set:html={JSON.stringify(catalog.generatedAt)} is:inline></script>
+      <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
+      <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
+      <script id="validation-status-data" type="application/json" set:html={serializedValidationStatuses} is:inline></script>
+      <script id="catalog-page-data" type="application/json" set:html={JSON.stringify(catalogPage)} is:inline></script>
+      <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
+    </>
+  )}
 
   <script>
     import { getHeroMotion } from '../lib/hero-motion'
@@ -282,20 +327,26 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     }
   </script>
 
-  <script is:inline>
+  {!isRankingPage && (
+    <script is:inline>
     const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
     const recommendationSeed = JSON.parse(document.getElementById('catalog-generated-at').textContent)
     const categories = JSON.parse(document.getElementById('category-data').textContent)
     const projectTypes = JSON.parse(document.getElementById('type-data').textContent)
+    const validationStatuses = JSON.parse(document.getElementById('validation-status-data').textContent)
+    const catalogPage = JSON.parse(document.getElementById('catalog-page-data').textContent)
+    const isVerifiedPage = catalogPage === 'verified'
     const baseUrl = JSON.parse(document.getElementById('base-url').textContent)
     const categoryById = new Map(categories.map((category) => [category.id, category]))
     const typeById = new Map(projectTypes.map((type) => [type.id, type]))
+    const validationStatusIds = new Set(validationStatuses.map((status) => status.id))
     const grid = document.getElementById('project-grid')
-    const sourceCard = grid.querySelector('[data-project-card]').cloneNode(true)
+    const sourceCard = document.getElementById('project-card-template').content
+      .querySelector('[data-project-card]').cloneNode(true)
     const searchInput = document.getElementById('catalog-search')
-    const viewSwitch = document.getElementById('catalog-view-switch')
     const typeFilter = document.getElementById('type-filter')
     const categoryFilter = document.getElementById('category-filter')
+    const validationFilter = document.getElementById('validation-filter')
     const categoryFilterPanel = document.querySelector('[data-category-filter-panel]')
     const categoryFilterToggle = document.getElementById('category-filter-toggle')
     const resultCount = document.getElementById('result-count')
@@ -304,8 +355,8 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     const emptyState = document.getElementById('empty-state')
     const clearFilters = document.getElementById('clear-filters')
     const pageSize = 24
-    const catalogFilterParamNames = ['q', 'category', 'type', 'view', 'validation', 'sort']
-    let selectedView = 'directory'
+    const catalogFilterParamNames = ['q', 'category', 'type', 'validation']
+    let selectedValidation = isVerifiedPage ? 'verified' : 'all'
     let selectedType = 'all'
     let selectedCategory = 'all'
     let visibleCount = pageSize
@@ -358,12 +409,14 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       if (query) params.set('q', query)
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
       if (selectedType !== 'all') params.set('type', selectedType)
-      if (selectedView !== 'directory') params.set('view', selectedView)
+      if (isVerifiedPage && selectedValidation !== 'verified') params.set('validation', selectedValidation)
       return params
     }
 
-    const getCatalogFilterSearch = () => {
-      const search = getCatalogFilterParams().toString()
+    const getCatalogDetailSearch = () => {
+      const params = getCatalogFilterParams()
+      if (isVerifiedPage) params.set('from', 'verified')
+      const search = params.toString()
       return search ? `?${search}` : ''
     }
 
@@ -400,7 +453,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       const card = sourceCard.cloneNode(true)
       const category = categoryById.get(repository.category)
       const projectType = typeById.get(repository.projectType)
-      const detailSearch = getCatalogFilterSearch()
+      const detailSearch = getCatalogDetailSearch()
       const detailUrl = `${baseUrl}plugins/${repository.slug}${detailSearch}`
       const searchable = [
         repository.name,
@@ -481,7 +534,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         return (!query || searchable.includes(query))
           && (selectedCategory === 'all' || repository.category === selectedCategory)
           && (selectedType === 'all' || repository.projectType === selectedType)
-          && (selectedView !== 'verified' || repository.validation.overall === 'verified')
+          && (!isVerifiedPage || selectedValidation === 'all' || repository.validation.overall === selectedValidation)
       })
 
       const compareStatus = (left, right) => {
@@ -525,12 +578,11 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       resetAndRender()
     }
 
-    const syncViewSwitch = () => {
-      viewSwitch.dataset.activeView = selectedView
-      viewSwitch.querySelectorAll('[data-view]').forEach((item) => {
-        const isActive = item.dataset.view === selectedView
+    const syncValidationFilters = () => {
+      validationFilter?.querySelectorAll('[data-validation]').forEach((item) => {
+        const isActive = item.dataset.validation === selectedValidation
         item.classList.toggle('is-active', isActive)
-        item.setAttribute('aria-selected', String(isActive))
+        item.setAttribute('aria-pressed', String(isActive))
       })
     }
 
@@ -557,19 +609,17 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       const filters = new URLSearchParams(window.location.search)
       const requestedCategory = filters.get('category')
       const requestedType = filters.get('type')
-      const requestedView = filters.get('view')
       const requestedValidation = filters.get('validation')
 
       searchInput.value = filters.get('q') ?? ''
-      selectedView = requestedView === 'verified'
-        || requestedValidation === 'verified'
-        || requestedCategory === 'verified'
-        ? 'verified'
-        : 'directory'
+      selectedValidation = isVerifiedPage
+        && (requestedValidation === 'all' || validationStatusIds.has(requestedValidation))
+        ? requestedValidation
+        : isVerifiedPage ? 'verified' : 'all'
       selectedCategory = categoryById.has(requestedCategory) ? requestedCategory : 'all'
       selectedType = typeById.has(requestedType) ? requestedType : 'all'
 
-      syncViewSwitch()
+      syncValidationFilters()
       typeFilter.querySelectorAll('[data-type]').forEach((item) => {
         const isActive = item.dataset.type === selectedType
         item.classList.toggle('is-active', isActive)
@@ -580,17 +630,12 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         item.classList.toggle('is-active', isActive)
         item.setAttribute('aria-pressed', String(isActive))
       })
-      if (selectedType !== 'all' || selectedCategory !== 'all') setCategoryExpanded(true)
+      if (selectedType !== 'all' || selectedCategory !== 'all' || (isVerifiedPage && selectedValidation !== 'verified')) {
+        setCategoryExpanded(true)
+      }
     }
 
     searchInput.addEventListener('input', commitFilters)
-    viewSwitch.addEventListener('click', (event) => {
-      const button = event.target.closest('[data-view]:not(:disabled)')
-      if (!button || button.dataset.view === selectedView) return
-      selectedView = button.dataset.view
-      syncViewSwitch()
-      commitFilters()
-    })
     typeFilter.addEventListener('click', (event) => {
       const button = event.target.closest('[data-type]')
       if (!button) return
@@ -613,16 +658,23 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       })
       commitFilters()
     })
+    validationFilter?.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-validation]')
+      if (!button) return
+      selectedValidation = button.dataset.validation
+      syncValidationFilters()
+      commitFilters()
+    })
     loadMore.addEventListener('click', () => {
       visibleCount += pageSize
       render()
     })
     clearFilters.addEventListener('click', () => {
       searchInput.value = ''
-      selectedView = 'directory'
+      selectedValidation = isVerifiedPage ? 'verified' : 'all'
       selectedType = 'all'
       selectedCategory = 'all'
-      syncViewSwitch()
+      syncValidationFilters()
       typeFilter.querySelectorAll('[data-type]').forEach((item) => {
         const isActive = item.dataset.type === 'all'
         item.classList.toggle('is-active', isActive)
@@ -652,7 +704,8 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     })
     restoreFiltersFromUrl()
     resetAndRender()
-  </script>
+    </script>
+  )}
 </BaseLayout>
 
 <style>
@@ -872,6 +925,11 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     gap: 8px;
   }
 
+  .search-row--navigation-only {
+    grid-template-columns: minmax(300px, 320px);
+    justify-content: end;
+  }
+
   .search-field {
     display: flex;
     min-height: 46px;
@@ -882,64 +940,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     background: var(--canvas-soft);
     color: var(--mute);
     padding-inline: 14px;
-  }
-
-  .catalog-view-switch {
-    position: relative;
-    isolation: isolate;
-    display: grid;
-    width: 100%;
-    min-height: 46px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    border: 1px solid var(--hairline);
-    border-radius: 9999px;
-    background: var(--canvas-soft);
-    padding: 3px;
-  }
-
-  .catalog-view-switch::before {
-    position: absolute;
-    z-index: -1;
-    top: 3px;
-    bottom: 3px;
-    left: 3px;
-    width: calc((100% - 6px) / 3);
-    border: 1px solid var(--outline-strong);
-    border-radius: 9999px;
-    background: var(--canvas-card);
-    content: '';
-    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .catalog-view-switch[data-active-view='verified']::before {
-    transform: translateX(100%);
-  }
-
-  .catalog-view-switch button {
-    min-width: 0;
-    border: 0;
-    border-radius: 9999px;
-    background: transparent;
-    color: var(--mute);
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 20px;
-    padding-inline: 10px;
-    white-space: nowrap;
-  }
-
-  .catalog-view-switch button.is-active {
-    color: var(--ink);
-  }
-
-  .catalog-view-switch button:disabled {
-    cursor: not-allowed;
-    opacity: 0.42;
-  }
-
-  .catalog-view-switch button:focus-visible {
-    outline: 2px solid var(--outline-strong);
-    outline-offset: -2px;
   }
 
   .search-field:focus-within {
@@ -1234,8 +1234,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       grid-template-columns: 1fr;
     }
 
-    .search-field,
-    .catalog-view-switch {
+    .search-field {
       min-height: 48px;
     }
 

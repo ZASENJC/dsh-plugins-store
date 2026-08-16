@@ -1,0 +1,112 @@
+---
+type CatalogPage = 'directory' | 'verified' | 'ranking'
+
+interface Props {
+  active: CatalogPage
+  baseUrl: string
+}
+
+const { active, baseUrl } = Astro.props
+---
+
+<nav
+  class="catalog-view-switch"
+  role="tablist"
+  aria-label="目录页面"
+  data-i18n-aria-label="home.views"
+  data-active-view={active}
+>
+  <a
+    class:list={{ 'is-active': active === 'directory' }}
+    href={baseUrl}
+    role="tab"
+    aria-selected={active === 'directory'}
+    aria-current={active === 'directory' ? 'page' : undefined}
+  >
+    <span data-i18n="home.viewDirectory">目录</span>
+  </a>
+  <a
+    class:list={{ 'is-active': active === 'verified' }}
+    href={`${baseUrl}verified/`}
+    role="tab"
+    aria-selected={active === 'verified'}
+    aria-current={active === 'verified' ? 'page' : undefined}
+  >
+    <span data-i18n="home.viewVerified">已验证</span>
+  </a>
+  <a
+    class:list={{ 'is-active': active === 'ranking' }}
+    href={`${baseUrl}ranking/`}
+    role="tab"
+    aria-selected={active === 'ranking'}
+    aria-current={active === 'ranking' ? 'page' : undefined}
+  >
+    <span data-i18n="home.viewRanking">排行榜</span>
+  </a>
+</nav>
+
+<style>
+  .catalog-view-switch {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    width: 100%;
+    min-height: 46px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid var(--hairline);
+    border-radius: 9999px;
+    background: var(--canvas-soft);
+    padding: 3px;
+  }
+
+  .catalog-view-switch::before {
+    position: absolute;
+    z-index: -1;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc((100% - 6px) / 3);
+    border: 1px solid var(--outline-strong);
+    border-radius: 9999px;
+    background: var(--canvas-card);
+    content: '';
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .catalog-view-switch[data-active-view='verified']::before {
+    transform: translateX(100%);
+  }
+
+  .catalog-view-switch[data-active-view='ranking']::before {
+    transform: translateX(200%);
+  }
+
+  .catalog-view-switch a {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    color: var(--mute);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 20px;
+    padding-inline: 10px;
+    white-space: nowrap;
+  }
+
+  .catalog-view-switch a.is-active {
+    color: var(--ink);
+  }
+
+  .catalog-view-switch a:focus-visible {
+    outline: 2px solid var(--outline-strong);
+    outline-offset: -2px;
+  }
+
+  @media (max-width: 767px) {
+    .catalog-view-switch {
+      min-height: 48px;
+    }
+  }
+</style>
