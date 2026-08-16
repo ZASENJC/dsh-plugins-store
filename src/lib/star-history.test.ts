@@ -2,56 +2,58 @@ import { describe, expect, it } from 'vitest'
 
 import { buildStarTrend } from './star-history'
 
-const NOW = '2026-08-16T12:00:00.000Z'
+const NOW = '2026-08-16T04:00:00.000Z'
 
 describe('catalog Star history', () => {
-  it('starts collecting without claiming a complete 24-hour change', () => {
+  it('starts each Beijing calendar day at zero growth', () => {
     expect(buildStarTrend(undefined, NOW, 42)).toEqual({
-      change24h: null,
+      changeToday: 0,
       points: [{ capturedAt: NOW, stars: 42 }],
     })
   })
 
-  it('calculates the 24-hour change from the closest complete baseline', () => {
+  it('calculates growth from the Star count captured at Beijing midnight', () => {
     const trend = buildStarTrend({
-      change24h: null,
+      changeToday: 0,
       points: [
-        { capturedAt: '2026-08-15T11:00:00.000Z', stars: 30 },
-        { capturedAt: '2026-08-16T00:00:00.000Z', stars: 34 },
+        { capturedAt: '2026-08-15T15:30:00.000Z', stars: 30 },
+        { capturedAt: '2026-08-15T16:00:00.000Z', stars: 34 },
       ],
     }, NOW, 39)
 
-    expect(trend.change24h).toBe(9)
+    expect(trend.changeToday).toBe(5)
     expect(trend.points).toEqual([
-      { capturedAt: '2026-08-15T11:00:00.000Z', stars: 30 },
-      { capturedAt: '2026-08-16T00:00:00.000Z', stars: 34 },
+      { capturedAt: '2026-08-15T16:00:00.000Z', stars: 34 },
       { capturedAt: NOW, stars: 39 },
     ])
   })
 
-  it('does not report a 24-hour change from a stale baseline after a refresh outage', () => {
+  it('drops the previous day and resets at the first midnight refresh', () => {
     const trend = buildStarTrend({
-      change24h: 99,
+      changeToday: 9,
       points: [
-        { capturedAt: '2026-08-15T06:00:00.000Z', stars: 10 },
-        { capturedAt: '2026-08-16T00:00:00.000Z', stars: 20 },
+        { capturedAt: '2026-08-16T04:00:00.000Z', stars: 20 },
+        { capturedAt: '2026-08-16T15:30:00.000Z', stars: 29 },
       ],
-    }, NOW, 24)
+    }, '2026-08-16T16:00:00.000Z', 30)
 
-    expect(trend.change24h).toBeNull()
-    expect(trend.points[0]).toEqual({ capturedAt: '2026-08-16T00:00:00.000Z', stars: 20 })
+    expect(trend).toEqual({
+      changeToday: 0,
+      points: [{ capturedAt: '2026-08-16T16:00:00.000Z', stars: 30 }],
+    })
   })
 
-  it('keeps a compact curve while preserving its baseline and newest point', () => {
-    const points = Array.from({ length: 49 }, (_, index) => ({
-      capturedAt: new Date(Date.parse(NOW) - (48 - index) * 30 * 60 * 1000).toISOString(),
+  it('keeps a compact daily curve while preserving its baseline and newest point', () => {
+    const endOfDay = '2026-08-16T15:30:00.000Z'
+    const points = Array.from({ length: 48 }, (_, index) => ({
+      capturedAt: new Date(Date.parse('2026-08-15T16:00:00.000Z') + index * 30 * 60 * 1000).toISOString(),
       stars: 100 + index,
     }))
-    const trend = buildStarTrend({ change24h: null, points }, NOW, 148)
+    const trend = buildStarTrend({ changeToday: 47, points }, endOfDay, 147)
 
-    expect(trend.change24h).toBe(48)
+    expect(trend.changeToday).toBe(47)
     expect(trend.points.length).toBeLessThanOrEqual(25)
-    expect(trend.points[0]).toEqual({ capturedAt: '2026-08-15T12:00:00.000Z', stars: 100 })
-    expect(trend.points.at(-1)).toEqual({ capturedAt: NOW, stars: 148 })
+    expect(trend.points[0]).toEqual({ capturedAt: '2026-08-15T16:00:00.000Z', stars: 100 })
+    expect(trend.points.at(-1)).toEqual({ capturedAt: endOfDay, stars: 147 })
   })
 })

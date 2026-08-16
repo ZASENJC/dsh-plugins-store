@@ -1,10 +1,10 @@
 import type { CatalogEntry } from './catalog'
 import type { StarHistoryPoint } from './star-history'
 
-export type RankingMode = 'stars24h' | 'stars' | 'newest' | 'updated'
+export type RankingMode = 'starsToday' | 'stars' | 'newest' | 'updated'
 
 export const RANKING_MODES: ReadonlyArray<{ id: RankingMode, label: string }> = [
-  { id: 'stars24h', label: '24h Star 增速' },
+  { id: 'starsToday', label: '今日 Star 增长' },
   { id: 'stars', label: '最多 Star' },
   { id: 'newest', label: '最新发布' },
   { id: 'updated', label: '最近更新' },
@@ -12,15 +12,9 @@ export const RANKING_MODES: ReadonlyArray<{ id: RankingMode, label: string }> = 
 
 export function sortRankingEntries(entries: CatalogEntry[], mode: RankingMode): CatalogEntry[] {
   return [...entries].sort((left, right) => {
-    if (mode === 'stars24h') {
-      const leftChange = left.starTrend?.change24h
-      const rightChange = right.starTrend?.change24h
-      const measuredPriority = Number(rightChange !== null && rightChange !== undefined)
-        - Number(leftChange !== null && leftChange !== undefined)
-      if (measuredPriority !== 0) return measuredPriority
-      if (leftChange !== null && leftChange !== undefined
-        && rightChange !== null && rightChange !== undefined
-        && leftChange !== rightChange) return rightChange - leftChange
+    if (mode === 'starsToday') {
+      const changePriority = right.starTrend.changeToday - left.starTrend.changeToday
+      if (changePriority !== 0) return changePriority
     }
     if (mode === 'newest') {
       const createdPriority = Date.parse(right.createdAt) - Date.parse(left.createdAt)

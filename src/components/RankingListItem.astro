@@ -16,7 +16,7 @@ const { repository, rank, mode } = Astro.props
 const category = getCategory(repository.category)
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const detailUrl = `${baseUrl}plugins/${repository.slug}?from=ranking`
-const starChange = repository.starTrend?.change24h ?? null
+const starChange = repository.starTrend.changeToday
 const metric = mode === 'stars'
   ? { key: 'ranking.metric.stars', value: formatCompactNumber(repository.stars), date: null }
   : mode === 'newest'
@@ -24,8 +24,8 @@ const metric = mode === 'stars'
     : mode === 'updated'
       ? { key: 'ranking.metric.updated', value: formatRelativeDate(repository.pushedAt), date: repository.pushedAt }
       : {
-          key: 'ranking.metric.stars24h',
-          value: starChange === null ? '数据积累中' : `${starChange >= 0 ? '+' : ''}${formatCompactNumber(starChange)}`,
+          key: 'ranking.metric.starsToday',
+          value: `${starChange >= 0 ? '+' : ''}${formatCompactNumber(starChange)}`,
           date: null,
         }
 ---
@@ -51,18 +51,17 @@ const metric = mode === 'stars'
       </p>
     </div>
   </div>
-  <div class="ranking-row__trend" data-field="sparkline-wrap" hidden={mode !== 'stars24h'}>
+  <div class="ranking-row__trend" data-field="sparkline-wrap" hidden={mode !== 'starsToday'}>
     <svg class="ranking-sparkline" viewBox="0 0 96 28" width="96" height="28" aria-hidden="true">
       <polyline data-field="sparkline" points={buildSparklinePoints(repository.starTrend?.points ?? [])}></polyline>
     </svg>
   </div>
   <div class="ranking-row__metric">
     <span data-field="metric-label" data-i18n={metric.key}>
-      {mode === 'stars24h' ? '24h 增长' : mode === 'stars' ? 'Star 数' : mode === 'newest' ? '发布于' : '更新于'}
+      {mode === 'starsToday' ? '今日增长' : mode === 'stars' ? 'Star 数' : mode === 'newest' ? '发布于' : '更新于'}
     </span>
     <strong
-      data-field={mode === 'stars24h' ? 'star-change' : 'metric-value'}
-      data-i18n={mode === 'stars24h' && starChange === null ? 'ranking.collecting' : undefined}
+      data-field={mode === 'starsToday' ? 'star-change' : 'metric-value'}
       data-i18n-relative-date={metric.date ?? undefined}
     >{metric.value}</strong>
     <small><Star size={13} stroke-width={1.6} /> <span data-field="total-stars">{formatCompactNumber(repository.stars)}</span></small>

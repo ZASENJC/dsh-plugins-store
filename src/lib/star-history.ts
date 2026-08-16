@@ -4,13 +4,18 @@ export interface StarHistoryPoint {
 }
 
 export interface StarTrend {
-  change24h: number | null
+  changeToday: number
   points: StarHistoryPoint[]
 }
 
-const WINDOW_MS = 24 * 60 * 60 * 1000
-const BASELINE_TOLERANCE_MS = 2 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
+const BEIJING_UTC_OFFSET_MS = 8 * 60 * 60 * 1000
 const MAX_POINTS = 25
+
+function getBeijingDayStart(capturedAtMs: number): number {
+  return Math.floor((capturedAtMs + BEIJING_UTC_OFFSET_MS) / DAY_MS) * DAY_MS
+    - BEIJING_UTC_OFFSET_MS
+}
 
 function compactPoints(points: StarHistoryPoint[]): StarHistoryPoint[] {
   if (points.length <= MAX_POINTS) return points
@@ -31,11 +36,14 @@ export function buildStarTrend(
 ): StarTrend {
   const capturedAtMs = Date.parse(capturedAt)
   if (!Number.isFinite(capturedAtMs)) throw new Error('Star history capture time is invalid')
+  const dayStartMs = getBeijingDayStart(capturedAtMs)
+  const currentStars = Math.max(0, Math.round(stars))
 
   const byTimestamp = new Map<number, StarHistoryPoint>()
   for (const point of previous?.points ?? []) {
     const pointTime = Date.parse(point.capturedAt)
     if (!Number.isFinite(pointTime)
+      || pointTime < dayStartMs
       || pointTime > capturedAtMs
       || !Number.isFinite(point.stars)
       || point.stars < 0) continue
@@ -46,26 +54,16 @@ export function buildStarTrend(
   }
   byTimestamp.set(capturedAtMs, {
     capturedAt: new Date(capturedAtMs).toISOString(),
-    stars: Math.max(0, Math.round(stars)),
+    stars: currentStars,
   })
 
-  const sorted = [...byTimestamp.entries()]
+  const today = [...byTimestamp.entries()]
     .sort(([left], [right]) => left - right)
-  const cutoff = capturedAtMs - WINDOW_MS
-  const baselineEntry = sorted.findLast(([pointTime]) => pointTime <= cutoff)
-  const hasCompleteBaseline = baselineEntry !== undefined
-    && baselineEntry[0] >= cutoff - BASELINE_TOLERANCE_MS
-  const recent = sorted
-    .filter(([pointTime]) => pointTime > cutoff)
     .map(([, point]) => point)
-  const retained = hasCompleteBaseline
-    ? [baselineEntry[1], ...recent]
-    : recent
+  const baseline = today[0]
 
   return {
-    change24h: hasCompleteBaseline
-      ? Math.max(0, Math.round(stars)) - baselineEntry[1].stars
-      : null,
-    points: compactPoints(retained),
+    changeToday: currentStars - baseline.stars,
+    points: compactPoints(today),
   }
 }

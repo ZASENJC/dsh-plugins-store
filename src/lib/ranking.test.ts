@@ -33,7 +33,7 @@ describe('catalog rankings', () => {
       repository(1, { stargazers_count: 10 }),
       repository(2, { stargazers_count: 20 }),
       repository(3, { stargazers_count: 30 }),
-    ], '2026-08-15T11:00:00.000Z')
+    ], '2026-08-15T16:00:00.000Z')
     const current = buildCatalog([
       repository(1, {
         stargazers_count: 15,
@@ -52,18 +52,17 @@ describe('catalog rankings', () => {
       }),
     ], '2026-08-16T12:00:00.000Z', 3, new Set(), new Map(), new Map(), null, previous)
 
-    expect(sortRankingEntries(current.repositories, 'stars24h').map(({ repositoryId }) => repositoryId)).toEqual([1, 3, 2])
+    expect(sortRankingEntries(current.repositories, 'starsToday').map(({ repositoryId }) => repositoryId)).toEqual([1, 3, 2])
     expect(sortRankingEntries(current.repositories, 'stars').map(({ repositoryId }) => repositoryId)).toEqual([3, 2, 1])
     expect(sortRankingEntries(current.repositories, 'newest').map(({ repositoryId }) => repositoryId)).toEqual([2, 3, 1])
     expect(sortRankingEntries(current.repositories, 'updated').map(({ repositoryId }) => repositoryId)).toEqual([3, 1, 2])
   })
 
-  it('places incomplete 24-hour histories after measured growth', () => {
-    const measured = buildCatalog([repository(1)], '2026-08-16T12:00:00.000Z').repositories[0]
-    const collecting = buildCatalog([repository(2, { stargazers_count: 100 })], '2026-08-16T12:00:00.000Z').repositories[0]
-    measured.starTrend.change24h = 0
+  it('uses total Stars as the tie-breaker when daily growth is equal', () => {
+    const lower = buildCatalog([repository(1)], '2026-08-16T12:00:00.000Z').repositories[0]
+    const higher = buildCatalog([repository(2, { stargazers_count: 100 })], '2026-08-16T12:00:00.000Z').repositories[0]
 
-    expect(sortRankingEntries([collecting, measured], 'stars24h').map(({ repositoryId }) => repositoryId)).toEqual([1, 2])
+    expect(sortRankingEntries([lower, higher], 'starsToday').map(({ repositoryId }) => repositoryId)).toEqual([2, 1])
   })
 
   it('creates a stable nonblank sparkline for changing and flat histories', () => {

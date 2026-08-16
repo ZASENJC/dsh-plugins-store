@@ -31,7 +31,7 @@ const initialRepositories = isRankingPage
   ? []
   : sortCatalogEntries(initialCatalog, 'recommended', catalog.generatedAt).slice(0, 24)
 const initialRankingRepositories = isRankingPage
-  ? sortRankingEntries(catalog.repositories, 'stars24h').slice(0, 40)
+  ? sortRankingEntries(catalog.repositories, 'starsToday').slice(0, 40)
   : []
 const initialResultCount = isVerifiedPage ? (catalog.stats.validationStatuses.verified ?? 0) : catalog.stats.fetched
 const generatedDate = new Intl.DateTimeFormat('zh-CN', {
@@ -254,17 +254,17 @@ const pageTitleKey = isVerifiedPage
       <div class="container">
         <div class="results-head">
           <p id="ranking-result-count">{catalog.stats.fetched} 个项目</p>
-          <p><i></i> <span data-i18n="ranking.snapshotNote">24h 数据随目录刷新积累</span></p>
+          <p><i></i> <span data-i18n="ranking.snapshotNote">每 30 分钟刷新 · 每日 00:00（北京时间）重新计数</span></p>
         </div>
 
         <ol class="ranking-list" id="ranking-list" aria-label="插件排行榜" data-i18n-aria-label="ranking.listLabel">
           {initialRankingRepositories.map((repository, index) => (
-            <RankingListItem repository={repository} rank={index + 1} mode="stars24h" />
+            <RankingListItem repository={repository} rank={index + 1} mode="starsToday" />
           ))}
         </ol>
 
         <template id="ranking-row-template">
-          <RankingListItem repository={catalog.repositories[0]} rank={1} mode="stars24h" />
+          <RankingListItem repository={catalog.repositories[0]} rank={1} mode="starsToday" />
         </template>
 
         <div class="empty-state" id="ranking-empty-state" hidden>
@@ -772,7 +772,7 @@ const pageTitleKey = isVerifiedPage
     const baseUrl = JSON.parse(document.getElementById('base-url').textContent)
     const categoryById = new Map(categories.map((category) => [category.id, category]))
     const typeById = new Map(projectTypes.map((type) => [type.id, type]))
-    const rankingModeIds = new Set(['stars24h', 'stars', 'newest', 'updated'])
+    const rankingModeIds = new Set(['starsToday', 'stars', 'newest', 'updated'])
     const list = document.getElementById('ranking-list')
     const sourceRow = document.getElementById('ranking-row-template').content
       .querySelector('[data-ranking-row]').cloneNode(true)
@@ -789,7 +789,7 @@ const pageTitleKey = isVerifiedPage
     const clearFilters = document.getElementById('ranking-clear-filters')
     const pageSize = 40
     const rankingParamNames = ['q', 'category', 'type', 'rank']
-    let selectedRankingMode = 'stars24h'
+    let selectedRankingMode = 'starsToday'
     let selectedType = 'all'
     let selectedCategory = 'all'
     let visibleCount = pageSize
@@ -832,7 +832,7 @@ const pageTitleKey = isVerifiedPage
       if (query) params.set('q', query)
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
       if (selectedType !== 'all') params.set('type', selectedType)
-      if (selectedRankingMode !== 'stars24h') params.set('rank', selectedRankingMode)
+      if (selectedRankingMode !== 'starsToday') params.set('rank', selectedRankingMode)
       return params
     }
 
@@ -860,7 +860,7 @@ const pageTitleKey = isVerifiedPage
       const category = categoryById.get(repository.category)
       const projectType = typeById.get(repository.projectType)
       const detailUrl = `${baseUrl}plugins/${repository.slug}${getRankingDetailSearch()}`
-      const change24h = repository.starTrend?.change24h ?? null
+      const changeToday = repository.starTrend.changeToday
 
       row.dataset.mode = selectedRankingMode
       row.dataset.category = repository.category
@@ -895,16 +895,11 @@ const pageTitleKey = isVerifiedPage
       metricValue.removeAttribute('data-i18n')
       metricValue.removeAttribute('data-i18n-relative-date')
 
-      if (selectedRankingMode === 'stars24h') {
-        metricLabel.dataset.i18n = 'ranking.metric.stars24h'
-        metricLabel.textContent = t('ranking.metric.stars24h', {}, '24h 增长')
+      if (selectedRankingMode === 'starsToday') {
+        metricLabel.dataset.i18n = 'ranking.metric.starsToday'
+        metricLabel.textContent = t('ranking.metric.starsToday', {}, '今日增长')
         metricValue.dataset.field = 'star-change'
-        if (change24h === null) {
-          metricValue.dataset.i18n = 'ranking.collecting'
-          metricValue.textContent = t('ranking.collecting', {}, '数据积累中')
-        } else {
-          metricValue.textContent = `${change24h >= 0 ? '+' : ''}${compactNumber(change24h)}`
-        }
+        metricValue.textContent = `${changeToday >= 0 ? '+' : ''}${compactNumber(changeToday)}`
         sparklineWrap.hidden = false
         sparkline.setAttribute('points', buildSparkline(repository.starTrend?.points ?? []))
       } else if (selectedRankingMode === 'stars') {
@@ -944,15 +939,9 @@ const pageTitleKey = isVerifiedPage
       })
 
       return filtered.sort((left, right) => {
-        if (selectedRankingMode === 'stars24h') {
-          const leftChange = left.starTrend?.change24h
-          const rightChange = right.starTrend?.change24h
-          const measuredPriority = Number(rightChange !== null && rightChange !== undefined)
-            - Number(leftChange !== null && leftChange !== undefined)
-          if (measuredPriority !== 0) return measuredPriority
-          if (leftChange !== null && leftChange !== undefined
-            && rightChange !== null && rightChange !== undefined
-            && leftChange !== rightChange) return rightChange - leftChange
+        if (selectedRankingMode === 'starsToday') {
+          const changePriority = right.starTrend.changeToday - left.starTrend.changeToday
+          if (changePriority !== 0) return changePriority
         }
         if (selectedRankingMode === 'newest') {
           const createdPriority = Date.parse(right.createdAt) - Date.parse(left.createdAt)
@@ -1027,7 +1016,7 @@ const pageTitleKey = isVerifiedPage
       searchInput.value = filters.get('q') ?? ''
       selectedCategory = categoryById.has(requestedCategory) ? requestedCategory : 'all'
       selectedType = typeById.has(requestedType) ? requestedType : 'all'
-      selectedRankingMode = rankingModeIds.has(requestedRankingMode) ? requestedRankingMode : 'stars24h'
+      selectedRankingMode = rankingModeIds.has(requestedRankingMode) ? requestedRankingMode : 'starsToday'
       syncFilterButtons()
       setCategoryExpanded(selectedType !== 'all' || selectedCategory !== 'all')
     }
@@ -1066,7 +1055,7 @@ const pageTitleKey = isVerifiedPage
       searchInput.value = ''
       selectedType = 'all'
       selectedCategory = 'all'
-      selectedRankingMode = 'stars24h'
+      selectedRankingMode = 'starsToday'
       syncFilterButtons()
       setCategoryExpanded(false)
       commitFilters()
