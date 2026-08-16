@@ -13,8 +13,8 @@
   <a href="https://www.nodeseek.com/" aria-label="访问 NodeSeek">
     <img src="https://img.shields.io/badge/NODE-SEEK-1E9FFF.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAATlBMVEVHcEy%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv7%2B%2Fv78NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ2%2Fv78MDAwAAAD%2F%2F%2F88PDx8fHzU1NSfn5%2BKiorNn%2Fb4AAAAEXRSTlMAxKMRhizc80hqEDPX7o1et%2F5TfbEAAAIXSURBVFiF7VVbYoQgDERFEJ8F3G73%2FhetJCRBKyeo8xWRTCZjBKUePHjwQDB4a72GsLUHvLvf53x620KsU86QXxjvve1wOWG4z0%2BVEqBUZ4%2FIFMtONvSSMU4HRnnupYCTUk0SAJE91R%2FXOSQs88YcUEI2NyCGZWmWkrCGAqv4cNrd0RI44KUtNS3hhJlEJL2eC7u80jBlNmAKfzAVNmhVJLLu1FRbzQ8ha2jJBYdaeupgKAQk92KMlIrRXEgYqIceeCwxG%2FEvvj4vZIjhG6MN3xpSakF7SxYY6k0pyN%2F3HfPie98%2FKVrwraZKDTA1Oa%2BTDraU9XMQfEeiekfxkZvWUNtkD3lZqa8awZdSZSkHUmwmGMSCpUYwiwlDTrGKPHXkhRpDjWCRWaKangk0E8AQxM%2BJwMdiFMg2JLD3CkL0lHVwvV81AsseXAmKQYoUXlrAETJFQ1ZMvMXFRPwKTZ6ry2e8xXr%2BjDiDNFedHCZbjQAHaaBS6IWj%2F7sY5UoP82WU8T%2FuSRCvVyVMYoGmpnv8p%2Fg5H4i3LuAgy2%2Bvs%2B38Gxv%2BkGq8aSI3AJ3z%2FrZkLA7qGwY6FPkSEMV8lFkZBTVeusj6sS6YzkcbRHI%2Bt7Rzm4vyE622JKCTzT2Hhg9YwLTOS7pXVk7HGoaZerEF4uLmIoxj%2BSR3H2zNluOD4QK1y%2Fn02hQCshy5r8SHM2Bbsa%2By7cGDB%2F8Vv7isS9jzGHgiAAAAAElFTkSuQmCC" alt="NodeSeek" height="18" />
   </a>
-  <a href="https://dsh.aitreez.com/">
-    <img src="https://img.shields.io/website?url=https%3A%2F%2Fdsh.aitreez.com%2F&amp;up_message=online&amp;down_message=offline&amp;label=dsh.aitreez.com" alt="Website" height="18" />
+  <a href="https://dshmk.com/">
+    <img src="https://img.shields.io/website?url=https%3A%2F%2Fdshmk.com%2F&amp;up_message=online&amp;down_message=offline&amp;label=dshmk.com" alt="Website" height="18" />
   </a>
   <a href="https://github.com/ZASENJC/dsh-plugins-store/actions/workflows/sync-catalog.yml">
     <img src="https://github.com/ZASENJC/dsh-plugins-store/actions/workflows/sync-catalog.yml/badge.svg" alt="Sync catalog" height="18" />
@@ -29,7 +29,7 @@
 
 面向 DeepSeek Harness 生态的 DSH 插件市场，自动收录并整理同时带有 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 与 `deepseek-harness` Topic 的项目，提供搜索、分类、排序和标签聚合浏览。
 
-[访问 DSH 插件市场（DeepSeek Harness 插件目录）](https://dsh.aitreez.com/)
+[访问 DSH 插件市场（DeepSeek Harness 插件目录）](https://dshmk.com/)
 
 ## 项目截图
 
@@ -68,7 +68,7 @@
 商店提供公开、只读的完整目录接口：
 
 ```text
-GET https://dsh.aitreez.com/catalog.json
+GET https://api.dshmk.com/catalog.json
 ```
 
 - 无需鉴权，不接收查询参数。
@@ -81,14 +81,14 @@ GET https://dsh.aitreez.com/catalog.json
 ```bash
 curl --fail --silent --show-error \
   --header 'Accept: application/json' \
-  https://dsh.aitreez.com/catalog.json \
+  https://api.dshmk.com/catalog.json \
   | jq '{schemaVersion, generatedAt, stats}'
 ```
 
 在 Node.js 22+ 中筛选当前已验证的插件：
 
 ```js
-const response = await fetch('https://dsh.aitreez.com/catalog.json', {
+const response = await fetch('https://api.dshmk.com/catalog.json', {
   headers: { Accept: 'application/json' },
 })
 

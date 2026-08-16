@@ -1,4 +1,4 @@
-export const SITE_URL = 'https://dsh.aitreez.com'
+export const SITE_URL = 'https://dshmk.com'
 export const HOME_TITLE = 'DSH 插件市场 - DSH-Plugin Store'
 export const HOME_DESCRIPTION = '在 DSH 插件市场中搜索和浏览 DSH 插件。本站作为 DeepSeek Harness 插件市场目录，自动收录和分类 GitHub dsh-plugin Topic 项目，并展示 DeepSeek Harness 插件的验证状态与安装参考。'
 

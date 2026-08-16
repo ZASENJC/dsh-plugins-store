@@ -311,7 +311,7 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/dsh-store-deploy ~/.ssh/known_hosts
 
-      - name: Publish to dsh.aitreez.com
+      - name: Publish to dshmk.com
         env:
           DEPLOY_HOST: ${{ secrets.DSH_DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DSH_DEPLOY_PORT }}

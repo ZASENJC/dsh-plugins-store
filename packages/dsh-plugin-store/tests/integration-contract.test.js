@@ -96,7 +96,7 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain("fetch('/api/dsh-plugin-store/remove'")
     expect(source).toContain('updateAvailable')
     expect(source).toContain('RemovePluginModal')
-    expect(source).not.toContain('https://dsh.aitreez.com/plugins/')
+    expect(source).not.toContain('https://dshmk.com/plugins/')
     expect(source).not.toMatch(/child_process|execFile|spawn\(/)
   })
 

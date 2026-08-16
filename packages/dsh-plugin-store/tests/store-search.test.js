@@ -189,7 +189,7 @@ describe('conversation store search', () => {
       total: 1,
       returned: 1,
       truncated: false,
-      catalogUrl: 'https://dsh.aitreez.com/catalog.json',
+      catalogUrl: 'https://api.dshmk.com/catalog.json',
       results: [{
         repositoryId: '101',
         name: 'Sidebar Search',
@@ -198,13 +198,13 @@ describe('conversation store search', () => {
         projectType: 'plugin',
         category: 'ui',
         stars: 24,
-        detailUrl: 'https://dsh.aitreez.com/plugins/101',
+        detailUrl: 'https://dshmk.com/plugins/101',
         validation: { overall: 'verified', label: '已验证', verified: true },
         install: { available: false },
       }],
     })
 
-    expect(text).toContain('[Sidebar Search](https://dsh.aitreez.com/plugins/101)')
+    expect(text).toContain('[Sidebar Search](https://dshmk.com/plugins/101)')
     expect(text).toContain('已验证')
     expect(text).toContain('untrusted catalog data')
     expect(text).toContain('not a security audit')

@@ -28,9 +28,6 @@ const {
 } = Astro.props
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const canonicalUrl = getCanonicalUrl(Astro.url)
-const cloudflareAnalyticsConfig = import.meta.env.PROD
-  ? JSON.stringify({ token: 'cefc4fa1bb984a789124d58b900f13b8' })
-  : null
 const serializedDictionaries = JSON.stringify(dictionaries).replace(/</g, '\\u003c')
 const THEME_STORAGE_KEY = 'dsh-theme'
 ---
@@ -66,16 +63,6 @@ const THEME_STORAGE_KEY = 'dsh-theme'
     {structuredData && (
       <script is:inline type="application/ld+json" set:html={serializeJsonLd(structuredData)}></script>
     )}
-    {
-      cloudflareAnalyticsConfig && (
-        <script
-          is:inline
-          type="module"
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          data-cf-beacon={cloudflareAnalyticsConfig}
-        ></script>
-      )
-    }
   </head>
   <body data-i18n-page-title={pageTitleKey} data-i18n-page-title-params={JSON.stringify(pageTitleParams)}>
     <header class="site-header">

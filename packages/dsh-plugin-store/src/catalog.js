@@ -1,7 +1,7 @@
 import { compareCatalogInstallation, isUpdateAvailable } from './installed-plugins.js'
 
 export const DEFAULT_CATALOG_URLS = Object.freeze([
-  'https://dsh.aitreez.com/catalog.json',
+  'https://api.dshmk.com/catalog.json',
 ])
 
 export const CATEGORY_LABELS = Object.freeze({
