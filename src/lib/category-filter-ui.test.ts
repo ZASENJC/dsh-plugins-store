@@ -13,6 +13,8 @@ describe('homepage category filter', () => {
     expect(homepageSource).not.toContain('<select id="type-filter"')
     expect(homepageSource).toContain('data-filter-group="type"')
     expect(homepageSource).toContain('data-filter-group="category"')
+    expect(homepageSource).toContain('data-filter-group="validation"')
+    expect(homepageSource).toMatch(/\{isVerifiedPage && \([\s\S]*data-filter-group="validation"/)
     expect(homepageSource).toContain('data-type="all"')
     expect(homepageSource).toContain('data-type={type.id}')
     expect(homepageSource).toContain("let selectedType = 'all'")
@@ -22,7 +24,7 @@ describe('homepage category filter', () => {
     expect(homepageSource).not.toContain('data-category="verified"')
   })
 
-  it('expands both filter groups by click instead of requiring horizontal scrolling', () => {
+  it('expands all page-specific filter groups by click instead of requiring horizontal scrolling', () => {
     expect(homepageSource).toContain('data-category-filter-panel')
     expect(homepageSource).toContain('id="category-filter-toggle"')
     expect(homepageSource).toContain('aria-controls="classification-filter-groups"')
