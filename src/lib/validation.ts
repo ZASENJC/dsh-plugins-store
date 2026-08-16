@@ -25,12 +25,16 @@ export const VALIDATION_STATUS_DEFINITIONS = Object.freeze([
   { id: 'verified', label: '已验证' },
   { id: 'expired', label: '需重新验证' },
   { id: 'recorded', label: '已有验证记录' },
+  { id: 'retrying', label: '自动重试中' },
+  { id: 'capability-pending', label: '等待验证器' },
+  { id: 'external-dependency', label: '等待外部依赖' },
   { id: 'inconclusive', label: '需要复核' },
   { id: 'security-review', label: '安全复核中' },
   { id: 'not-applicable', label: '非插件验证范围' },
 ] as const)
 
 export type ValidationOverall = typeof VALIDATION_STATUS_DEFINITIONS[number]['id']
+export type ValidationRecordDisposition = 'verified' | 'auto_failed' | 'retryable' | 'capability_pending' | 'external_dependency_pending' | 'manual_review'
 export type ValidationStageId = typeof VALIDATION_STAGE_DEFINITIONS[number]['id']
 export type ValidationStageStatus = 'pending' | 'running' | 'passed' | 'failed' | 'inconclusive' | 'quarantined' | 'skipped'
 export type ValidationTone = 'neutral' | 'info' | 'running' | 'success' | 'warning' | 'danger'
@@ -51,6 +55,7 @@ export interface ValidationRecord {
   dshVersion?: string
   platform?: string
   validatorVersion?: string
+  disposition?: ValidationRecordDisposition
   sourceClassification?: SourceClassification
   structure: ValidationStageEvidence
   sandbox: ValidationStageEvidence
@@ -93,6 +98,14 @@ const STAGE_STATUSES = new Set<ValidationStageStatus>([
 const STATUS_DEFINITION_BY_ID = new Map(
   VALIDATION_STATUS_DEFINITIONS.map((definition) => [definition.id, definition]),
 )
+const VALIDATION_RECORD_DISPOSITIONS = new Set<ValidationRecordDisposition>([
+  'verified',
+  'auto_failed',
+  'retryable',
+  'capability_pending',
+  'external_dependency_pending',
+  'manual_review',
+])
 const STATUS_TONES: Record<ValidationOverall, ValidationTone> = {
   unrecognized: 'neutral',
   'check-pending': 'neutral',
@@ -104,6 +117,9 @@ const STATUS_TONES: Record<ValidationOverall, ValidationTone> = {
   verified: 'success',
   expired: 'warning',
   recorded: 'info',
+  retrying: 'running',
+  'capability-pending': 'info',
+  'external-dependency': 'info',
   inconclusive: 'warning',
   'security-review': 'warning',
   'not-applicable': 'neutral',
@@ -163,6 +179,9 @@ export function parseValidationFeed(value: unknown): Map<number, ValidationRecor
     if (!isValidDate(raw.sourcePushedAt) || !isValidDate(raw.updatedAt)) {
       throw new Error(`验证记录 ${repositoryId} 时间无效`)
     }
+    if (raw.disposition !== undefined && !VALIDATION_RECORD_DISPOSITIONS.has(raw.disposition as ValidationRecordDisposition)) {
+      throw new Error(`验证记录 ${repositoryId} disposition 无效`)
+    }
 
     const structure = parseStage(raw.structure, `验证记录 ${repositoryId}.structure`)
     const sandbox = parseStage(raw.sandbox, `验证记录 ${repositoryId}.sandbox`)
@@ -184,6 +203,7 @@ export function parseValidationFeed(value: unknown): Map<number, ValidationRecor
       ...(typeof raw.dshVersion === 'string' ? { dshVersion: raw.dshVersion } : {}),
       ...(typeof raw.platform === 'string' ? { platform: raw.platform } : {}),
       ...(typeof raw.validatorVersion === 'string' ? { validatorVersion: raw.validatorVersion } : {}),
+      ...(raw.disposition === undefined ? {} : { disposition: raw.disposition as ValidationRecordDisposition }),
       ...(sourceClassification ? { sourceClassification } : {}),
       structure,
       sandbox,
@@ -196,8 +216,11 @@ function resolveOverall(record: ValidationRecord): ValidationOverall {
   if (record.structure.status === 'pending') return 'check-pending'
   if (record.structure.status === 'running') return 'check-running'
   if (record.structure.status === 'failed') return 'check-failed'
-  if (record.structure.status === 'inconclusive') return 'inconclusive'
   if (record.structure.status === 'quarantined') return 'security-review'
+  if (record.disposition === 'retryable') return 'retrying'
+  if (record.disposition === 'capability_pending') return 'capability-pending'
+  if (record.disposition === 'external_dependency_pending') return 'external-dependency'
+  if (record.structure.status === 'inconclusive') return 'inconclusive'
   if (record.sandbox.status === 'pending' || record.sandbox.status === 'skipped') return 'sandbox-pending'
   if (record.sandbox.status === 'running') return 'sandbox-running'
   if (record.sandbox.status === 'failed') return 'sandbox-failed'

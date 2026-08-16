@@ -97,4 +97,45 @@ describe('validation archive merge', () => {
     expect(result.retryable).toEqual([3])
     expect(result.manualReview).toEqual([])
   })
+
+  it('retains the classified SHA and concrete snapshot failure code for an unobserved report', () => {
+    const result = buildValidationArchive(
+      archive,
+      { ...selection, repositoryIds: [1] },
+      [],
+      '2026-08-16T00:03:00.000Z',
+      new Map([[1, 'SNAPSHOT_LOAD_FAILED']]),
+    )
+
+    expect(result.archive.records[0].validation).toMatchObject({
+      status: 'inconclusive',
+      disposition: 'retryable',
+      sourceSha: 'a'.repeat(40),
+      errorCode: 'SNAPSHOT_LOAD_FAILED',
+    })
+    expect(result.retryable).toEqual([1])
+  })
+
+  it('records unsupported validator contracts as capability-pending without retrying them', () => {
+    const capabilityReport = report('inconclusive')
+    capabilityReport.events[capabilityReport.events.length - 1] = {
+      ...capabilityReport.events[capabilityReport.events.length - 1],
+      code: 'PLATFORM_RUNNER_REQUIRED',
+      reason: 'platform adapter is not installed',
+      attribution: 'inconclusive',
+    }
+    const result = buildValidationArchive(
+      archive,
+      { ...selection, repositoryIds: [1] },
+      [capabilityReport],
+      '2026-08-16T00:04:00.000Z',
+    )
+
+    expect(result.archive.records[0].validation).toMatchObject({
+      disposition: 'capability_pending',
+      errorCode: 'PLATFORM_RUNNER_REQUIRED',
+    })
+    expect(result.capabilityPending).toEqual([1])
+    expect(result.retryable).toEqual([])
+  })
 })

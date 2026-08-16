@@ -12,6 +12,8 @@ export interface ValidationArchiveMergeResult {
   verified: number[]
   autoFailed: number[]
   retryable: number[]
+  capabilityPending: number[]
+  externalDependencyPending: number[]
   manualReview: number[]
 }
 
@@ -68,18 +70,23 @@ function resultFromReport(report: ValidationReport, fallbackCheckedAt: string): 
   }
 }
 
-function missingResult(selection: ValidationSelection, checkedAt: string): SourceValidationResult {
+function missingResult(
+  selection: ValidationSelection,
+  checkedAt: string,
+  sourceSha: string | null,
+  errorCode = 'VALIDATION_NOT_OBSERVED',
+): SourceValidationResult {
   return {
     status: 'inconclusive',
     disposition: 'retryable',
     stage: 'sandbox',
-    sourceSha: null,
+    sourceSha,
     checkedAt,
     dshVersion: selection.target.dshVersion,
     platform: selection.target.platform,
     validatorVersion: selection.target.validatorVersion,
     executionType: null,
-    errorCode: 'VALIDATION_NOT_OBSERVED',
+    errorCode,
     attribution: 'infrastructure',
   }
 }
@@ -89,6 +96,7 @@ export function buildValidationArchive(
   selection: ValidationSelection,
   rawReports: readonly ValidationReport[],
   generatedAt: string,
+  snapshotFailures: ReadonlyMap<number, string> = new Map(),
 ): ValidationArchiveMergeResult {
   const archive = parseSourceClassificationArchive(rawArchive)
   const reports = latestReports(rawReports)
@@ -96,6 +104,8 @@ export function buildValidationArchive(
   const verified: number[] = []
   const autoFailed: number[] = []
   const retryable: number[] = []
+  const capabilityPending: number[] = []
+  const externalDependencyPending: number[] = []
   const manualReview: number[] = []
 
   for (const repositoryId of selection.repositoryIds) {
@@ -112,11 +122,18 @@ export function buildValidationArchive(
       : undefined
     const validation = matchingReport
       ? resultFromReport(matchingReport, generatedAt)
-      : missingResult(selection, generatedAt)
+      : missingResult(
+        selection,
+        generatedAt,
+        record.sourceSha,
+        snapshotFailures.get(repositoryId) ?? (report ? 'SOURCE_CHANGED_DURING_RUN' : undefined),
+      )
     record.validation = validation
     if (validation.disposition === 'verified') verified.push(repositoryId)
     else if (validation.disposition === 'auto_failed') autoFailed.push(repositoryId)
     else if (validation.disposition === 'retryable') retryable.push(repositoryId)
+    else if (validation.disposition === 'capability_pending') capabilityPending.push(repositoryId)
+    else if (validation.disposition === 'external_dependency_pending') externalDependencyPending.push(repositoryId)
     else manualReview.push(repositoryId)
   }
 
@@ -129,6 +146,8 @@ export function buildValidationArchive(
     verified: verified.sort((a, b) => a - b),
     autoFailed: [...new Set(autoFailed)].sort((a, b) => a - b),
     retryable: [...new Set(retryable)].sort((a, b) => a - b),
+    capabilityPending: [...new Set(capabilityPending)].sort((a, b) => a - b),
+    externalDependencyPending: [...new Set(externalDependencyPending)].sort((a, b) => a - b),
     manualReview: [...new Set(manualReview)].sort((a, b) => a - b),
   }
 }

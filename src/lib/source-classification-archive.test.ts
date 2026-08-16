@@ -237,6 +237,20 @@ describe('source classification archive', () => {
             attribution: 'policy',
           },
         },
+        {
+          ...base,
+          repositoryId: 4,
+          fullName: 'owner/capability',
+          sourceSha: 'd'.repeat(40),
+          validation: {
+            ...base.validation,
+            status: 'inconclusive',
+            sourceSha: 'd'.repeat(40),
+            disposition: 'manual_review',
+            errorCode: 'PLATFORM_RUNNER_REQUIRED',
+            attribution: 'inconclusive',
+          },
+        },
       ],
     })
 
@@ -244,6 +258,7 @@ describe('source classification archive', () => {
       'auto_failed',
       'retryable',
       'manual_review',
+      'capability_pending',
     ])
   })
 

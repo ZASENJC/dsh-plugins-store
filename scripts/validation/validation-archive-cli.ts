@@ -42,6 +42,44 @@ async function readReports(directory: string): Promise<ValidationReport[]> {
   return reports
 }
 
+async function readSnapshotFailures(directory: string): Promise<ReadonlyMap<number, string>> {
+  const failures = new Map<number, string>()
+  let entries
+  try {
+    entries = await readdir(directory, { withFileTypes: true })
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return failures
+    throw error
+  }
+  for (const entry of entries) {
+    const path = join(directory, entry.name)
+    if (entry.isDirectory()) {
+      for (const [repositoryId, code] of await readSnapshotFailures(path)) {
+        failures.set(repositoryId, code)
+      }
+      continue
+    }
+    if (!entry.isFile() || !/^shadow-summary-\d+\.json$/.test(entry.name)) continue
+    try {
+      const summary = JSON.parse(await readFile(path, 'utf8')) as {
+        loadFailures?: Array<{ repositoryId?: unknown, code?: unknown }>
+      }
+      for (const failure of summary.loadFailures ?? []) {
+        if (Number.isSafeInteger(failure.repositoryId)
+          && Number(failure.repositoryId) > 0
+          && typeof failure.code === 'string'
+          && failure.code.length > 0) {
+          failures.set(Number(failure.repositoryId), failure.code)
+        }
+      }
+    } catch {
+      // A malformed shard summary is handled as VALIDATION_NOT_OBSERVED by the
+      // archive merge; it must not discard other shard evidence.
+    }
+  }
+  return failures
+}
+
 export async function runValidationArchiveCli(args = process.argv.slice(2)): Promise<void> {
   const classificationPath = resolve(valueAfter(args, '--classification') ?? join(root, 'validation/source-classification.json'))
   const selectionPath = resolve(valueAfter(args, '--selection') ?? join(root, 'validation/selection.json'))
@@ -56,7 +94,8 @@ export async function runValidationArchiveCli(args = process.argv.slice(2)): Pro
   const archive = parseSourceClassificationArchive(JSON.parse(await readFile(classificationPath, 'utf8')))
   const selection = parseValidationSelection(JSON.parse(await readFile(selectionPath, 'utf8')))
   const reports = await readReports(reportsPath)
-  const result = buildValidationArchive(archive, selection, reports, generatedAt)
+  const snapshotFailures = await readSnapshotFailures(reportsPath)
+  const result = buildValidationArchive(archive, selection, reports, generatedAt, snapshotFailures)
   const discovery = parseSourceDiscovery(JSON.parse(await readFile(discoveryPath, 'utf8')))
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(result.archive, null, 2)}\n`, 'utf8')
@@ -92,6 +131,26 @@ export async function runValidationArchiveCli(args = process.argv.slice(2)): Pro
           errorCode: validation?.errorCode ?? 'VALIDATION_NOT_OBSERVED',
         }
       }),
+      capabilityPending: result.capabilityPending.map((repositoryId) => {
+        const record = byId.get(repositoryId)
+        const validation = record?.validation
+        return {
+          repositoryId,
+          fullName: record?.fullName ?? null,
+          sourceSha: record?.sourceSha ?? null,
+          errorCode: validation?.errorCode ?? 'VALIDATOR_CONTRACT_REQUIRED',
+        }
+      }),
+      externalDependencyPending: result.externalDependencyPending.map((repositoryId) => {
+        const record = byId.get(repositoryId)
+        const validation = record?.validation
+        return {
+          repositoryId,
+          fullName: record?.fullName ?? null,
+          sourceSha: record?.sourceSha ?? null,
+          errorCode: validation?.errorCode ?? 'EXTERNAL_CREDENTIALS_REQUIRED',
+        }
+      }),
       manualReview: result.manualReview.map((repositoryId) => {
         const record = byId.get(repositoryId)
         const validation = record?.validation
@@ -108,6 +167,8 @@ export async function runValidationArchiveCli(args = process.argv.slice(2)): Pro
     verified: result.verified,
     autoFailed: result.autoFailed,
     retryable: result.retryable,
+    capabilityPending: result.capabilityPending,
+    externalDependencyPending: result.externalDependencyPending,
     manualReview: result.manualReview,
     reportsObserved: reports.length,
   })}\n`)

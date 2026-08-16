@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -181,6 +181,12 @@ export async function runShadowCli(args = process.argv.slice(2)): Promise<void> 
       }
     },
   })
+  await mkdir(options.outputDir, { recursive: true })
+  await writeFile(
+    join(options.outputDir, `shadow-summary-${options.shardIndex}.json`),
+    `${JSON.stringify(summary, null, 2)}\n`,
+    'utf8',
+  )
   process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`)
 }
 

@@ -15,19 +15,25 @@ export const SOURCE_CLASSIFICATION_ARCHIVE_SCHEMA_VERSION = 1 as const
 export type SourceClassificationDisposition = 'include' | 'exclude' | 'inconclusive'
 
 export type SourceValidationStatus = 'passed' | 'failed' | 'inconclusive'
-export type SourceValidationDisposition = 'verified' | 'auto_failed' | 'retryable' | 'manual_review'
+export type SourceValidationDisposition = 'verified' | 'auto_failed' | 'retryable' | 'capability_pending' | 'external_dependency_pending' | 'manual_review'
 
-// These outcomes can be retried without asking a reviewer to inspect plugin
-// source. Unsupported execution contracts remain visible, but do not become
-// permanent manual-review records while a validator is being added.
+// These outcomes are transient and can be retried without asking a reviewer to
+// inspect plugin source. Unsupported execution contracts are listed separately
+// below so they do not consume an automatic retry budget.
 export const RETRYABLE_SOURCE_VALIDATION_CODES = new Set([
   'VALIDATION_NOT_OBSERVED',
+  'SOURCE_CHANGED_DURING_RUN',
   'CANDIDATE_INFRASTRUCTURE_FAILED',
   'SANDBOX_TIMEOUT',
   'SANDBOX_INFRASTRUCTURE_FAILED',
   'SCANNER_UNAVAILABLE',
   'SNAPSHOT_LOAD_FAILED',
-  'EXTERNAL_CREDENTIALS_REQUIRED',
+])
+
+// These outcomes are deterministic until a validator or platform adapter is
+// added. They should remain visible in the archive without consuming an
+// automatic retry budget on every scheduled run.
+export const CAPABILITY_PENDING_SOURCE_VALIDATION_CODES = new Set([
   'WEB_SMOKE_CONTRACT_REQUIRED',
   'CHANNEL_MOCK_REQUIRED',
   'CHANNEL_MOCK_INVALID',
@@ -37,8 +43,20 @@ export const RETRYABLE_SOURCE_VALIDATION_CODES = new Set([
   'VALIDATOR_CONTRACT_REQUIRED',
 ])
 
+export const EXTERNAL_DEPENDENCY_SOURCE_VALIDATION_CODES = new Set([
+  'EXTERNAL_CREDENTIALS_REQUIRED',
+])
+
 export function isRetryableSourceValidationCode(code: string | undefined): boolean {
   return code !== undefined && RETRYABLE_SOURCE_VALIDATION_CODES.has(code)
+}
+
+export function isCapabilityPendingSourceValidationCode(code: string | undefined): boolean {
+  return code !== undefined && CAPABILITY_PENDING_SOURCE_VALIDATION_CODES.has(code)
+}
+
+export function isExternalDependencySourceValidationCode(code: string | undefined): boolean {
+  return code !== undefined && EXTERNAL_DEPENDENCY_SOURCE_VALIDATION_CODES.has(code)
 }
 
 export function resolveSourceValidationDisposition({
@@ -52,6 +70,12 @@ export function resolveSourceValidationDisposition({
 }): SourceValidationDisposition {
   if (status === 'passed') return 'verified'
   if (errorCode === 'SECURITY_REVIEW_REQUIRED' || attribution === 'policy') return 'manual_review'
+  if (status === 'inconclusive' && isExternalDependencySourceValidationCode(errorCode)) {
+    return 'external_dependency_pending'
+  }
+  if (status === 'inconclusive' && isCapabilityPendingSourceValidationCode(errorCode)) {
+    return 'capability_pending'
+  }
   if (status === 'inconclusive'
     && (attribution === 'infrastructure' || isRetryableSourceValidationCode(errorCode))) return 'retryable'
   if (status === 'failed' || attribution === 'plugin' || attribution === 'compatibility') return 'auto_failed'
@@ -154,7 +178,7 @@ function numberValue(value: unknown, fallback = 0): number {
 function parseValidationResult(value: unknown): SourceValidationResult {
   if (!isRecord(value)
     || !['passed', 'failed', 'inconclusive'].includes(value.status as string)
-    || !['verified', 'auto_failed', 'retryable', 'manual_review'].includes(value.disposition as string)
+    || !['verified', 'auto_failed', 'retryable', 'capability_pending', 'external_dependency_pending', 'manual_review'].includes(value.disposition as string)
     || !['structure', 'sandbox'].includes(value.stage as string)
     || (value.sourceSha !== null && (typeof value.sourceSha !== 'string' || !/^[a-f0-9]{40}$/i.test(value.sourceSha)))
     || !isDate(value.checkedAt)
@@ -281,7 +305,7 @@ function parseArchiveRecord(value: unknown): SourceClassificationArchiveRecord {
   if (validation && (
     (validation.status === 'passed' && validation.disposition !== 'verified')
     || (validation.status === 'failed' && !['auto_failed', 'manual_review'].includes(validation.disposition))
-    || (validation.status === 'inconclusive' && !['auto_failed', 'retryable', 'manual_review'].includes(validation.disposition))
+    || (validation.status === 'inconclusive' && !['auto_failed', 'retryable', 'capability_pending', 'external_dependency_pending', 'manual_review'].includes(validation.disposition))
   )) {
     throw new Error('Source validation disposition is invalid')
   }
@@ -429,8 +453,18 @@ export function validationRecordsFromArchive(
       dshVersion: validation.dshVersion,
       platform: validation.platform,
       validatorVersion: validation.validatorVersion,
+      disposition: validation.disposition,
       ...(record.classification ? { sourceClassification: record.classification } : {}),
-      ...(validation.stage === 'structure'
+      ...(validation.disposition === 'manual_review'
+        ? {
+          structure: {
+            status: 'quarantined',
+            checkedAt: validation.checkedAt,
+            ...(validation.errorCode ? { reason: validation.errorCode } : {}),
+          },
+          sandbox: { status: 'skipped' },
+        }
+        : validation.stage === 'structure'
         ? {
           structure: {
             status: validation.status === 'inconclusive' ? 'inconclusive' : 'failed',

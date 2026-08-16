@@ -109,6 +109,41 @@ describe('validation ladder', () => {
     })
   })
 
+  it('shows retryable and capability-pending outcomes without calling either manual security review', () => {
+    const feed = parseValidationFeed({
+      schemaVersion: 1,
+      generatedAt: '2026-08-14T08:30:00Z',
+      records: [{
+        repositoryId: 103,
+        sourceSha: 'c'.repeat(40),
+        sourcePushedAt: baseInput.repositoryPushedAt,
+        updatedAt: '2026-08-14T08:25:00Z',
+        disposition: 'retryable',
+        structure: { status: 'passed' },
+        sandbox: { status: 'inconclusive', reason: 'SNAPSHOT_LOAD_FAILED' },
+      }, {
+        repositoryId: 104,
+        sourceSha: 'd'.repeat(40),
+        sourcePushedAt: baseInput.repositoryPushedAt,
+        updatedAt: '2026-08-14T08:26:00Z',
+        disposition: 'capability_pending',
+        structure: { status: 'passed' },
+        sandbox: { status: 'inconclusive', reason: 'PLATFORM_RUNNER_REQUIRED' },
+      }],
+    })
+
+    expect(buildValidationStatus({ ...baseInput, repositoryId: 103, record: feed.get(103) })).toMatchObject({
+      overall: 'retrying',
+      label: '自动重试中',
+      tone: 'running',
+    })
+    expect(buildValidationStatus({ ...baseInput, repositoryId: 104, record: feed.get(104) })).toMatchObject({
+      overall: 'capability-pending',
+      label: '等待验证器',
+      tone: 'info',
+    })
+  })
+
   it('marks a pinned passing result verified and expires it when the repository changes', () => {
     const record = {
       repositoryId: 101,
