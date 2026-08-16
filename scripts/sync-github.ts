@@ -145,15 +145,25 @@ async function readClassificationArchive(): Promise<SourceClassificationArchive 
   }
 }
 
+async function readHistoricalVerifiedRepositoryNames(): Promise<Set<string>> {
+  try {
+    const response = await fetchRenderedReadme(VERIFY_REPOSITORY)
+    if (!response.ok) {
+      console.warn(`Verified 历史目录暂不可用：${response.status}；继续使用当前源码分类和验证档案`)
+      return new Set()
+    }
+    return extractVerifiedRepositoryNames(await response.text())
+  } catch (error) {
+    console.warn(`Verified 历史目录读取失败；继续使用当前源码分类和验证档案：${String(error)}`)
+    return new Set()
+  }
+}
+
 async function sync() {
   const { repositories, allRepositories, reportedByGitHub } = await fetchRepositories()
   const classificationArchive = await readClassificationArchive()
   const validationRecords = validationRecordsFromArchive(classificationArchive)
-  const verifyResponse = await fetchRenderedReadme(VERIFY_REPOSITORY)
-  if (!verifyResponse.ok) {
-    throw new Error(`验证目录请求失败：Verify ${verifyResponse.status}`)
-  }
-  const verifiedRepositoryNames = extractVerifiedRepositoryNames(await verifyResponse.text())
+  const verifiedRepositoryNames = await readHistoricalVerifiedRepositoryNames()
   const catalogRepositories = classificationArchive === null
     ? repositories
     : filterCatalogRepositoriesByArchive(allRepositories, classificationArchive)

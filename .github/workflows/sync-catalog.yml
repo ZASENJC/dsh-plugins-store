@@ -130,8 +130,6 @@ jobs:
 
       - name: Persist source classification archive
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
           BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
         run: |
           if test ! -f src/data/source-classification.json; then
@@ -139,25 +137,28 @@ jobs:
             exit 0
           fi
           set -euo pipefail
-          endpoint="repos/$REPOSITORY/contents/src/data/source-classification.json"
-          remote_sha="$(gh api "$endpoint" --method GET -f "ref=$BRANCH" --jq '.sha' 2>/dev/null || true)"
-          local_sha="$(git hash-object src/data/source-classification.json)"
-          if test -n "$remote_sha" && test "$remote_sha" = "$local_sha"; then
+          archive_snapshot="$(mktemp)"
+          persist_parent="$(mktemp -d)"
+          persist_root="$persist_parent/checkout"
+          cp src/data/source-classification.json "$archive_snapshot"
+          cleanup_persist_worktree() {
+            git worktree remove --force "$persist_root" >/dev/null 2>&1 || true
+            rm -f "$archive_snapshot"
+            rmdir "$persist_parent" >/dev/null 2>&1 || true
+          }
+          trap cleanup_persist_worktree EXIT
+          git fetch --no-tags origin "$BRANCH"
+          git worktree add --detach "$persist_root" "origin/$BRANCH"
+          cp "$archive_snapshot" "$persist_root/src/data/source-classification.json"
+          git -C "$persist_root" add src/data/source-classification.json
+          if git -C "$persist_root" diff --cached --quiet; then
             echo "Persisted source classification archive is unchanged."
             exit 0
           fi
-          REMOTE_SHA="$remote_sha" BRANCH="$BRANCH" node --input-type=module - <<'NODE'
-          import fs from 'node:fs'
-
-          const payload = {
-            message: 'chore: persist source classification archive',
-            content: fs.readFileSync('src/data/source-classification.json').toString('base64'),
-            branch: process.env.BRANCH,
-          }
-          if (process.env.REMOTE_SHA) payload.sha = process.env.REMOTE_SHA
-          fs.writeFileSync('/tmp/source-classification-persist.json', JSON.stringify(payload))
-          NODE
-          gh api --method PUT "$endpoint" --input /tmp/source-classification-persist.json --jq '.commit.sha'
+          git -C "$persist_root" config user.name 'github-actions[bot]'
+          git -C "$persist_root" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$persist_root" commit -m 'chore: persist source classification archive'
+          git -C "$persist_root" push origin "HEAD:$BRANCH"
 
       - name: Sync GitHub Topic
         run: npm run sync
