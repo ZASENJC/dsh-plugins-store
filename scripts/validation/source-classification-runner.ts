@@ -133,6 +133,17 @@ function classificationRecord(
   }
 }
 
+function classificationFailureCode(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  if (/rate.?limit|remaining=0|\b429\b/i.test(message)) return 'GITHUB_RATE_LIMITED'
+  if (/bad credentials|authentication|\b401\b/i.test(message)) return 'GITHUB_AUTH_FAILED'
+  if (/timed? ?out|timeout|aborted/i.test(message)) return 'SOURCE_CLASSIFICATION_TIMEOUT'
+  if (/size limit|exceeds validation size limit/i.test(message)) return 'SOURCE_CLASSIFICATION_SIZE_LIMIT'
+  if (/archive request failed|codeload|download/i.test(message)) return 'SOURCE_ARCHIVE_DOWNLOAD_FAILED'
+  if (/extract|tar|docker/i.test(message)) return 'SOURCE_ARCHIVE_EXTRACTION_FAILED'
+  return 'SOURCE_CLASSIFICATION_FAILED'
+}
+
 async function classifyRepository(repository: SourceDiscoveryRepository): Promise<SourceClassificationArchiveRecord> {
   let sourceSha: string | null = null
   const temporaryRoot = await mkdtemp(join(tmpdir(), `dsh-source-classification-${repository.repositoryId}-`))
@@ -159,10 +170,7 @@ async function classifyRepository(repository: SourceDiscoveryRepository): Promis
     })
     return classificationRecord(repository, sourceSha, classifySourceSnapshot({ sourceSha, files: snapshot.files }))
   } catch (error) {
-    const failureCode = error instanceof Error && error.message.includes('size limit')
-      ? 'SOURCE_CLASSIFICATION_SIZE_LIMIT'
-      : 'SOURCE_CLASSIFICATION_FAILED'
-    return classificationRecord(repository, sourceSha, undefined, failureCode)
+    return classificationRecord(repository, sourceSha, undefined, classificationFailureCode(error))
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true })
   }

@@ -255,8 +255,9 @@ export function isRetryableValidationReport(report: ValidationReport): boolean {
 
 function isRetryableValidationRecord(record: ValidationRecord): boolean {
   const reason = record.sandbox.reason ?? record.structure.reason
-  return (record.sandbox.status === 'inconclusive' || record.structure.status === 'inconclusive')
-    && isRetryableSourceValidationCode(reason)
+  return record.disposition === 'retryable'
+    || ((record.sandbox.status === 'inconclusive' || record.structure.status === 'inconclusive')
+      && isRetryableSourceValidationCode(reason))
 }
 
 function retryDelayMs(retryCount: number): number {
@@ -289,14 +290,15 @@ function retryEntry(
     ...(durationMs !== undefined && durationMs > 0 ? { lastDurationMs: durationMs } : {}),
     ...(executionType ? { executionType } : {}),
     retryCount,
-    ...(retryCount >= MAX_AUTOMATIC_RETRIES
-      ? { retryExhausted: true }
-      : { nextRetryAt: new Date(Date.parse(now) + retryDelayMs(retryCount)).toISOString() }),
+    ...(retryCount >= MAX_AUTOMATIC_RETRIES ? { retryExhausted: true } : {}),
+    // Exhaustion is a cooldown marker. Keep a nextRetryAt so transient
+    // infrastructure failures continue to receive a low-frequency retry.
+    nextRetryAt: new Date(Date.parse(now) + retryDelayMs(retryCount)).toISOString(),
   }
 }
 
 function retryIsDue(entry: ValidationStateEntry, now: string): boolean {
-  if (entry.retryCount === undefined || entry.retryExhausted === true) return false
+  if (entry.retryCount === undefined) return false
   return entry.nextRetryAt === undefined || Date.parse(entry.nextRetryAt) <= Date.parse(now)
 }
 

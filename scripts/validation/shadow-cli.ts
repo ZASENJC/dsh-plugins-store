@@ -156,6 +156,10 @@ export async function runShadowCli(args = process.argv.slice(2)): Promise<void> 
       validatorVersion: process.env.VALIDATOR_VERSION ?? '0.1.0',
       platform: 'linux-x64',
     },
+    concurrency: (() => {
+      const value = Number(process.env.VALIDATION_STRUCTURE_CONCURRENCY ?? '1')
+      return Number.isSafeInteger(value) && value > 0 ? value : 1
+    })(),
     snapshotLoader: async (repository) => {
       const sourceSha = await resolvePinnedSourceSha(repository)
       const temporaryRoot = await mkdtemp(join(tmpdir(), `dsh-validation-${repository.repositoryId}-`))

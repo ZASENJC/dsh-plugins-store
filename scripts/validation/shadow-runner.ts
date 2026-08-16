@@ -32,8 +32,8 @@ export interface ShadowRunSummary {
   reportPaths: string[]
   loadFailures: Array<{
     repositoryId: number
-    code: 'SNAPSHOT_LOAD_FAILED'
-    reason: '仓库快照或扫描基础设施不可用'
+    code: 'SNAPSHOT_LOAD_FAILED' | 'STRUCTURE_CHECK_FAILED' | 'REPORT_WRITE_FAILED'
+    reason: string
   }>
 }
 
@@ -66,15 +66,20 @@ export async function runShadowBatch({
   target,
   snapshotLoader,
   snapshotAttempts = 1,
+  concurrency = 1,
 }: {
   repositories: ShadowCatalogRepository[]
   outputDir: string
   target: StructureCheckTarget
   snapshotLoader: (repository: ShadowCatalogRepository) => Promise<RepositoryStructureSnapshot>
   snapshotAttempts?: number
+  concurrency?: number
 }): Promise<ShadowRunSummary> {
   if (!Number.isSafeInteger(snapshotAttempts) || snapshotAttempts < 1) {
     throw new Error('Snapshot attempts must be a positive integer')
+  }
+  if (!Number.isSafeInteger(concurrency) || concurrency < 1) {
+    throw new Error('Shadow concurrency must be a positive integer')
   }
   const summary: ShadowRunSummary = {
     mode: 'shadow',
@@ -86,34 +91,60 @@ export async function runShadowBatch({
     loadFailures: [],
   }
 
-  for (const repository of repositories) {
-    let snapshot: RepositoryStructureSnapshot | undefined
-    let loaded = false
-    for (let attempt = 1; attempt <= snapshotAttempts; attempt += 1) {
+  let nextIndex = 0
+  async function runWorker(): Promise<void> {
+    while (true) {
+      const index = nextIndex
+      nextIndex += 1
+      if (index >= repositories.length) return
+      const repository = repositories[index]
+      let snapshot: RepositoryStructureSnapshot | undefined
+      let loaded = false
+      for (let attempt = 1; attempt <= snapshotAttempts; attempt += 1) {
+        try {
+          snapshot = await snapshotLoader(repository)
+          loaded = true
+          break
+        } catch {
+          // Transient GitHub, download, and scanner errors are retried before the
+          // repository is left in the archive retry queue.
+        }
+      }
+      if (!loaded || snapshot === undefined) {
+        summary.loadFailures.push({
+          repositoryId: repository.repositoryId,
+          code: 'SNAPSHOT_LOAD_FAILED',
+          reason: '仓库快照或扫描基础设施不可用',
+        })
+        continue
+      }
+      let result: StructureCheckResult
       try {
-        snapshot = await snapshotLoader(repository)
-        loaded = true
-        break
+        result = runStructureCheck(snapshot, target)
       } catch {
-        // Transient GitHub, download, and scanner errors are retried before the
-        // repository is left in the archive retry queue.
+        summary.loadFailures.push({
+          repositoryId: repository.repositoryId,
+          code: 'STRUCTURE_CHECK_FAILED',
+          reason: '源码结构检查发生未预期错误',
+        })
+        continue
+      }
+      try {
+        const reportPath = await writeReportAtomically(outputDir, result.report)
+        summary.reportsWritten += 1
+        summary.decisions[result.decision] = (summary.decisions[result.decision] ?? 0) + 1
+        if (result.queueSandbox) summary.queueable += 1
+        summary.reportPaths.push(reportPath)
+      } catch {
+        summary.loadFailures.push({
+          repositoryId: repository.repositoryId,
+          code: 'REPORT_WRITE_FAILED',
+          reason: '验证报告无法写入工作区',
+        })
       }
     }
-    if (!loaded || snapshot === undefined) {
-      summary.loadFailures.push({
-        repositoryId: repository.repositoryId,
-        code: 'SNAPSHOT_LOAD_FAILED',
-        reason: '仓库快照或扫描基础设施不可用',
-      })
-      continue
-    }
-    const result = runStructureCheck(snapshot, target)
-    const reportPath = await writeReportAtomically(outputDir, result.report)
-    summary.reportsWritten += 1
-    summary.decisions[result.decision] = (summary.decisions[result.decision] ?? 0) + 1
-    if (result.queueSandbox) summary.queueable += 1
-    summary.reportPaths.push(reportPath)
   }
+  await Promise.all(Array.from({ length: Math.min(concurrency, repositories.length) }, () => runWorker()))
 
   return summary
 }

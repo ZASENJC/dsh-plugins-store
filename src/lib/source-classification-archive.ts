@@ -28,6 +28,8 @@ export const RETRYABLE_SOURCE_VALIDATION_CODES = new Set([
   'SANDBOX_INFRASTRUCTURE_FAILED',
   'SCANNER_UNAVAILABLE',
   'SNAPSHOT_LOAD_FAILED',
+  'STRUCTURE_CHECK_FAILED',
+  'REPORT_WRITE_FAILED',
 ])
 
 // These outcomes are deterministic until a validator or platform adapter is
@@ -45,6 +47,12 @@ export const CAPABILITY_PENDING_SOURCE_VALIDATION_CODES = new Set([
 
 export const EXTERNAL_DEPENDENCY_SOURCE_VALIDATION_CODES = new Set([
   'EXTERNAL_CREDENTIALS_REQUIRED',
+])
+
+// Only an explicit security signal requires source inspection. Other policy
+// outcomes, such as sandbox hygiene failures, remain fully automated.
+export const MANUAL_REVIEW_SOURCE_VALIDATION_CODES = new Set([
+  'SECURITY_REVIEW_REQUIRED',
 ])
 
 export function isRetryableSourceValidationCode(code: string | undefined): boolean {
@@ -69,7 +77,7 @@ export function resolveSourceValidationDisposition({
   errorCode?: string
 }): SourceValidationDisposition {
   if (status === 'passed') return 'verified'
-  if (errorCode === 'SECURITY_REVIEW_REQUIRED' || attribution === 'policy') return 'manual_review'
+  if (errorCode !== undefined && MANUAL_REVIEW_SOURCE_VALIDATION_CODES.has(errorCode)) return 'manual_review'
   if (status === 'inconclusive' && isExternalDependencySourceValidationCode(errorCode)) {
     return 'external_dependency_pending'
   }
@@ -78,6 +86,7 @@ export function resolveSourceValidationDisposition({
   }
   if (status === 'inconclusive'
     && (attribution === 'infrastructure' || isRetryableSourceValidationCode(errorCode))) return 'retryable'
+  if (status === 'inconclusive' && attribution === 'inconclusive') return 'retryable'
   if (status === 'failed' || attribution === 'plugin' || attribution === 'compatibility') return 'auto_failed'
   return 'manual_review'
 }
@@ -362,7 +371,9 @@ export function selectSourceClassificationTargets(
   return discovery.repositories.filter((repository) => {
     if (full) return true
     const record = previousById.get(repository.repositoryId)
-    return record === undefined || record.sourcePushedAt !== repository.pushedAt
+    return record === undefined
+      || record.sourcePushedAt !== repository.pushedAt
+      || record.disposition === 'inconclusive'
   })
 }
 
@@ -420,7 +431,10 @@ export function buildValidationCatalog(
 ): ValidationCatalogSnapshot {
   const repositories = discovery.repositories.flatMap((repository) => {
     const record = currentRecord(repository, archive)
-    if (record?.disposition === 'exclude') return []
+    // A validation target must have a current source classification. Keep
+    // inconclusive records in the central archive for retry, but do not send
+    // them to the sandbox using only coarse Topic metadata.
+    if (record?.disposition !== 'include') return []
     const sourceType = record?.classification && record.classification.confidence !== 'low'
       ? record.classification.projectType
       : undefined

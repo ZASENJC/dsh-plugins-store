@@ -207,7 +207,7 @@ describe('incremental validation cursor', () => {
       .toEqual([4])
   })
 
-  it('backs off retryable outcomes and stops automatic retries after five attempts', () => {
+  it('backs off retryable outcomes and continues low-frequency retries after five attempts', () => {
     let current = state([
       { repositoryId: 1, pushedAt: catalog.repositories[0].pushedAt },
       { repositoryId: 2, pushedAt: catalog.repositories[1].pushedAt },
@@ -241,10 +241,11 @@ describe('incremental validation cursor', () => {
         executionType: 'host-tool',
         retryCount: 5,
         retryExhausted: true,
+        nextRetryAt: '2026-08-15T00:05:00.000Z',
       },
     ])
-    expect(selectValidationDelta(catalog, current, target, 20, '2026-08-15T20:05:00.000Z').repositoryIds)
-      .toEqual([])
+    expect(selectValidationDelta(catalog, current, target, 20, '2026-08-15T00:05:00.000Z').repositoryIds)
+      .toEqual([4])
   })
 
   it('retains the latest duration and execution type as the next shard cost signal', () => {

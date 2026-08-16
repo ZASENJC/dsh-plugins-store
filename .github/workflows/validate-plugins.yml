@@ -271,13 +271,14 @@ jobs:
     timeout-minutes: 360
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 6
       matrix:
         shard: ${{ fromJSON(needs.select.outputs.shards) }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DSH_VALIDATION_VERSION: 0.1.0-rc.6
       VALIDATOR_VERSION: 0.1.2
+      VALIDATION_STRUCTURE_CONCURRENCY: 2
       VALIDATION_CANDIDATE_CONCURRENCY: 2
     steps:
       - name: Checkout validation source
@@ -302,7 +303,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run selected P1 structure shard serially
+      - name: Run selected P1 structure shard with bounded concurrency
         run: |
           npm run --silent validate:shadow -- \
             --output validation/reports/structure \
@@ -313,7 +314,7 @@ jobs:
             --limit 0 | tee /tmp/shadow-summary.json
           node -e "const result=require('/tmp/shadow-summary.json'); if(result.reportsWritten > result.discovered){console.error('P1 reports exceed discovery count'); process.exit(1)}; if(result.loadFailures.length || result.reportsWritten !== result.discovered){console.warn('P1 shard completed with retryable snapshot omissions', JSON.stringify({discovered:result.discovered,reportsWritten:result.reportsWritten,loadFailures:result.loadFailures.map(({repositoryId,code})=>({repositoryId,code}))}))}"
 
-      - name: Run selected sandbox candidates serially
+      - name: Run selected sandbox candidates with bounded concurrency
         run: >-
           npm run validate:candidates --
           --reports validation/reports/structure

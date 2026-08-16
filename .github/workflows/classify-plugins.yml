@@ -115,6 +115,8 @@ jobs:
     if: needs.prepare.outputs.classification_changes == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       max-parallel: 8

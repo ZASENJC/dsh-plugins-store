@@ -238,7 +238,11 @@ jobs:
             for (const record of archive.records) {
               if (record.disposition !== 'include' || !record.classification || record.classification.confidence === 'low') continue
               const entry = sourceById.get(record.repositoryId)
-              if (!entry || entry.classificationSource !== 'source') {
+              // The archive intentionally retains historical records. A
+              // repository that is no longer in the current Topic discovery
+              // must not make the current catalog refresh fail.
+              if (!entry) continue
+              if (entry.classificationSource !== 'source') {
                 throw new Error(`Catalog is missing source classification for repository ${record.repositoryId}`)
               }
               if (record.classification.projectType !== 'unknown' && entry.projectType !== record.classification.projectType) {

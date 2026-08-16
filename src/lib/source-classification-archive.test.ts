@@ -71,7 +71,7 @@ const appClassification = {
 }
 
 describe('source classification archive', () => {
-  it('selects every active repository on the first run and only new or changed repositories later', () => {
+  it('selects every active repository on the first run and retries inconclusive repositories later', () => {
     expect(selectSourceClassificationTargets(discovery, null, false).map(({ repositoryId }) => repositoryId))
       .toEqual([1, 2, 3])
 
@@ -85,12 +85,12 @@ describe('source classification archive', () => {
         fullName: repository.fullName,
         sourcePushedAt: repository.pushedAt,
         sourceSha: null,
-        disposition: 'include' as const,
+        disposition: repository.repositoryId === 1 ? 'inconclusive' as const : 'include' as const,
       })).filter(({ repositoryId }) => repositoryId !== 3),
     }
 
     expect(selectSourceClassificationTargets(discovery, previous, false).map(({ repositoryId }) => repositoryId))
-      .toEqual([3])
+      .toEqual([1, 3])
     expect(selectSourceClassificationTargets(discovery, previous, true).map(({ repositoryId }) => repositoryId))
       .toEqual([1, 2, 3])
   })
@@ -120,7 +120,7 @@ describe('source classification archive', () => {
     })
 
     expect(buildValidationCatalog(discovery, archive).repositories.map(({ repositoryId }) => repositoryId))
-      .toEqual([1, 3])
+      .toEqual([])
 
     const changed = {
       ...discovery,
@@ -136,7 +136,27 @@ describe('source classification archive', () => {
       generatedAt: '2026-08-16T03:00:00Z',
     })
     expect(buildValidationCatalog(changed, staleArchive).repositories.map(({ repositoryId }) => repositoryId))
-      .toContain(2)
+      .not.toContain(2)
+  })
+
+  it('sends only current include records with source classification to the validation catalog', () => {
+    const archive = buildSourceClassificationArchive({
+      discovery,
+      previous: null,
+      results: [{
+        repositoryId: 1,
+        fullName: 'owner/plugin',
+        sourcePushedAt: discovery.repositories[0].pushedAt,
+        sourceSha: pluginClassification.sourceSha,
+        disposition: 'include',
+        classification: pluginClassification,
+      }],
+      mode: 'full',
+      generatedAt: '2026-08-16T03:30:00Z',
+    })
+
+    expect(buildValidationCatalog(discovery, archive).repositories.map(({ repositoryId }) => repositoryId))
+      .toEqual([1])
   })
 
   it('falls back to the discovery project type for low-confidence source classification', () => {
@@ -251,6 +271,18 @@ describe('source classification archive', () => {
             attribution: 'inconclusive',
           },
         },
+        {
+          ...base,
+          repositoryId: 5,
+          fullName: 'owner/postflight',
+          sourceSha: 'e'.repeat(40),
+          validation: {
+            ...base.validation,
+            sourceSha: 'e'.repeat(40),
+            errorCode: 'SANDBOX_POSTFLIGHT_FAILED',
+            attribution: 'policy',
+          },
+        },
       ],
     })
 
@@ -259,6 +291,7 @@ describe('source classification archive', () => {
       'retryable',
       'manual_review',
       'capability_pending',
+      'auto_failed',
     ])
   })
 
