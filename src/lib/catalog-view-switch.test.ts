@@ -46,4 +46,9 @@ describe('catalog page navigation', () => {
     expect(existsSync(fileURLToPath(new URL('../pages/verified.json.ts', import.meta.url)))).toBe(false)
     expect(existsSync(fileURLToPath(new URL('../pages/ranking.json.ts', import.meta.url)))).toBe(false)
   })
+
+  it('isolates independent page controllers from shared browser globals', () => {
+    expect(homepageSource).toMatch(/\{!isRankingPage && \(\s*<script is:inline>\s*\{/)
+    expect(homepageSource).toMatch(/\{isRankingPage && \(\s*<script is:inline>\s*\{/)
+  })
 })

@@ -383,6 +383,7 @@ const pageTitleKey = isVerifiedPage
 
   {!isRankingPage && (
     <script is:inline>
+    {
     const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
     const recommendationSeed = JSON.parse(document.getElementById('catalog-generated-at').textContent)
     const categories = JSON.parse(document.getElementById('category-data').textContent)
@@ -758,11 +759,13 @@ const pageTitleKey = isVerifiedPage
     })
     restoreFiltersFromUrl()
     resetAndRender()
+    }
     </script>
   )}
 
   {isRankingPage && (
     <script is:inline>
+    {
     const repositories = JSON.parse(document.getElementById('catalog-data').textContent)
     const categories = JSON.parse(document.getElementById('category-data').textContent)
     const projectTypes = JSON.parse(document.getElementById('type-data').textContent)
@@ -1083,6 +1086,7 @@ const pageTitleKey = isVerifiedPage
     document.addEventListener('dsh:locale-change', render)
     restoreFiltersFromUrl()
     resetAndRender()
+    }
     </script>
   )}
 </BaseLayout>
