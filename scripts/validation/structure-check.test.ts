@@ -116,14 +116,43 @@ describe('shadow structure check', () => {
     })
   })
 
-  it('does not queue a Topic-labeled static site without a recognized DSH contract', () => {
+  it('queues a project admitted by the case-insensitive dsh- Topic prefix', () => {
     const result = runStructureCheck({
       ...hostToolSnapshot,
       projectType: 'plugin',
-      topics: ['dsh-plugin', 'deepseek-harness'],
+      topics: ['DSH-Plugin', 'deepseek-harness'],
       files: {
         'robots.txt': 'User-agent: *\nAllow: /\n',
         'og-image.jpg': undefined,
+        'README.md': '# DSH plugin recommendation\n',
+      },
+    }, {
+      now: '2026-08-14T08:10:00Z',
+      dshVersion: '0.1.0-rc.6',
+      nodeVersion: '22.19.0',
+      validatorVersion: '1.0.0',
+      platform: 'linux-x64',
+    })
+
+    expect(result).toMatchObject({
+      decision: 'passed',
+      queueSandbox: true,
+      report: {
+        currentStatus: 'structure_passed',
+        sourceClassification: {
+          dshRelevance: 'recognized',
+          relevanceSignals: ['topic:dsh-plugin'],
+        },
+      },
+    })
+  })
+
+  it('does not queue a Topic without the required dsh- prefix', () => {
+    const result = runStructureCheck({
+      ...hostToolSnapshot,
+      projectType: 'plugin',
+      topics: ['dsh', 'dshplugin', 'not-dsh-plugin'],
+      files: {
         'README.md': '# DSH plugin recommendation\n',
       },
     }, {

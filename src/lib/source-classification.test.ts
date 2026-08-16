@@ -9,6 +9,10 @@ import {
 const sourceSha = 'a'.repeat(40)
 
 describe('source classification', () => {
+  it('uses the current Topic-aware classifier binding', () => {
+    expect(SOURCE_CLASSIFIER_VERSION).toBe('0.2.1')
+  })
+
   it('recognizes a DSH bundle from audited structure files', () => {
     const result = classifySource({
       sourceSha,
@@ -115,6 +119,41 @@ describe('source classification', () => {
       typeConfidence: 'low',
     })
     expect(result.categoryConfidence).not.toBe('high')
+  })
+
+  it.each([
+    'dsh-plugin',
+    'DSH-Theme',
+  ])('admits the case-insensitive dsh- Topic prefix without a source contract: %s', (topic) => {
+    const result = classifySource({
+      sourceSha,
+      topics: [topic],
+      files: {
+        'README.md': '# Community plugin\n',
+      },
+    })
+
+    expect(result).toMatchObject({
+      dshRelevance: 'recognized',
+      relevanceSignals: [`topic:${topic.toLowerCase()}`],
+      projectType: 'plugin',
+      typeConfidence: 'high',
+    })
+  })
+
+  it.each([
+    'dsh',
+    'dshplugin',
+    'not-dsh-plugin',
+  ])('requires dsh- at the beginning of a Topic: %s', (topic) => {
+    expect(classifySource({
+      sourceSha,
+      topics: [topic],
+      files: {},
+    })).toMatchObject({
+      dshRelevance: 'unrecognized',
+      relevanceSignals: [],
+    })
   })
 
   it('recognizes a safe custom DSH patch path from the fixed-SHA snapshot', () => {
