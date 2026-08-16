@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 import type { FailureAttribution, ValidationReport, ValidationStatus } from '../../src/lib/validation-report'
+import { SOURCE_CLASSIFIER_VERSION } from '../../src/lib/source-classification'
 import { parseBaseline, type BaselineTarget } from './baseline'
 import {
   assessPromotionGate,
@@ -314,11 +315,15 @@ describe('P4 promotion quality gate', () => {
     const reports = reportsForAll(1)
     reports[0].sourceClassification = {
       sourceSha: reports[0].repository.sourceSha,
-      classifierVersion: '0.1.0',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
+      dshRelevance: 'recognized',
+      relevanceSignals: ['package.json:dsh.bundle.patch', 'cordis.patch.yml:parsed'],
       projectType: 'plugin',
       category: 'model-mcp',
       categories: ['model-mcp'],
       matchedSignals: ['package.json:dsh.bundle.patch'],
+      typeConfidence: 'high',
+      categoryConfidence: 'high',
       confidence: 'high',
     }
 
