@@ -21,10 +21,18 @@
 ## 一键安装
 
 ```sh
-dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store
+dsh plugin --profile web add npm:dsh-plugins-store
 ```
 
 重启 DSH Web 后刷新浏览器。
+
+npm 与 pnpm 使用同一个 npm Registry，无需分别发布；DSH 会通过当前 profile 的包管理环境完成安装。
+
+从 GitHub 源码安装：
+
+```sh
+dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugins-store
+```
 
 ## 本地构建与安装
 
@@ -32,14 +40,14 @@ dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-
 
 ```sh
 npm run build:plugin
-npm pack ./packages/dsh-plugin-store
-dsh plugin --profile web add ./dsh-plugin-store-0.1.0.tgz
+npm pack ./packages/dsh-plugins-store
+dsh plugin --profile web add ./dsh-plugins-store-0.1.0.tgz
 ```
 
 卸载：
 
 ```sh
-dsh plugin --profile web remove dsh-plugin-store
+dsh plugin --profile web remove dsh-plugins-store
 ```
 
 ## 许可证

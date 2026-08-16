@@ -600,7 +600,7 @@ function terminalReplyContext() {
         'Do not call any tool, retry, investigate, or attempt a fallback.',
       ].join(' '),
     }],
-    source: { kind: 'plugin', plugin: 'dsh-plugin-store' },
+    source: { kind: 'plugin', plugin: 'dsh-plugins-store' },
   }
 }
 

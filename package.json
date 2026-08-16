@@ -1,5 +1,5 @@
 {
-  "name": "dsh-plugin-store",
+  "name": "dsh-plugins-store",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "build:plugin": "node packages/dsh-plugin-store/build.mjs",
-    "pack:plugin": "npm run build:plugin && npm pack ./packages/dsh-plugin-store",
+    "build:plugin": "node packages/dsh-plugins-store/build.mjs",
+    "pack:plugin": "npm run build:plugin && npm pack ./packages/dsh-plugins-store",
     "preview": "astro preview",
     "sync": "tsx scripts/sync-github.ts",
     "validate:shadow": "tsx scripts/validation/shadow-cli.ts",

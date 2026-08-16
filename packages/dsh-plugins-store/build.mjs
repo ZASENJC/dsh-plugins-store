@@ -1,7 +1,7 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { build } from 'esbuild'
 
-const pluginId = 'dsh-plugin-store'
+const pluginId = 'dsh-plugins-store'
 const root = new URL('./', import.meta.url)
 const outDir = new URL('./lib/', root)
 

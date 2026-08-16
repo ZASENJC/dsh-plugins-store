@@ -43,7 +43,7 @@ const classificationArchivePath = resolve(
 function getHeaders(accept = 'application/vnd.github+json'): HeadersInit {
   const headers: Record<string, string> = {
     Accept: accept,
-    'User-Agent': 'dsh-plugin-store-sync',
+    'User-Agent': 'dsh-plugins-store-sync',
     'X-GitHub-Api-Version': '2022-11-28',
   }
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN

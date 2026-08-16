@@ -407,7 +407,7 @@ describe('conversation store search', () => {
         type: 'text',
         text: expect.stringContaining('Return one final user-visible response now'),
       })],
-      source: expect.objectContaining({ kind: 'plugin', plugin: 'dsh-plugin-store' }),
+      source: expect.objectContaining({ kind: 'plugin', plugin: 'dsh-plugins-store' }),
     }))
     expect(install).not.toHaveBeenCalled()
     expect(listInstalled).not.toHaveBeenCalled()

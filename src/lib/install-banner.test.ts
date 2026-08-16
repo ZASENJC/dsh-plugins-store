@@ -15,9 +15,9 @@ describe('homepage store plugin install banner', () => {
     expect(homepageSource).toContain('id="copy-store-install"')
     expect(homepageSource).toContain('aria-live="polite"')
     expect(homepageSource).toContain('一键安装')
-    expect(homepageSource).toContain('packages/dsh-plugin-store#一键安装')
+    expect(homepageSource).toContain('packages/dsh-plugins-store#一键安装')
     expect(homepageSource).toContain(
-      'dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store',
+      'dsh plugin --profile web add npm:dsh-plugins-store',
     )
   })
 

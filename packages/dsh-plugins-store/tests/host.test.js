@@ -17,7 +17,7 @@ describe('DSH host command', () => {
       on,
     })
 
-    expect(name).toBe('dsh-plugin-store')
+    expect(name).toBe('dsh-plugins-store')
     expect(inject).toEqual(['commands', 'webServer', 'tools', 'skills'])
     expect(registerCommand).toHaveBeenCalledOnce()
     expect(registerTool.mock.calls.map(([tool]) => tool.name)).toEqual([
@@ -36,17 +36,17 @@ describe('DSH host command', () => {
     expect(on).toHaveBeenCalledWith('tools/pre-execute', expect.any(Function))
     expect(registerRoute).toHaveBeenCalledWith(expect.objectContaining({
       kind: 'exact',
-      path: '/api/dsh-plugin-store/install',
+      path: '/api/dsh-plugins-store/install',
       handler: expect.any(Function),
     }))
     expect(registerRoute).toHaveBeenCalledWith(expect.objectContaining({
       kind: 'exact',
-      path: '/api/dsh-plugin-store/plugins',
+      path: '/api/dsh-plugins-store/plugins',
       handler: expect.any(Function),
     }))
     expect(registerRoute).toHaveBeenCalledWith(expect.objectContaining({
       kind: 'exact',
-      path: '/api/dsh-plugin-store/remove',
+      path: '/api/dsh-plugins-store/remove',
       handler: expect.any(Function),
     }))
     expect(registerRoute).toHaveBeenCalledTimes(3)

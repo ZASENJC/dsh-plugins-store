@@ -19,7 +19,7 @@ interface GitHubCommitResponse {
 function getHeaders(token?: string): HeadersInit {
   return {
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'dsh-plugin-store-validator',
+    'User-Agent': 'dsh-plugins-store-validator',
     'X-GitHub-Api-Version': '2022-11-28',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }

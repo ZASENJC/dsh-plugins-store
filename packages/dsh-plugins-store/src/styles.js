@@ -679,7 +679,7 @@ body > :has(> .dps-risk-modal) {
 `
 
 export function installStyles() {
-  const id = 'dsh-plugin-store-styles'
+  const id = 'dsh-plugins-store-styles'
   const existing = document.getElementById(id)
   if (existing !== null) return () => {}
   const element = document.createElement('style')

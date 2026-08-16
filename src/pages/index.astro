@@ -51,8 +51,8 @@ const validationFilterStatuses = [
   ...VALIDATION_STATUS_DEFINITIONS.filter(({ id }) => id !== 'verified'),
 ]
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
-const storeInstallCommand = 'dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store'
-const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugin-store#一键安装'
+const storeInstallCommand = 'dsh plugin --profile web add npm:dsh-plugins-store'
+const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugins-store#一键安装'
 const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched)
 const pageTitle = isVerifiedPage
   ? '已验证插件 · DSH 插件市场'

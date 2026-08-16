@@ -119,7 +119,7 @@ export async function downloadPinnedArchive({
         redirect: 'follow',
         signal: controller.signal,
         headers: {
-          'User-Agent': 'dsh-plugin-store-validator',
+          'User-Agent': 'dsh-plugins-store-validator',
         },
       })
       if (!response.ok) throw new Error(`GitHub archive request failed: ${response.status}`)

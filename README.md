@@ -27,7 +27,7 @@
   </a>
 </p>
 
-DSH 插件市场面向 DeepSeek Harness 生态，自动收录同时带有 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 与 `deepseek-harness` Topic 的公开项目，提供目录检索、排行榜与 [公开 API](https://api.dshmk.com/)。配套的 [DSH Web 插件](packages/dsh-plugin-store/README.md)可独立安装并接入 `/store` 和 Agent 会话；验证结果来自固定源码 SHA 的结构检查与 Linux 隔离沙箱。
+DSH 插件市场面向 DeepSeek Harness 生态，自动收录同时带有 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 与 `deepseek-harness` Topic 的公开项目，提供目录检索、排行榜与 [公开 API](https://api.dshmk.com/)。配套的 [DSH Web 插件](packages/dsh-plugins-store/README.md)可独立安装并接入 `/store` 和 Agent 会话；验证结果来自固定源码 SHA 的结构检查与 Linux 隔离沙箱。
 
 [访问 DSH 插件市场（DeepSeek Harness 插件目录）](https://dshmk.com/)
 
@@ -47,7 +47,7 @@ DSH 插件市场面向 DeepSeek Harness 生态，自动收录同时带有 [`dsh-
 dsh plugin --profile web add npm:dsh-plugins-store
 ```
 
-安装完成后重启 DSH Web 并刷新浏览器。源码安装、本地构建、卸载、市场工具及 `search-dsh-store` skill 的完整说明见 [`packages/dsh-plugin-store/README.md`](packages/dsh-plugin-store/README.md)。
+安装完成后重启 DSH Web 并刷新浏览器。源码安装、本地构建、卸载、市场工具及 `search-dsh-store` skill 的完整说明见 [`packages/dsh-plugins-store/README.md`](packages/dsh-plugins-store/README.md)。
 
 ## 项目截图
 
@@ -177,7 +177,7 @@ npm run dev
 
 ```bash
 npm run build:plugin
-npm pack ./packages/dsh-plugin-store
+npm pack ./packages/dsh-plugins-store
 ```
 
 ### 同步目录

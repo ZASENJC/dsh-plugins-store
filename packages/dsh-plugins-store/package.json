@@ -1,7 +1,20 @@
 {
-  "name": "dsh-plugin-store",
+  "name": "dsh-plugins-store",
   "version": "0.1.0",
   "description": "Native DSH browser integration for the DSH Plugin Store",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "plugin-store",
+    "marketplace",
+    "web-ui"
+  ],
+  "homepage": "https://dshmk.com/",
+  "bugs": {
+    "url": "https://github.com/ZASENJC/dsh-plugins-store/issues"
+  },
+  "author": "ZASENJC",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
@@ -41,10 +54,16 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ZASENJC/dsh-plugins-store.git",
-    "directory": "packages/dsh-plugin-store"
+    "directory": "packages/dsh-plugins-store"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-native-command": "^0.1.0-rc.6"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "license": "MIT"
 }

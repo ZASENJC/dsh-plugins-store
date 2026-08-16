@@ -160,7 +160,7 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
     setPhase('installing')
     setMessage('')
     try {
-      const response = await fetch('/api/dsh-plugin-store/install', {
+      const response = await fetch('/api/dsh-plugins-store/install', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -315,7 +315,7 @@ function RemovePluginModal({ target, onClose, onRemoved, t }) {
     setPhase('removing')
     setMessage('')
     try {
-      const response = await fetch('/api/dsh-plugin-store/remove', {
+      const response = await fetch('/api/dsh-plugins-store/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: target.installedPlugin.name }),
@@ -416,7 +416,7 @@ export function StoreView({
   const refreshInstalled = async () => {
     setInstalledState((current) => ({ ...current, status: 'loading' }))
     try {
-      const response = await fetch('/api/dsh-plugin-store/plugins', {
+      const response = await fetch('/api/dsh-plugins-store/plugins', {
         headers: { Accept: 'application/json' },
         cache: 'no-store',
       })

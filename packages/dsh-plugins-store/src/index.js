@@ -4,12 +4,12 @@ import { createInventoryHandler, createRemoveHandler, listInstalledPlugins, remo
 import { loadBundledStoreSkill } from './store-skill.js'
 import { createStoreApprovalGate, createStoreTools } from './store-search.js'
 
-export const name = 'dsh-plugin-store'
+export const name = 'dsh-plugins-store'
 export const inject = ['commands', 'webServer', 'tools', 'skills']
 
-const INSTALL_PATH = '/api/dsh-plugin-store/install'
-const INVENTORY_PATH = '/api/dsh-plugin-store/plugins'
-const REMOVE_PATH = '/api/dsh-plugin-store/remove'
+const INSTALL_PATH = '/api/dsh-plugins-store/install'
+const INVENTORY_PATH = '/api/dsh-plugins-store/plugins'
+const REMOVE_PATH = '/api/dsh-plugins-store/remove'
 
 function runnerOptions(signal = new AbortController().signal) {
   return {

@@ -18,7 +18,7 @@ describe('installable DSH plugin package', () => {
 
     const manifest = JSON.parse(readFileSync(packagePath, 'utf8'))
     expect(manifest).toMatchObject({
-      name: 'dsh-plugin-store',
+      name: 'dsh-plugins-store',
       main: './lib/index.js',
       exports: {
         '.': './lib/index.js',
@@ -28,6 +28,7 @@ describe('installable DSH plugin package', () => {
         bundle: { patch: './cordis.patch.yml' },
         client: { platform: 'web' },
       },
+      publishConfig: { access: 'public' },
     })
     expect(manifest.dsh.client.inject).toEqual(expect.arrayContaining([
       '@deepseek-ai/dsh-client-runtime',
@@ -78,7 +79,7 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain('buildInstallCommand')
     expect(source).toContain('buildCatalogDetailUrl')
     expect(source).toContain('getCatalogFilterOptions')
-    expect(source).toContain("fetch('/api/dsh-plugin-store/install'")
+    expect(source).toContain("fetch('/api/dsh-plugins-store/install'")
     expect(source).toContain("t('store.riskAcknowledge')")
     expect(source).toContain('repository.validation')
     expect(source).toContain("t('store.analyzeWithAgent')")
@@ -92,8 +93,8 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain("aria-label={t('store.category')}")
     expect(source).toContain("t('store.verifiedOnly')")
     expect(source).toContain("t('store.installedOnly')")
-    expect(source).toContain("fetch('/api/dsh-plugin-store/plugins'")
-    expect(source).toContain("fetch('/api/dsh-plugin-store/remove'")
+    expect(source).toContain("fetch('/api/dsh-plugins-store/plugins'")
+    expect(source).toContain("fetch('/api/dsh-plugins-store/remove'")
     expect(source).toContain('updateAvailable')
     expect(source).toContain('RemovePluginModal')
     expect(source).not.toContain('https://dshmk.com/plugins/')
