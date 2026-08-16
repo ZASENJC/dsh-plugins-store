@@ -182,6 +182,35 @@ describe('validation ladder', () => {
     })
   })
 
+  it('expires every historical conclusion after a source change, even before current source classification returns', () => {
+    const record = {
+      repositoryId: 101,
+      sourceSha: 'b'.repeat(40),
+      sourcePushedAt: baseInput.repositoryPushedAt,
+      updatedAt: '2026-08-14T09:00:00Z',
+      ...CURRENT_VALIDATION_TARGET,
+      disposition: 'auto_failed' as const,
+      structure: { status: 'passed' as const },
+      sandbox: { status: 'failed' as const, reason: 'PLUGIN_SMOKE_FAILED' },
+    }
+
+    expect(buildValidationStatus({
+      ...baseInput,
+      projectType: 'unknown',
+      repositoryPushedAt: '2026-08-14T10:00:00Z',
+      record,
+    })).toMatchObject({
+      overall: 'expired',
+      label: '需重新验证',
+      verified: false,
+      reason: '仓库源码已更新',
+      stages: {
+        structure: { status: 'passed' },
+        sandbox: { status: 'failed', reason: 'PLUGIN_SMOKE_FAILED' },
+      },
+    })
+  })
+
   it.each([
     ['dshVersion', '0.1.0-rc.7'],
     ['platform', 'linux-arm64'],

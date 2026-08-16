@@ -267,7 +267,12 @@ export function buildValidationStatus({
   let level: ValidationStatus['level'] = 1
   let stages = defaultStages
   let reason: string | null = null
-  if (!identified) {
+  if (record && record.sourcePushedAt !== repositoryPushedAt) {
+    stages = { ...defaultStages, structure: record.structure, sandbox: record.sandbox }
+    overall = 'expired'
+    reason = buildExpiryReason(record, repositoryPushedAt)
+    level = record.sandbox.status === 'passed' ? 4 : record.structure.status === 'passed' ? 3 : 2
+  } else if (!identified) {
     overall = 'unrecognized'
   } else if (!eligible) {
     overall = 'not-applicable'
@@ -278,7 +283,6 @@ export function buildValidationStatus({
     reason = getEvidence(record, 'reason')
     level = record.structure.status === 'passed' ? 3 : 2
     if (record.sandbox.status === 'passed') level = 4
-    if (overall === 'verified' && record.sourcePushedAt !== repositoryPushedAt) overall = 'expired'
     if (overall === 'verified' && (
       record.dshVersion !== CURRENT_VALIDATION_TARGET.dshVersion
       || record.platform !== CURRENT_VALIDATION_TARGET.platform

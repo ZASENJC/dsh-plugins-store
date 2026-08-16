@@ -195,6 +195,7 @@ jobs:
           const read = (path) => JSON.parse(fs.readFileSync(path, 'utf8'))
           const source = read('src/data/catalog.json')
           const built = read('dist/catalog.json')
+          const discovery = read('validation/discovery.json')
           const projection = (catalog) => ({
             repositoryIds: catalog.repositories.map(({ repositoryId }) => repositoryId),
             verified: catalog.stats.verified,
@@ -216,6 +217,18 @@ jobs:
           if (fs.existsSync(archivePath)) {
             const archive = read(archivePath)
             const sourceById = new Map(source.repositories.map((entry) => [entry.repositoryId, entry]))
+            const archiveById = new Map(archive.records.map((record) => [record.repositoryId, record]))
+            const expectedVisibleIds = new Set(discovery.repositories
+              .filter((repository) => {
+                const record = archiveById.get(repository.id)
+                return record && record.disposition !== 'exclude'
+              })
+              .map((repository) => repository.id))
+            const actualVisibleIds = new Set(source.repositories.map((entry) => entry.repositoryId))
+            if (expectedVisibleIds.size !== actualVisibleIds.size
+              || [...expectedVisibleIds].some((repositoryId) => !actualVisibleIds.has(repositoryId))) {
+              throw new Error(`Catalog visibility does not match source archive: expected ${expectedVisibleIds.size}, got ${actualVisibleIds.size}`)
+            }
             const excludedIds = archive.records
               .filter((record) => record.disposition === 'exclude')
               .map((record) => record.repositoryId)
@@ -242,6 +255,12 @@ jobs:
               // repository that is no longer in the current Topic discovery
               // must not make the current catalog refresh fail.
               if (!entry) continue
+              if (entry.pushedAt !== record.sourcePushedAt) {
+                if (record.validation && entry.validation.overall !== 'expired') {
+                  throw new Error(`Changed repository ${record.repositoryId} did not expire archived validation`)
+                }
+                continue
+              }
               if (entry.classificationSource !== 'source') {
                 throw new Error(`Catalog is missing source classification for repository ${record.repositoryId}`)
               }

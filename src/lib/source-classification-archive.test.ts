@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildSourceClassificationArchive,
   buildValidationCatalog,
+  filterCatalogRepositoriesByArchive,
   mergeSourceValidationHistory,
   parseSourceClassificationArchive,
   selectSourceClassificationTargets,
@@ -72,6 +73,39 @@ const appClassification = {
 }
 
 describe('source classification archive', () => {
+  it('uses stable repository IDs for catalog visibility while source changes await reclassification', () => {
+    const archive = parseSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T01:00:00Z',
+      mode: 'full',
+      classifierVersion: '0.1.0',
+      records: [{
+        repositoryId: 1,
+        fullName: 'owner/plugin',
+        sourcePushedAt: '2026-08-15T00:00:00Z',
+        sourceSha: 'a'.repeat(40),
+        disposition: 'include',
+      }, {
+        repositoryId: 2,
+        fullName: 'owner/excluded',
+        sourcePushedAt: '2026-08-15T00:00:00Z',
+        sourceSha: 'b'.repeat(40),
+        disposition: 'exclude',
+      }, {
+        repositoryId: 3,
+        fullName: 'owner/new',
+        sourcePushedAt: '2026-08-15T00:00:00Z',
+        sourceSha: null,
+        disposition: 'inconclusive',
+      }],
+    })
+    const repositories = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]
+
+    expect(filterCatalogRepositoriesByArchive(repositories, archive).map(({ id }) => id))
+      .toEqual([1, 3])
+    expect(filterCatalogRepositoriesByArchive(repositories, null)).toEqual(repositories)
+  })
+
   it('selects every active repository on the first run and retries inconclusive repositories later', () => {
     expect(selectSourceClassificationTargets(discovery, null, false).map(({ repositoryId }) => repositoryId))
       .toEqual([1, 2, 3])

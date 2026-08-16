@@ -11,6 +11,7 @@ import { classifyRepository } from '../src/lib/classification'
 import { extractVerifiedRepositoryNames } from '../src/lib/github-content'
 import { extractInstallReference, type InstallReference } from '../src/lib/install-reference'
 import {
+  filterCatalogRepositoriesByArchive,
   parseSourceClassificationArchive,
   validationRecordsFromArchive,
   type SourceClassificationArchive,
@@ -147,12 +148,7 @@ async function readClassificationArchive(): Promise<SourceClassificationArchive 
 async function sync() {
   const { repositories, allRepositories, reportedByGitHub } = await fetchRepositories()
   const classificationArchive = await readClassificationArchive()
-  const archiveValidationRecords = validationRecordsFromArchive(classificationArchive)
-  const validationRecords = new Map(archiveValidationRecords)
-  for (const [repositoryId, record] of archiveValidationRecords) {
-    const repository = allRepositories.find(({ id }) => id === repositoryId)
-    if (!repository || record.sourcePushedAt !== repository.pushed_at) validationRecords.delete(repositoryId)
-  }
+  const validationRecords = validationRecordsFromArchive(classificationArchive)
   const verifyResponse = await fetchRenderedReadme(VERIFY_REPOSITORY)
   if (!verifyResponse.ok) {
     throw new Error(`验证目录请求失败：Verify ${verifyResponse.status}`)
@@ -160,9 +156,7 @@ async function sync() {
   const verifiedRepositoryNames = extractVerifiedRepositoryNames(await verifyResponse.text())
   const catalogRepositories = classificationArchive === null
     ? repositories
-    : allRepositories.filter((repository) => classificationArchive.records.some((record) => (
-      record.repositoryId === repository.id && record.sourcePushedAt === repository.pushed_at
-    )))
+    : filterCatalogRepositoriesByArchive(allRepositories, classificationArchive)
   const installReferences = await fetchInstallReferences(catalogRepositories)
   const generatedAt = new Date().toISOString()
   const catalog = buildCatalog(

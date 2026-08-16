@@ -532,6 +532,18 @@ export function validationRecordsFromArchive(
   return records
 }
 
+export function filterCatalogRepositoriesByArchive<T extends { id: number }>(
+  repositories: readonly T[],
+  archive: SourceClassificationArchive | null,
+): T[] {
+  if (archive === null) return [...repositories]
+  const dispositions = new Map(archive.records.map((record) => [record.repositoryId, record.disposition]))
+  return repositories.filter((repository) => {
+    const disposition = dispositions.get(repository.id)
+    return disposition !== undefined && disposition !== 'exclude'
+  })
+}
+
 export function currentSourceClassification(
   repository: Pick<SourceDiscoveryRepository, 'repositoryId' | 'pushedAt'>,
   archive: SourceClassificationArchive | null,

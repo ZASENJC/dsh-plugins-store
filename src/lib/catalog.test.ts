@@ -376,6 +376,49 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
     })
   })
 
+  it('keeps a changed archived plugin visible with expired SHA-bound validation', () => {
+    const previousPushedAt = '2026-08-13T20:00:00Z'
+    const archive: SourceClassificationArchive = {
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T09:00:00Z',
+      mode: 'full',
+      classifierVersion: '0.1.0',
+      records: [{
+        repositoryId: githubRepository.id,
+        fullName: githubRepository.full_name,
+        sourcePushedAt: previousPushedAt,
+        sourceSha: 'a'.repeat(40),
+        disposition: 'include',
+      }],
+    }
+    const catalog = buildCatalog(
+      [githubRepository],
+      '2026-08-16T09:05:00Z',
+      1,
+      new Set(),
+      new Map([[githubRepository.id, {
+        repositoryId: githubRepository.id,
+        sourceSha: 'a'.repeat(40),
+        sourcePushedAt: previousPushedAt,
+        updatedAt: '2026-08-16T08:00:00Z',
+        dshVersion: '0.1.0-rc.6',
+        platform: 'linux-x64',
+        validatorVersion: '0.1.2',
+        structure: { status: 'passed' as const },
+        sandbox: { status: 'passed' as const },
+      }]]),
+      new Map(),
+      archive,
+    )
+
+    expect(catalog.repositories).toHaveLength(1)
+    expect(catalog.repositories[0]).toMatchObject({
+      repositoryId: githubRepository.id,
+      verified: false,
+      validation: { overall: 'expired', reason: '仓库源码已更新' },
+    })
+  })
+
   it('uses the current classification archive to exclude unrelated repositories and expose source signals', () => {
     const archive: SourceClassificationArchive = {
       schemaVersion: 1,
