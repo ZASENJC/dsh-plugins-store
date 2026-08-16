@@ -19,12 +19,30 @@ describe('README install reference extraction', () => {
     expect(canExtractInstallReference(repository, {
       sourceSha: 'a'.repeat(40),
       classifierVersion: '0.1.0',
+      dshRelevance: 'recognized',
+      relevanceSignals: ['package.json:dsh.bundle.patch'],
       projectType: 'plugin',
       category: 'agent-session',
       categories: ['agent-session'],
       matchedSignals: ['package.json:dsh.bundle.patch'],
+      typeConfidence: 'high',
+      categoryConfidence: 'high',
       confidence: 'high',
     })).toBe(true)
+
+    expect(canExtractInstallReference(repository, {
+      sourceSha: 'b'.repeat(40),
+      classifierVersion: '0.1.0',
+      dshRelevance: 'unrecognized',
+      relevanceSignals: [],
+      projectType: 'plugin',
+      category: 'agent-session',
+      categories: ['agent-session'],
+      matchedSignals: ['README.md'],
+      typeConfidence: 'high',
+      categoryConfidence: 'high',
+      confidence: 'high',
+    })).toBe(false)
   })
 
   it('recognizes an explicit DSH GitHub install command in an install section', () => {

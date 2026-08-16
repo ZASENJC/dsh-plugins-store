@@ -378,7 +378,7 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
     })
   })
 
-  it('keeps a changed archived plugin visible with expired SHA-bound validation', () => {
+  it('hides a changed plugin until its DSH relevance is reclassified at the new source', () => {
     const previousPushedAt = '2026-08-13T20:00:00Z'
     const archive: SourceClassificationArchive = {
       schemaVersion: 1,
@@ -413,12 +413,7 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       archive,
     )
 
-    expect(catalog.repositories).toHaveLength(1)
-    expect(catalog.repositories[0]).toMatchObject({
-      repositoryId: githubRepository.id,
-      verified: false,
-      validation: { overall: 'expired', reason: '仓库源码已更新' },
-    })
+    expect(catalog.repositories).toEqual([])
   })
 
   it('uses the current classification archive to exclude unrelated repositories and expose source signals', () => {

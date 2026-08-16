@@ -58,6 +58,8 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).toContain('git show "origin/$VALIDATION_BRANCH:src/data/source-classification.json"')
     expect(syncWorkflow).toContain('archive_is_newer_or_equal')
     expect(syncWorkflow).not.toContain('rm -f src/data/source-classification.json')
+    expect(syncWorkflow).not.toContain('topic full-catalog fallback')
+    expect(syncWorkflow).toContain("record.disposition === 'include'")
     expect(syncWorkflow).not.toContain('Restore last successful validation feed')
     expect(syncWorkflow).not.toContain('validation-restore')
     expect(syncWorkflow).not.toContain('npm run validate:artifact')

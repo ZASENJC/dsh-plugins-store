@@ -43,9 +43,14 @@ describe('archive-backed GitHub snapshot', () => {
     const root = await mkdtemp(join(tmpdir(), 'dsh-archive-snapshot-'))
     temporaryRoots.push(root)
     await mkdir(join(root, 'lib'), { recursive: true })
-    await writeFile(join(root, 'package.json'), '{"main":"./lib/index.js"}')
+    await mkdir(join(root, 'config'), { recursive: true })
+    await writeFile(join(root, 'package.json'), JSON.stringify({
+      main: './lib/index.js',
+      dsh: { bundle: { patch: './config/custom.cordis.yml' } },
+    }))
     await writeFile(join(root, '.npmrc'), '@private:registry=https://npm.pkg.github.com/\n')
     await writeFile(join(root, 'lib/index.js'), 'export default {}')
+    await writeFile(join(root, 'config/custom.cordis.yml'), '- insert: []\n')
 
     const snapshot = await loadExtractedSnapshot(repository, {
       sourceSha: 'b'.repeat(40),
@@ -64,8 +69,9 @@ describe('archive-backed GitHub snapshot', () => {
       archived: false,
       sizeKb: 120,
     })
-    expect(snapshot.files['package.json']).toBe('{"main":"./lib/index.js"}')
+    expect(snapshot.files['package.json']).toContain('custom.cordis.yml')
     expect(snapshot.files['.npmrc']).toBe('@private:registry=https://npm.pkg.github.com/\n')
     expect(snapshot.files['lib/index.js']).toBe('')
+    expect(snapshot.files['config/custom.cordis.yml']).toBe('- insert: []\n')
   })
 })

@@ -73,7 +73,7 @@ const appClassification = {
 }
 
 describe('source classification archive', () => {
-  it('uses stable repository IDs for catalog visibility while source changes await reclassification', () => {
+  it('publishes only current include records and fails closed without an archive', () => {
     const archive = parseSourceClassificationArchive({
       schemaVersion: 1,
       generatedAt: '2026-08-16T01:00:00Z',
@@ -99,11 +99,16 @@ describe('source classification archive', () => {
         disposition: 'inconclusive',
       }],
     })
-    const repositories = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]
+    const repositories = [
+      { id: 1, pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 2, pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 3, pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 4, pushed_at: '2026-08-15T00:00:00Z' },
+    ]
 
     expect(filterCatalogRepositoriesByArchive(repositories, archive).map(({ id }) => id))
-      .toEqual([1, 3])
-    expect(filterCatalogRepositoriesByArchive(repositories, null)).toEqual(repositories)
+      .toEqual([1])
+    expect(filterCatalogRepositoriesByArchive(repositories, null)).toEqual([])
   })
 
   it('selects every active repository on the first run and retries inconclusive repositories later', () => {
