@@ -130,8 +130,14 @@ const verifiedPlugins = catalog.repositories.filter((repository) =>
 | `repositories[].projectType` | 项目类型，如 `plugin`、`skill`、`collection` 或 `unknown` |
 | `repositories[].category` / `categories` | 主分类及全部匹配分类 |
 | `repositories[].validation` | 当前验证状态、绑定的源码 SHA、DSH 版本、平台及各阶段证据 |
+| `repositories[].install` | README 安装证据以及解析后的候选；没有可靠安装证据时省略 |
+| `repositories[].install.candidate.action` | 结构化安装动作，当前固定为 `add` |
+| `repositories[].install.candidate.specifier` | 与 profile 无关的机器安装标识；已验证 GitHub 候选会固定到验证 SHA |
+| `repositories[].install.candidate.executable` | 当前目录策略是否允许进入一键安装确认流程，不代表安全保证 |
 
 判断当前验证状态时，只应使用 `repositories[].validation.overall === "verified"`。`status.verification`、历史验证链接或曾经通过的记录不能替代当前结果。
+
+安装消费者应读取 `action` 与 `specifier`，再由本地 DSH 环境选择 profile 并执行结构化参数。例如 DSH Desktop 应使用 `desktopProfiles.current` 作为 profile 真值，并把 `['add', candidate.specifier]` 交给 `desktopPnpm.runPlugin()`。`command` 与 `args` 为普通 DSH 展示和旧消费者保留，其中可能包含 `web` profile；不要把 `command` 当作 shell 文本直接执行。确认、来源校验、超时、取消和执行结果均由消费者负责，目录 API 不接收或推断用户的本地 profile。
 
 ## 自动化架构
 

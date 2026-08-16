@@ -86,6 +86,8 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
       candidate: {
         source: 'github',
         target: 'PlutoKeating/dsh-lark-bot',
+        action: 'add',
+        specifier: 'github:PlutoKeating/dsh-lark-bot',
         executable: true,
       },
     })

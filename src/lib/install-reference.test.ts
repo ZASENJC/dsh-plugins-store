@@ -41,6 +41,8 @@ dsh plugin --profile web add github:owner/plugin
       candidate: {
         source: 'github',
         target: 'owner/plugin',
+        action: 'add',
+        specifier: 'github:owner/plugin',
         command: 'dsh plugin --profile web add github:owner/plugin',
         args: ['plugin', '--profile', 'web', 'add', 'github:owner/plugin'],
         executable: true,
@@ -63,6 +65,8 @@ npm install dsh-example
       candidate: {
         source: 'npm',
         target: 'dsh-example',
+        action: 'add',
+        specifier: 'npm:dsh-example',
         command: 'npm install dsh-example',
         executable: false,
         evidence: { pattern: 'package-manager-add' },
@@ -159,6 +163,8 @@ dsh plugin --profile web add github:owner/plugin
     })).toMatchObject({
       status: 'recognized',
       candidate: {
+        action: 'add',
+        specifier: `github:owner/plugin#${'a'.repeat(40)}`,
         command: `dsh plugin --profile web add github:owner/plugin#${'a'.repeat(40)}`,
         args: ['plugin', '--profile', 'web', 'add', `github:owner/plugin#${'a'.repeat(40)}`],
         executable: true,
@@ -206,6 +212,8 @@ npm install dsh-example
       candidate: {
         source: 'npm',
         target: 'dsh-example',
+        action: 'add',
+        specifier: 'npm:dsh-example',
         args: ['plugin', '--profile', 'web', 'add', 'npm:dsh-example'],
         executable: true,
       },

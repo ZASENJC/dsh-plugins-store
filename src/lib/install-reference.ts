@@ -15,6 +15,8 @@ export interface InstallEvidence {
 export interface InstallCandidate {
   source: InstallSource
   target: string
+  action: 'add'
+  specifier: string
   command: string
   args: string[]
   executable: boolean
@@ -129,6 +131,8 @@ function parseDshCommand(command: string, heading: string | null): InstallCandid
   const parsed = parseSpecifier(specifier)
   return {
     ...parsed,
+    action: 'add',
+    specifier: parsed.source === 'npm' ? `npm:${parsed.target}` : specifier,
     command: match[1] === undefined
       ? `dsh plugin --profile web add ${specifier}`
       : command,
@@ -156,6 +160,8 @@ function parsePackageManagerCommand(command: string, heading: string | null): In
   return {
     source: 'npm',
     target: parsed.target,
+    action: 'add',
+    specifier: `npm:${parsed.target}`,
     command,
     args: [],
     executable: false,
@@ -211,11 +217,13 @@ export function resolveCatalogInstallReference(
       candidate.executable = false
     } else if (verified) {
       const pinnedSpecifier = `github:${repository.fullName}#${sourceSha.toLowerCase()}`
+      candidate.specifier = pinnedSpecifier
       candidate.command = `dsh plugin --profile web add ${pinnedSpecifier}`
       candidate.args = ['plugin', '--profile', 'web', 'add', pinnedSpecifier]
     }
   } else if (candidate.source === 'npm') {
     if (!securityReview && candidate.evidence.pattern === 'package-manager-add') {
+      candidate.specifier = `npm:${candidate.target}`
       candidate.args = ['plugin', '--profile', 'web', 'add', `npm:${candidate.target}`]
       candidate.executable = true
     } else if (securityReview) {
