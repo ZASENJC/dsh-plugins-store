@@ -8,7 +8,6 @@ import { sortCatalogEntries, type Catalog } from '../lib/catalog'
 import { catalogData } from '../lib/catalog-data'
 import { CATEGORIES, PROJECT_TYPES } from '../lib/classification'
 import { buildHomepageStructuredData } from '../lib/seo'
-import { VALIDATION_STATUS_DEFINITIONS } from '../lib/validation'
 
 const catalog = catalogData as Catalog
 const initialRepositories = sortCatalogEntries(catalog.repositories, 'recommended', catalog.generatedAt).slice(0, 24)
@@ -23,7 +22,6 @@ const generatedDate = new Intl.DateTimeFormat('zh-CN', {
 const serializedCatalog = JSON.stringify(catalog.repositories).replace(/</g, '\\u003c')
 const serializedCategories = JSON.stringify(CATEGORIES).replace(/</g, '\\u003c')
 const serializedTypes = JSON.stringify(PROJECT_TYPES).replace(/</g, '\\u003c')
-const serializedValidationStatuses = JSON.stringify(VALIDATION_STATUS_DEFINITIONS).replace(/</g, '\\u003c')
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const storeInstallCommand = 'dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-plugin-store'
 const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugin-store#一键安装'
@@ -113,31 +111,34 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
           />
         </label>
 
-        <label class="select-field">
-          <span class="select-value" id="validation-filter-value">全部验证状态</span>
-          <select id="validation-filter" aria-label="验证状态" data-i18n-aria-label="home.validation">
-            <option value="all" data-i18n="home.allValidation">全部验证状态</option>
-            {VALIDATION_STATUS_DEFINITIONS.map((status) => (
-              <option
-                value={status.id}
-                data-i18n-option={`validation.status.${status.id}`}
-                data-count={catalog.stats.validationStatuses[status.id] ?? 0}
-              >{status.label} · {catalog.stats.validationStatuses[status.id] ?? 0}</option>
-            ))}
-          </select>
-          <ChevronDown size={15} stroke-width={1.6} />
-        </label>
-
-        <label class="select-field">
-          <span class="select-value" id="sort-filter-value">综合推荐</span>
-          <select id="sort-filter" aria-label="排序方式" data-i18n-aria-label="home.sort">
-            <option value="recommended" data-i18n="sort.recommended">综合推荐</option>
-            <option value="stars" data-i18n="sort.stars">最多 Star</option>
-            <option value="updated" data-i18n="sort.updated">最近更新</option>
-            <option value="name" data-i18n="sort.name">名称排序</option>
-          </select>
-          <ChevronDown size={15} stroke-width={1.6} />
-        </label>
+        <div
+          class="catalog-view-switch"
+          id="catalog-view-switch"
+          role="tablist"
+          aria-label="目录视图"
+          data-i18n-aria-label="home.views"
+          data-active-view="directory"
+        >
+          <button class="is-active" type="button" role="tab" data-view="directory" aria-selected="true">
+            <span data-i18n="home.viewDirectory">目录</span>
+          </button>
+          <button type="button" role="tab" data-view="verified" aria-selected="false">
+            <span data-i18n="home.viewVerified">已验证</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            data-view="ranking"
+            aria-selected="false"
+            aria-label="排行榜即将上线"
+            title="排行榜即将上线"
+            data-i18n-aria-label="home.viewRankingSoon"
+            data-i18n-title="home.viewRankingSoon"
+            disabled
+          >
+            <span data-i18n="home.viewRanking">排行榜</span>
+          </button>
+        </div>
       </div>
 
       <div class="category-filter-panel" data-category-filter-panel>
@@ -164,11 +165,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
               <button class="category-filter is-active" type="button" data-category="all" aria-pressed="true">
                 <span class="category-filter__label" data-i18n="home.all">全部</span>
                 <span class="category-filter__count">{catalog.stats.fetched}</span>
-              </button>
-              <button class="category-filter category-filter--verified" type="button" data-category="verified" aria-pressed="false">
-                <i></i>
-                <span class="category-filter__label" data-i18n="home.currentVerified">当前已验证</span>
-                <span class="category-filter__count">{catalog.stats.validationStatuses.verified ?? 0}</span>
               </button>
               {CATEGORIES.map((category) => (
                 <button class="category-filter" type="button" data-category={category.id} aria-pressed="false">
@@ -228,7 +224,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
   <script id="catalog-generated-at" type="application/json" set:html={JSON.stringify(catalog.generatedAt)} is:inline></script>
   <script id="category-data" type="application/json" set:html={serializedCategories} is:inline></script>
   <script id="type-data" type="application/json" set:html={serializedTypes} is:inline></script>
-  <script id="validation-status-data" type="application/json" set:html={serializedValidationStatuses} is:inline></script>
   <script id="base-url" type="application/json" set:html={JSON.stringify(baseUrl)} is:inline></script>
 
   <script>
@@ -292,18 +287,14 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     const recommendationSeed = JSON.parse(document.getElementById('catalog-generated-at').textContent)
     const categories = JSON.parse(document.getElementById('category-data').textContent)
     const projectTypes = JSON.parse(document.getElementById('type-data').textContent)
-    const validationStatuses = JSON.parse(document.getElementById('validation-status-data').textContent)
     const baseUrl = JSON.parse(document.getElementById('base-url').textContent)
     const categoryById = new Map(categories.map((category) => [category.id, category]))
     const typeById = new Map(projectTypes.map((type) => [type.id, type]))
     const grid = document.getElementById('project-grid')
     const sourceCard = grid.querySelector('[data-project-card]').cloneNode(true)
     const searchInput = document.getElementById('catalog-search')
+    const viewSwitch = document.getElementById('catalog-view-switch')
     const typeFilter = document.getElementById('type-filter')
-    const validationFilter = document.getElementById('validation-filter')
-    const sortFilter = document.getElementById('sort-filter')
-    const validationFilterValue = document.getElementById('validation-filter-value')
-    const sortFilterValue = document.getElementById('sort-filter-value')
     const categoryFilter = document.getElementById('category-filter')
     const categoryFilterPanel = document.querySelector('[data-category-filter-panel]')
     const categoryFilterToggle = document.getElementById('category-filter-toggle')
@@ -313,9 +304,8 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     const emptyState = document.getElementById('empty-state')
     const clearFilters = document.getElementById('clear-filters')
     const pageSize = 24
-    const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'sort']
-    const validationStatusIds = new Set(validationStatuses.map((status) => status.id))
-    const sortIds = new Set(Array.from(sortFilter.options, (option) => option.value))
+    const catalogFilterParamNames = ['q', 'category', 'type', 'view', 'validation', 'sort']
+    let selectedView = 'directory'
     let selectedType = 'all'
     let selectedCategory = 'all'
     let visibleCount = pageSize
@@ -368,8 +358,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       if (query) params.set('q', query)
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
       if (selectedType !== 'all') params.set('type', selectedType)
-      if (validationFilter.value !== 'all') params.set('validation', validationFilter.value)
-      if (sortFilter.value !== 'recommended') params.set('sort', sortFilter.value)
+      if (selectedView !== 'directory') params.set('view', selectedView)
       return params
     }
 
@@ -481,7 +470,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
     const getFilteredRepositories = () => {
       const query = searchInput.value.trim().toLocaleLowerCase('zh-CN')
-      const selectedValidation = validationFilter.value
       const filtered = repositories.filter((repository) => {
         const searchable = [
           repository.name,
@@ -491,12 +479,9 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
           ...repository.topics,
         ].join(' ').toLocaleLowerCase('zh-CN')
         return (!query || searchable.includes(query))
-          && (selectedCategory === 'all'
-            || (selectedCategory === 'verified'
-              ? repository.validation.overall === 'verified'
-              : repository.category === selectedCategory))
+          && (selectedCategory === 'all' || repository.category === selectedCategory)
           && (selectedType === 'all' || repository.projectType === selectedType)
-          && (selectedValidation === 'all' || repository.validation.overall === selectedValidation)
+          && (selectedView !== 'verified' || repository.validation.overall === 'verified')
       })
 
       const compareStatus = (left, right) => {
@@ -509,32 +494,13 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         || left.fullName.localeCompare(right.fullName)
       )
 
-      if (sortFilter.value === 'recommended') {
-        const priority = filtered
-          .filter((repository) => repository.verified)
-          .sort(compareStars)
-        const discovery = filtered
-          .filter((repository) => !repository.verified)
-          .sort(compareStars)
-        return mixRecommendedRepositories(priority, discovery, createSeededRandom(recommendationSeed))
-      }
-
-      return filtered.sort((left, right) => {
-        const statusPriority = compareStatus(left, right)
-        if (sortFilter.value === 'updated') {
-          return Date.parse(right.pushedAt) - Date.parse(left.pushedAt)
-            || statusPriority
-            || left.fullName.localeCompare(right.fullName)
-        }
-        if (sortFilter.value === 'name') {
-          return left.name.localeCompare(right.name)
-            || statusPriority
-            || left.fullName.localeCompare(right.fullName)
-        }
-        return right.stars - left.stars
-          || statusPriority
-          || left.fullName.localeCompare(right.fullName)
-      })
+      const priority = filtered
+        .filter((repository) => repository.verified)
+        .sort(compareStars)
+      const discovery = filtered
+        .filter((repository) => !repository.verified)
+        .sort(compareStars)
+      return mixRecommendedRepositories(priority, discovery, createSeededRandom(recommendationSeed))
     }
 
     const render = () => {
@@ -559,8 +525,13 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       resetAndRender()
     }
 
-    const syncSelectValue = (select, target) => {
-      target.textContent = select.selectedOptions[0]?.textContent ?? ''
+    const syncViewSwitch = () => {
+      viewSwitch.dataset.activeView = selectedView
+      viewSwitch.querySelectorAll('[data-view]').forEach((item) => {
+        const isActive = item.dataset.view === selectedView
+        item.classList.toggle('is-active', isActive)
+        item.setAttribute('aria-selected', String(isActive))
+      })
     }
 
     const setCategoryExpanded = (expanded) => {
@@ -586,17 +557,19 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       const filters = new URLSearchParams(window.location.search)
       const requestedCategory = filters.get('category')
       const requestedType = filters.get('type')
+      const requestedView = filters.get('view')
       const requestedValidation = filters.get('validation')
-      const requestedSort = filters.get('sort')
 
       searchInput.value = filters.get('q') ?? ''
-      selectedCategory = requestedCategory === 'verified' || categoryById.has(requestedCategory)
-        ? requestedCategory
-        : 'all'
+      selectedView = requestedView === 'verified'
+        || requestedValidation === 'verified'
+        || requestedCategory === 'verified'
+        ? 'verified'
+        : 'directory'
+      selectedCategory = categoryById.has(requestedCategory) ? requestedCategory : 'all'
       selectedType = typeById.has(requestedType) ? requestedType : 'all'
-      validationFilter.value = validationStatusIds.has(requestedValidation) ? requestedValidation : 'all'
-      sortFilter.value = sortIds.has(requestedSort) ? requestedSort : 'recommended'
 
+      syncViewSwitch()
       typeFilter.querySelectorAll('[data-type]').forEach((item) => {
         const isActive = item.dataset.type === selectedType
         item.classList.toggle('is-active', isActive)
@@ -608,19 +581,16 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         item.setAttribute('aria-pressed', String(isActive))
       })
       if (selectedType !== 'all' || selectedCategory !== 'all') setCategoryExpanded(true)
-      syncSelectValue(validationFilter, validationFilterValue)
-      syncSelectValue(sortFilter, sortFilterValue)
-    }
-
-    const localizeFilterOptions = () => {
-      validationFilter.querySelectorAll('[data-i18n-option]').forEach((option) => {
-        option.textContent = `${t(option.dataset.i18nOption)} · ${option.dataset.count}`
-      })
-      syncSelectValue(validationFilter, validationFilterValue)
-      syncSelectValue(sortFilter, sortFilterValue)
     }
 
     searchInput.addEventListener('input', commitFilters)
+    viewSwitch.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-view]:not(:disabled)')
+      if (!button || button.dataset.view === selectedView) return
+      selectedView = button.dataset.view
+      syncViewSwitch()
+      commitFilters()
+    })
     typeFilter.addEventListener('click', (event) => {
       const button = event.target.closest('[data-type]')
       if (!button) return
@@ -630,14 +600,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         item.classList.toggle('is-active', isActive)
         item.setAttribute('aria-pressed', String(isActive))
       })
-      commitFilters()
-    })
-    validationFilter.addEventListener('change', () => {
-      syncSelectValue(validationFilter, validationFilterValue)
-      commitFilters()
-    })
-    sortFilter.addEventListener('change', () => {
-      syncSelectValue(sortFilter, sortFilterValue)
       commitFilters()
     })
     categoryFilter.addEventListener('click', (event) => {
@@ -657,12 +619,10 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     })
     clearFilters.addEventListener('click', () => {
       searchInput.value = ''
+      selectedView = 'directory'
       selectedType = 'all'
-      validationFilter.value = 'all'
-      sortFilter.value = 'recommended'
-      syncSelectValue(validationFilter, validationFilterValue)
-      syncSelectValue(sortFilter, sortFilterValue)
       selectedCategory = 'all'
+      syncViewSwitch()
       typeFilter.querySelectorAll('[data-type]').forEach((item) => {
         const isActive = item.dataset.type === 'all'
         item.classList.toggle('is-active', isActive)
@@ -688,7 +648,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       }
     })
     document.addEventListener('dsh:locale-change', () => {
-      localizeFilterOptions()
       render()
     })
     restoreFiltersFromUrl()
@@ -909,12 +868,11 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
   .search-row {
     display: grid;
-    grid-template-columns: minmax(260px, 1fr) repeat(2, minmax(150px, auto));
+    grid-template-columns: minmax(260px, 1fr) minmax(300px, 320px);
     gap: 8px;
   }
 
-  .search-field,
-  .select-field {
+  .search-field {
     display: flex;
     min-height: 46px;
     align-items: center;
@@ -926,12 +884,65 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     padding-inline: 14px;
   }
 
-  .select-field {
+  .catalog-view-switch {
     position: relative;
+    isolation: isolate;
+    display: grid;
+    width: 100%;
+    min-height: 46px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid var(--hairline);
+    border-radius: 9999px;
+    background: var(--canvas-soft);
+    padding: 3px;
   }
 
-  .search-field:focus-within,
-  .select-field:focus-within {
+  .catalog-view-switch::before {
+    position: absolute;
+    z-index: -1;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc((100% - 6px) / 3);
+    border: 1px solid var(--outline-strong);
+    border-radius: 9999px;
+    background: var(--canvas-card);
+    content: '';
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .catalog-view-switch[data-active-view='verified']::before {
+    transform: translateX(100%);
+  }
+
+  .catalog-view-switch button {
+    min-width: 0;
+    border: 0;
+    border-radius: 9999px;
+    background: transparent;
+    color: var(--mute);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 20px;
+    padding-inline: 10px;
+    white-space: nowrap;
+  }
+
+  .catalog-view-switch button.is-active {
+    color: var(--ink);
+  }
+
+  .catalog-view-switch button:disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+  }
+
+  .catalog-view-switch button:focus-visible {
+    outline: 2px solid var(--outline-strong);
+    outline-offset: -2px;
+  }
+
+  .search-field:focus-within {
     border-color: var(--outline-strong);
   }
 
@@ -949,34 +960,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
   .search-field input::placeholder {
     color: var(--mute);
-  }
-
-  .select-field select {
-    position: absolute;
-    z-index: 2;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    border: 0;
-    appearance: none;
-    cursor: pointer;
-    opacity: 0;
-  }
-
-  .select-field > svg,
-  .select-value {
-    pointer-events: none;
-  }
-
-  .select-value {
-    min-width: 0;
-    flex: 1;
-    overflow: hidden;
-    color: var(--ink);
-    font-size: 13px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .category-filter-panel {
@@ -1082,10 +1065,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     height: 5px;
     border-radius: 50%;
     background: var(--category-color);
-  }
-
-  .category-filter--verified i {
-    background: #9fdda9;
   }
 
   .category-filter__label {
@@ -1252,20 +1231,12 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     }
 
     .search-row {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .search-field {
-      grid-column: 1 / -1;
+      grid-template-columns: 1fr;
     }
 
     .search-field,
-    .select-field {
+    .catalog-view-switch {
       min-height: 48px;
-    }
-
-    .select-field select {
-      width: 100%;
     }
 
     .category-filter {

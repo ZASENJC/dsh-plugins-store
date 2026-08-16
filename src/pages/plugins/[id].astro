@@ -392,7 +392,7 @@ const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 
     const catalogBackLink = document.querySelector<HTMLAnchorElement>('[data-catalog-back]')
     if (catalogBackLink) {
-      const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'sort']
+      const catalogFilterParamNames = ['q', 'category', 'type', 'view', 'validation', 'sort']
       const currentParams = new URLSearchParams(window.location.search)
       const catalogFilterParams = new URLSearchParams()
       catalogFilterParamNames.forEach((param) => {
