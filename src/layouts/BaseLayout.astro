@@ -58,7 +58,8 @@ const THEME_STORAGE_KEY = 'dsh-theme'
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="icon" href={`${baseUrl}favicon.svg`} type="image/svg+xml" />
+    <link rel="icon" href={`${baseUrl}favicon-32.png`} type="image/png" sizes="32x32" />
+    <link rel="icon" href={`${baseUrl}favicon.png`} type="image/png" sizes="512x512" />
     <title>{title}</title>
     {structuredData && (
       <script is:inline type="application/ld+json" set:html={serializeJsonLd(structuredData)}></script>
