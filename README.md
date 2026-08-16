@@ -54,11 +54,15 @@ dsh plugin --profile web add npm:dsh-plugins-store
 <details>
 <summary>展开查看项目截图</summary>
 
-![DSH 插件市场首页](<https://img.qunq.de/file/1786723996481_FireShot Capture 033 - DSH 插件市场 - DSH-Plugin Store - [127.0.0.1].png>)
+![DSH 插件市场截图 1](https://img.qunq.de/file/1786921693044_Screenshot%202026-08-17%20at%2006-31-01.png)
 
-![deepseek-harness 项目详情](<https://img.qunq.de/file/1786723993650_FireShot Capture 034 - deepseek-harness · DSH 插件市场 - [127.0.0.1].png>)
+![DSH 插件市场截图 2](https://img.qunq.de/file/1786921688782_Screenshot%202026-08-17%20at%2006-31-10.png)
 
-![dsh-plugin 标签页面](<https://img.qunq.de/file/1786723992252_FireShot Capture 037 - dsh-plugin 标签 · DSH 插件市场 - [127.0.0.1].png>)
+![DSH 插件市场截图 3](https://img.qunq.de/file/1786921698410_Screenshot%202026-08-17%20at%2006-31-17.png)
+
+![DSH 插件市场截图 4](https://img.qunq.de/file/1786921702563_Screenshot%202026-08-17%20at%2006-33-37.png)
+
+![DSH 插件市场截图 5](https://img.qunq.de/file/1786921703878_Screenshot%202026-08-17%20at%2006-52-47.png)
 
 </details>
 
