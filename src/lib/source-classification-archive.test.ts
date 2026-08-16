@@ -4,6 +4,7 @@ import {
   buildSourceClassificationArchive,
   buildValidationCatalog,
   filterCatalogRepositoriesByArchive,
+  isCurrentSourceClassificationArchive,
   mergeSourceValidationHistory,
   parseSourceClassificationArchive,
   selectSourceClassificationTargets,
@@ -80,6 +81,24 @@ const appClassification = {
 }
 
 describe('source classification archive', () => {
+  it('distinguishes the current classifier archive from stale or missing evidence', () => {
+    expect(isCurrentSourceClassificationArchive(null)).toBe(false)
+    expect(isCurrentSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-16T01:00:00Z',
+      mode: 'full',
+      classifierVersion: '0.1.0',
+      records: [],
+    })).toBe(false)
+    expect(isCurrentSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-17T01:00:00Z',
+      mode: 'full',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
+      records: [],
+    })).toBe(true)
+  })
+
   it('publishes only current include records and fails closed without an archive', () => {
     const archive = parseSourceClassificationArchive({
       schemaVersion: 1,

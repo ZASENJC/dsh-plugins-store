@@ -60,6 +60,8 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).not.toContain('rm -f src/data/source-classification.json')
     expect(syncWorkflow).not.toContain('topic full-catalog fallback')
     expect(syncWorkflow).toContain("record.disposition === 'include'")
+    expect(syncWorkflow).toContain("SOURCE_CLASSIFIER_VERSION: '0.2.0'")
+    expect(syncWorkflow).toContain('Last valid catalog remains published')
     expect(syncWorkflow).not.toContain('Restore last successful validation feed')
     expect(syncWorkflow).not.toContain('validation-restore')
     expect(syncWorkflow).not.toContain('npm run validate:artifact')
