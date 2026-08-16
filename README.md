@@ -27,16 +27,6 @@
   </a>
 </p>
 
-> [!IMPORTANT]
-> **名称更新**
->
-> 项目与插件标识已统一为 `dsh-plugins-store`，旧包名、运行时 ID 和接口不再兼容。
->
-> **访问地址更新**
->
-> - 站点：[dshmk.com](https://dshmk.com/)
-> - 公开 API：[api.dshmk.com](https://api.dshmk.com/)
-
 DSH 插件市场面向 DeepSeek Harness 生态，自动收录同时带有 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 与 `deepseek-harness` Topic 的公开项目，提供目录检索、排行榜与 [公开 API](https://api.dshmk.com/)。配套的 [DSH Web 插件](packages/dsh-plugins-store/README.md)可独立安装并接入 `/store` 和 Agent 会话；验证结果来自固定源码 SHA 的结构检查与 Linux 隔离沙箱。
 
 [访问 DSH 插件市场（DeepSeek Harness 插件目录）](https://dshmk.com/)
