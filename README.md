@@ -27,9 +27,27 @@
   </a>
 </p>
 
-面向 DeepSeek Harness 生态的 DSH 插件市场，自动收录并整理同时带有 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 与 `deepseek-harness` Topic 的项目，提供搜索、分类、排序和标签聚合浏览。
+DSH 插件市场面向 DeepSeek Harness 生态，自动收录同时带有 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 与 `deepseek-harness` Topic 的公开项目，提供目录检索、排行榜与 [公开 API](https://api.dshmk.com/)。配套的 [DSH Web 插件](packages/dsh-plugin-store/README.md)可独立安装并接入 `/store` 和 Agent 会话；验证结果来自固定源码 SHA 的结构检查与 Linux 隔离沙箱。
 
 [访问 DSH 插件市场（DeepSeek Harness 插件目录）](https://dshmk.com/)
+
+## 功能
+
+- 自动收录同时带有 `dsh-plugin` 与 `deepseek-harness` Topic 的公开仓库，并排除归档仓库、Fork 和宿主应用
+- 提供独立的 [目录](https://dshmk.com/)、[已验证](https://dshmk.com/verified)和 [排行榜](https://dshmk.com/ranking)页面，支持搜索、分类、筛选和排序
+- 排行榜支持 24 小时 Star 增速、最多 Star、最新发布和最近更新；项目详情展示分类依据、同标签项目和验证进度
+- 每 30 分钟自动同步 GitHub 仓库数据
+- 配套 DSH Web 插件支持通过 `/store`、设置页和 Agent 会话浏览市场，并在用户明确请求和确认后安装、更新或移除 Web profile 插件
+
+## 安装 DSH Web 插件
+
+以下命令安装市场自身的 DSH Web 插件：
+
+```sh
+dsh plugin --profile web add npm:dsh-plugins-store
+```
+
+安装完成后重启 DSH Web 并刷新浏览器。源码安装、本地构建、卸载、市场工具及 `search-dsh-store` skill 的完整说明见 [`packages/dsh-plugin-store/README.md`](packages/dsh-plugin-store/README.md)。
 
 ## 项目截图
 
@@ -44,24 +62,13 @@
 
 </details>
 
-## 功能
-
-- 自动收录同时带有 `dsh-plugin` 与 `deepseek-harness` Topic 的公开仓库，并排除归档仓库、Fork 和宿主应用
-- 根据 GitHub Topics 识别项目类型和功能分类
-- 支持名称、作者、描述和标签搜索
-- 支持分类、项目类型和更新时间等筛选排序
-- 提供项目详情、分类依据和同标签项目页面
-- 显示“发现 → 识别 → 结构检查 → 实机验证”进度，并支持按当前验证状态筛选
-- 每 30 分钟自动同步 GitHub 仓库数据
-- 提供可安装的 DSH Web 插件，通过 `/store`、会话工具栏和设置页浏览同一目录，并在风险确认后支持一键安装
-
-## 数据说明
+## 收录与验证
 
 项目分类优先使用仓库公开的 GitHub Topics，并与站内词典和词根规则比对。标签不足时，项目会保留为“其他”或“待识别”，不会根据名称强行推断。
 
 收录仅表示仓库同时出现在 `dsh-plugin` 与 `deepseek-harness` Topic，且未被识别为归档仓库、Fork 或宿主应用，不代表项目已经通过安装、兼容性、安全性或质量验证。目录同步模块只读取公开仓库元数据，不执行第三方代码；可选 DSH Web 插件只会在用户阅读风险提示并明确确认后发起安装。
 
-独立验证流程先对固定 SHA 做源码特征分类，再只对分类后的 validation catalog 进入一次性 Linux 沙箱。沙箱无商店密钥、非 root、资源受限，安装、激活、入口导入和 `apply` 调用均在隔离环境中完成；失败结果带错误码进入人工复核，不会进入源码排除名单。只有绑定当前仓库 ID、SHA、DSH 版本、平台和验证器版本的通过结果才显示“已验证”；该标记不等于完整安全审计或官方背书。
+独立验证流程先对固定 SHA 做源码特征分类，再只对分类后的待验证目录进入一次性 Linux 沙箱。沙箱无商店密钥、非 root、资源受限，安装、激活、入口导入和 `apply` 调用均在隔离环境中完成；失败结果带错误码进入人工复核，不会进入源码排除名单。只有绑定当前仓库 ID、SHA、DSH 版本、平台和验证器版本的通过结果才显示“已验证”；该标记不等于完整安全审计或官方背书。
 
 ## 商店 API
 
@@ -75,6 +82,8 @@ GET https://api.dshmk.com/
 - 返回整个目录，不提供服务端搜索、筛选或分页；调用方应在本地处理。
 - 目录约每 30 分钟刷新一次。请使用 `schemaVersion` 判断响应是否兼容，不要依赖仓库数组顺序。
 - 生产响应允许跨域读取，浏览器插件可直接请求；命令行、Node.js 或其他服务端同样可直接调用。
+
+### 使用示例
 
 使用 `curl` 获取目录并读取基础信息：
 
@@ -107,7 +116,7 @@ const verifiedPlugins = catalog.repositories.filter((repository) =>
 )
 ```
 
-响应主要字段：
+### 响应字段
 
 | 字段 | 说明 |
 | --- | --- |
@@ -122,41 +131,40 @@ const verifiedPlugins = catalog.repositories.filter((repository) =>
 | `repositories[].category` / `categories` | 主分类及全部匹配分类 |
 | `repositories[].validation` | 当前验证状态、绑定的源码 SHA、DSH 版本、平台及各阶段证据 |
 
-只有 `repositories[].validation.overall === "verified"` 才表示当前结果已绑定到对应源码 SHA、DSH 版本、平台和验证器版本。`status.verification`、历史验证链接或曾经通过的记录不能替代这个判断；验证也不等于安全审计或官方背书。
+判断当前验证状态时，只应使用 `repositories[].validation.overall === "verified"`。`status.verification`、历史验证链接或曾经通过的记录不能替代当前结果。
 
-## 项目结构
+## 自动化架构
+
+自动化主链只有三步：源码分类、增量验证、目录同步与生产发布。分类每小时自动运行，目录每 30 分钟独立刷新；验证完成后也会触发目录同步。验证没有新结果或执行失败时，发布流程继续使用最近一次成功状态，不会中断网站更新。
 
 ```mermaid
-flowchart TD
-  ROOT["dsh-store"]
+flowchart TB
+  CLASSIFY["1. Classify plugins<br/>源码分类，不执行第三方代码"]
+  VALIDATE["2. Validate plugins<br/>增量结构检查与 Linux 隔离验证"]
+  SYNC["3. Sync catalog<br/>目录同步、测试构建与生产发布"]
 
-  ROOT --> SRC["src<br/>Astro 静态站点"]
-  SRC --> PAGES["pages<br/>首页、详情、Topic 与 catalog.json"]
-  SRC --> DATA["data<br/>catalog.json 与 validation.json"]
-  SRC --> LIB["lib<br/>分类、目录、验证与安装链接"]
-  SRC --> UI["components / layouts / styles<br/>界面组件与样式"]
+  CLASSIFY -->|分类完成后自动触发| VALIDATE
+  VALIDATE -->|验证完成后自动触发| SYNC
+  SYNC -.->|最新发现快照进入下一轮| CLASSIFY
 
-  ROOT --> SCRIPTS["scripts"]
-  SCRIPTS --> SYNC["sync-github.ts<br/>同步 GitHub Topic"]
-  SCRIPTS --> VALIDATORS["validation<br/>结构检查、沙箱调度与结果提升"]
+  CLASSIFY_TIMER["每小时自动分类"] --> CLASSIFY
+  SYNC_TIMER["每 30 分钟自动刷新"] --> SYNC
+  TOPICS["GitHub 社区项目"] --> SYNC
 
-  ROOT --> SANDBOX["validation<br/>Schema、基线与隔离验证工具"]
-  ROOT --> PLUGIN["packages/dsh-plugin-store<br/>DSH Web 商店插件"]
-  ROOT --> DEPLOY["deploy/server<br/>生产 Nginx 与发布脚本"]
-  ROOT --> ACTIONS[".github/workflows<br/>同步、验证与部署工作流"]
-
-  SYNC -.->|更新目录| DATA
-  VALIDATORS -.->|更新验证结果| DATA
-  DATA -.->|构建时注入| PAGES
-  PAGES -.->|生成| DIST["dist<br/>生产静态文件"]
-  PLUGIN -.->|读取| API["api.dshmk.com/"]
-  DIST -.-> API
-  ACTIONS -.->|测试、构建、发布| DEPLOY
+  SYNC --> ORIGIN["生产服务器<br/>原子版本切换"]
+  ORIGIN --> CLOUDFLARE["Cloudflare"]
+  CLOUDFLARE --> SITE["dshmk.com<br/>目录、已验证、排行榜、详情"]
+  CLOUDFLARE --> API["api.dshmk.com<br/>公开目录 API"]
+  API --> PLUGIN["DSH Web 插件<br/>/store、设置页与 Agent 工具"]
 ```
 
-## 本地运行
+`deploy-pages.yml` 仅用于 GitHub Pages 预览或备用站点，不属于上述生产链路。正式网站和 API 由 `sync-catalog.yml` 构建并发布到生产服务器，再通过 Cloudflare 对外提供服务。
+
+## 本地开发
 
 需要 Node.js 22 或更高版本。
+
+### 运行站点
 
 ```bash
 npm ci
@@ -165,16 +173,14 @@ npm run dev
 
 默认访问地址：`http://localhost:4321/`。
 
-构建 DSH Web 插件：
+### 构建 DSH Web 插件
 
 ```bash
 npm run build:plugin
 npm pack ./packages/dsh-plugin-store
 ```
 
-插件安装与卸载方式见 [`packages/dsh-plugin-store/README.md`](packages/dsh-plugin-store/README.md)。
-
-重新同步目录时运行：
+### 同步目录
 
 ```bash
 npm run sync
@@ -182,14 +188,12 @@ npm run sync
 
 同步脚本支持读取 `GITHUB_TOKEN` 或 `GH_TOKEN`。未提供 Token 时会受到 GitHub API 的较低请求限额约束。
 
-## 验证与构建
+### 检查与构建
 
 ```bash
 npm test
 npm run build
 ```
-
-推送到 `main` 后，GitHub Actions 会自动构建并部署 GitHub Pages。生产服务器每 30 分钟触发一次目录同步；同步、测试和构建成功后，静态站点会原子发布到生产服务器。
 
 ## 社区交流
 
