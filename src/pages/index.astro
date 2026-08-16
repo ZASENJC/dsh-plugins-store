@@ -1,5 +1,5 @@
 ---
-import { ArrowUpRight, Check, ChevronDown, Copy, Search, SlidersHorizontal, Terminal } from '@lucide/astro'
+import { ArrowUpRight, Check, ChevronDown, Copy, Search, Terminal } from '@lucide/astro'
 
 import DeepSeekGridMark from '../components/DeepSeekGridMark.astro'
 import ProjectCard from '../components/ProjectCard.astro'
@@ -114,22 +114,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
         </label>
 
         <label class="select-field">
-          <SlidersHorizontal size={16} stroke-width={1.6} />
-          <span class="select-value" id="type-filter-value">全部类型</span>
-          <select id="type-filter" aria-label="项目类型" data-i18n-aria-label="home.projectType">
-            <option value="all" data-i18n="home.allTypes">全部类型</option>
-            {PROJECT_TYPES.map((type) => (
-              <option
-                value={type.id}
-                data-i18n-option={`projectType.${type.id}`}
-                data-count={catalog.stats.projectTypes[type.id] ?? 0}
-              >{type.label} · {catalog.stats.projectTypes[type.id] ?? 0}</option>
-            ))}
-          </select>
-          <ChevronDown size={15} stroke-width={1.6} />
-        </label>
-
-        <label class="select-field">
           <span class="select-value" id="validation-filter-value">全部验证状态</span>
           <select id="validation-filter" aria-label="验证状态" data-i18n-aria-label="home.validation">
             <option value="all" data-i18n="home.allValidation">全部验证状态</option>
@@ -157,29 +141,50 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       </div>
 
       <div class="category-filter-panel" data-category-filter-panel>
-        <div class="category-row" id="category-filter" aria-label="功能分类" data-i18n-aria-label="home.category">
-          <button class="category-filter is-active" type="button" data-category="all">
-            <span class="category-filter__label" data-i18n="home.all">全部</span>
-            <span class="category-filter__count">{catalog.stats.fetched}</span>
-          </button>
-          <button class="category-filter category-filter--verified" type="button" data-category="verified">
-            <i></i>
-            <span class="category-filter__label" data-i18n="home.currentVerified">当前已验证</span>
-            <span class="category-filter__count">{catalog.stats.validationStatuses.verified ?? 0}</span>
-          </button>
-          {CATEGORIES.map((category) => (
-            <button class="category-filter" type="button" data-category={category.id}>
-              <i style={`--category-color: ${category.color}`}></i>
-              <span class="category-filter__label" data-i18n={`category.${category.id}`}>{category.label}</span>
-              <span class="category-filter__count">{catalog.stats.categories[category.id] ?? 0}</span>
-            </button>
-          ))}
+        <div class="filter-groups" id="classification-filter-groups">
+          <div class="filter-group" data-filter-group="type">
+            <span class="filter-group__title" id="type-filter-label" data-i18n="home.projectType">项目类型</span>
+            <div class="filter-group__options" id="type-filter" role="group" aria-labelledby="type-filter-label">
+              <button class="category-filter is-active" type="button" data-type="all" aria-pressed="true">
+                <span class="category-filter__label" data-i18n="home.allTypes">全部类型</span>
+                <span class="category-filter__count">{catalog.stats.fetched}</span>
+              </button>
+              {PROJECT_TYPES.map((type) => (
+                <button class="category-filter" type="button" data-type={type.id} aria-pressed="false">
+                  <span class="category-filter__label" data-i18n={`projectType.${type.id}`}>{type.label}</span>
+                  <span class="category-filter__count">{catalog.stats.projectTypes[type.id] ?? 0}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div class="filter-group" data-filter-group="category">
+            <span class="filter-group__title" id="category-filter-label" data-i18n="home.category">功能分类</span>
+            <div class="filter-group__options" id="category-filter" role="group" aria-labelledby="category-filter-label">
+              <button class="category-filter is-active" type="button" data-category="all" aria-pressed="true">
+                <span class="category-filter__label" data-i18n="home.all">全部</span>
+                <span class="category-filter__count">{catalog.stats.fetched}</span>
+              </button>
+              <button class="category-filter category-filter--verified" type="button" data-category="verified" aria-pressed="false">
+                <i></i>
+                <span class="category-filter__label" data-i18n="home.currentVerified">当前已验证</span>
+                <span class="category-filter__count">{catalog.stats.validationStatuses.verified ?? 0}</span>
+              </button>
+              {CATEGORIES.map((category) => (
+                <button class="category-filter" type="button" data-category={category.id} aria-pressed="false">
+                  <i style={`--category-color: ${category.color}`}></i>
+                  <span class="category-filter__label" data-i18n={`category.${category.id}`}>{category.label}</span>
+                  <span class="category-filter__count">{catalog.stats.categories[category.id] ?? 0}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <button
           id="category-filter-toggle"
           class="category-filter-toggle"
           type="button"
-          aria-controls="category-filter"
+          aria-controls="classification-filter-groups"
           aria-expanded="false"
           aria-label="展开全部分类"
           title="展开全部分类"
@@ -297,7 +302,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     const typeFilter = document.getElementById('type-filter')
     const validationFilter = document.getElementById('validation-filter')
     const sortFilter = document.getElementById('sort-filter')
-    const typeFilterValue = document.getElementById('type-filter-value')
     const validationFilterValue = document.getElementById('validation-filter-value')
     const sortFilterValue = document.getElementById('sort-filter-value')
     const categoryFilter = document.getElementById('category-filter')
@@ -312,6 +316,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'sort']
     const validationStatusIds = new Set(validationStatuses.map((status) => status.id))
     const sortIds = new Set(Array.from(sortFilter.options, (option) => option.value))
+    let selectedType = 'all'
     let selectedCategory = 'all'
     let visibleCount = pageSize
 
@@ -362,7 +367,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       const query = searchInput.value.trim()
       if (query) params.set('q', query)
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
-      if (typeFilter.value !== 'all') params.set('type', typeFilter.value)
+      if (selectedType !== 'all') params.set('type', selectedType)
       if (validationFilter.value !== 'all') params.set('validation', validationFilter.value)
       if (sortFilter.value !== 'recommended') params.set('sort', sortFilter.value)
       return params
@@ -476,7 +481,6 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
     const getFilteredRepositories = () => {
       const query = searchInput.value.trim().toLocaleLowerCase('zh-CN')
-      const selectedType = typeFilter.value
       const selectedValidation = validationFilter.value
       const filtered = repositories.filter((repository) => {
         const searchable = [
@@ -589,34 +593,43 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       selectedCategory = requestedCategory === 'verified' || categoryById.has(requestedCategory)
         ? requestedCategory
         : 'all'
-      typeFilter.value = typeById.has(requestedType) ? requestedType : 'all'
+      selectedType = typeById.has(requestedType) ? requestedType : 'all'
       validationFilter.value = validationStatusIds.has(requestedValidation) ? requestedValidation : 'all'
       sortFilter.value = sortIds.has(requestedSort) ? requestedSort : 'recommended'
 
-      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
-        item.classList.toggle('is-active', item.dataset.category === selectedCategory)
+      typeFilter.querySelectorAll('[data-type]').forEach((item) => {
+        const isActive = item.dataset.type === selectedType
+        item.classList.toggle('is-active', isActive)
+        item.setAttribute('aria-pressed', String(isActive))
       })
-      if (selectedCategory !== 'all') setCategoryExpanded(true)
-      syncSelectValue(typeFilter, typeFilterValue)
+      categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
+        const isActive = item.dataset.category === selectedCategory
+        item.classList.toggle('is-active', isActive)
+        item.setAttribute('aria-pressed', String(isActive))
+      })
+      if (selectedType !== 'all' || selectedCategory !== 'all') setCategoryExpanded(true)
       syncSelectValue(validationFilter, validationFilterValue)
       syncSelectValue(sortFilter, sortFilterValue)
     }
 
     const localizeFilterOptions = () => {
-      typeFilter.querySelectorAll('[data-i18n-option]').forEach((option) => {
-        option.textContent = `${t(option.dataset.i18nOption)} · ${option.dataset.count}`
-      })
       validationFilter.querySelectorAll('[data-i18n-option]').forEach((option) => {
         option.textContent = `${t(option.dataset.i18nOption)} · ${option.dataset.count}`
       })
-      syncSelectValue(typeFilter, typeFilterValue)
       syncSelectValue(validationFilter, validationFilterValue)
       syncSelectValue(sortFilter, sortFilterValue)
     }
 
     searchInput.addEventListener('input', commitFilters)
-    typeFilter.addEventListener('change', () => {
-      syncSelectValue(typeFilter, typeFilterValue)
+    typeFilter.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-type]')
+      if (!button) return
+      selectedType = button.dataset.type
+      typeFilter.querySelectorAll('[data-type]').forEach((item) => {
+        const isActive = item === button
+        item.classList.toggle('is-active', isActive)
+        item.setAttribute('aria-pressed', String(isActive))
+      })
       commitFilters()
     })
     validationFilter.addEventListener('change', () => {
@@ -632,7 +645,9 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       if (!button) return
       selectedCategory = button.dataset.category
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
-        item.classList.toggle('is-active', item === button)
+        const isActive = item === button
+        item.classList.toggle('is-active', isActive)
+        item.setAttribute('aria-pressed', String(isActive))
       })
       commitFilters()
     })
@@ -642,15 +657,21 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     })
     clearFilters.addEventListener('click', () => {
       searchInput.value = ''
-      typeFilter.value = 'all'
+      selectedType = 'all'
       validationFilter.value = 'all'
       sortFilter.value = 'recommended'
-      syncSelectValue(typeFilter, typeFilterValue)
       syncSelectValue(validationFilter, validationFilterValue)
       syncSelectValue(sortFilter, sortFilterValue)
       selectedCategory = 'all'
+      typeFilter.querySelectorAll('[data-type]').forEach((item) => {
+        const isActive = item.dataset.type === 'all'
+        item.classList.toggle('is-active', isActive)
+        item.setAttribute('aria-pressed', String(isActive))
+      })
       categoryFilter.querySelectorAll('[data-category]').forEach((item) => {
-        item.classList.toggle('is-active', item.dataset.category === 'all')
+        const isActive = item.dataset.category === 'all'
+        item.classList.toggle('is-active', isActive)
+        item.setAttribute('aria-pressed', String(isActive))
       })
       commitFilters()
       searchInput.focus()
@@ -888,7 +909,7 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
 
   .search-row {
     display: grid;
-    grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(150px, auto));
+    grid-template-columns: minmax(260px, 1fr) repeat(2, minmax(150px, auto));
     gap: 8px;
   }
 
@@ -966,7 +987,31 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     padding-top: 12px;
   }
 
-  .category-row {
+  .filter-groups {
+    display: grid;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .filter-group {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+  }
+
+  .filter-group__title {
+    display: flex;
+    min-height: 38px;
+    align-items: center;
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+  }
+
+  .filter-group__options {
     display: flex;
     max-height: none;
     flex-wrap: wrap;
@@ -975,11 +1020,11 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
     transition: max-height 180ms ease;
   }
 
-  .category-filter-panel.is-collapsible:not(.is-expanded) .category-row {
+  .category-filter-panel.is-collapsible:not(.is-expanded) .filter-group__options {
     max-height: 38px;
   }
 
-  .category-filter-panel.is-collapsible.is-expanded .category-row {
+  .category-filter-panel.is-collapsible.is-expanded .filter-group__options {
     max-height: 600px;
   }
 
@@ -1227,7 +1272,17 @@ const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched
       min-height: 44px;
     }
 
-    .category-filter-panel.is-collapsible:not(.is-expanded) .category-row {
+    .filter-group {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .filter-group__title {
+      min-height: 20px;
+      padding-inline: 2px;
+    }
+
+    .category-filter-panel.is-collapsible:not(.is-expanded) .filter-group__options {
       max-height: 44px;
     }
 
