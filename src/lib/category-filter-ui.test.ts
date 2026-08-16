@@ -17,8 +17,9 @@ describe('homepage category filter', () => {
     expect(homepageSource).toContain('data-type={type.id}')
     expect(homepageSource).toContain("let selectedType = 'all'")
     expect(homepageSource).toContain("typeFilter.addEventListener('click'")
-    expect(homepageSource).toContain('<select id="validation-filter"')
-    expect(homepageSource).toContain('<select id="sort-filter"')
+    expect(homepageSource).not.toContain('<select id="validation-filter"')
+    expect(homepageSource).not.toContain('<select id="sort-filter"')
+    expect(homepageSource).not.toContain('data-category="verified"')
   })
 
   it('expands both filter groups by click instead of requiring horizontal scrolling', () => {

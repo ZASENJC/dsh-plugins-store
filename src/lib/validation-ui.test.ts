@@ -14,9 +14,9 @@ describe('validation ladder presentation', () => {
     expect(cardSource).toContain('repository.validation.label')
   })
 
-  it('offers a validation status filter and updates cloned cards from catalog data', () => {
-    expect(indexSource).toContain('id="validation-filter"')
-    expect(indexSource).toContain('serializedValidationStatuses')
+  it('offers a verified catalog view and updates cloned cards from catalog data', () => {
+    expect(indexSource).toContain('data-view="verified"')
+    expect(indexSource).toContain("selectedView !== 'verified' || repository.validation.overall === 'verified'")
     expect(indexSource).toContain("repository.validation.overall")
     expect(indexSource).toContain("'[data-field=\"validation-label\"]'")
   })

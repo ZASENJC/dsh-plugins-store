@@ -14,7 +14,7 @@ const detailSource = readFileSync(
 
 describe('catalog filter navigation', () => {
   it('restores every catalog filter from the URL before rendering results', () => {
-    expect(homepageSource).toContain("const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'sort']")
+    expect(homepageSource).toContain("const catalogFilterParamNames = ['q', 'category', 'type', 'view', 'validation', 'sort']")
     expect(homepageSource).toContain('const restoreFiltersFromUrl = () =>')
     expect(homepageSource).toMatch(/restoreFiltersFromUrl\(\)\s+resetAndRender\(\)/)
   })
@@ -28,7 +28,7 @@ describe('catalog filter navigation', () => {
 
   it('uses the detail URL filters for the in-page return-to-catalog link', () => {
     expect(detailSource).toContain('data-catalog-back')
-    expect(detailSource).toContain("const catalogFilterParamNames = ['q', 'category', 'type', 'validation', 'sort']")
+    expect(detailSource).toContain("const catalogFilterParamNames = ['q', 'category', 'type', 'view', 'validation', 'sort']")
     expect(detailSource).toContain('catalogBackLink.href = `${catalogBackLink.href}${catalogFilterSearch}`')
   })
 })
