@@ -310,7 +310,7 @@ describe('plugin catalog filtering', () => {
 
 describe('remote catalog state', () => {
   it('uses only the primary market API', async () => {
-    expect(DEFAULT_CATALOG_URLS).toEqual(['https://api.dshmk.com/catalog.json'])
+    expect(DEFAULT_CATALOG_URLS).toEqual(['https://api.dshmk.com/'])
     const fetcher = vi.fn().mockResolvedValue({ ok: false, status: 503 })
     const store = new CatalogStore({ fetcher })
     const listener = vi.fn()
@@ -320,7 +320,7 @@ describe('remote catalog state', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(1)
     expect(fetcher).toHaveBeenCalledWith(
-      'https://api.dshmk.com/catalog.json',
+      'https://api.dshmk.com/',
       { headers: { Accept: 'application/json' } },
     )
     expect(store.getSnapshot()).toMatchObject({

@@ -189,7 +189,7 @@ describe('conversation store search', () => {
       total: 1,
       returned: 1,
       truncated: false,
-      catalogUrl: 'https://api.dshmk.com/catalog.json',
+      catalogUrl: 'https://api.dshmk.com/',
       results: [{
         repositoryId: '101',
         name: 'Sidebar Search',

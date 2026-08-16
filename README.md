@@ -68,7 +68,7 @@
 商店提供公开、只读的完整目录接口：
 
 ```text
-GET https://api.dshmk.com/catalog.json
+GET https://api.dshmk.com/
 ```
 
 - 无需鉴权，不接收查询参数。
@@ -81,14 +81,14 @@ GET https://api.dshmk.com/catalog.json
 ```bash
 curl --fail --silent --show-error \
   --header 'Accept: application/json' \
-  https://api.dshmk.com/catalog.json \
+  https://api.dshmk.com/ \
   | jq '{schemaVersion, generatedAt, stats}'
 ```
 
 在 Node.js 22+ 中筛选当前已验证的插件：
 
 ```js
-const response = await fetch('https://api.dshmk.com/catalog.json', {
+const response = await fetch('https://api.dshmk.com/', {
   headers: { Accept: 'application/json' },
 })
 
@@ -149,7 +149,7 @@ flowchart TD
   VALIDATORS -.->|更新验证结果| DATA
   DATA -.->|构建时注入| PAGES
   PAGES -.->|生成| DIST["dist<br/>生产静态文件"]
-  PLUGIN -.->|读取| API["/catalog.json"]
+  PLUGIN -.->|读取| API["api.dshmk.com/"]
   DIST -.-> API
   ACTIONS -.->|测试、构建、发布| DEPLOY
 ```
