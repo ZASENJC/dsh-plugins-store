@@ -189,7 +189,8 @@ jobs:
         id: selection
         run: |
           previous_args=()
-          if test "$FORCE_FULL" != "true" && test -f validation-input/previous/state.json; then
+          classification_mode="$(node -e 'const fs=require("fs"); const archive=JSON.parse(fs.readFileSync("validation-input/source-classification.json","utf8")); process.stdout.write(archive.mode === "full" ? "full" : "incremental")')"
+          if test "$FORCE_FULL" != "true" && test "$classification_mode" != "full" && test -f validation-input/previous/state.json; then
             previous_args=(--previous validation-input/previous/state.json)
           fi
           npm run --silent validate:select -- \
