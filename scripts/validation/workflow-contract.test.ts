@@ -71,6 +71,7 @@ describe('decoupled incremental validation workflows', () => {
     expect(workflow).toMatch(/force_full:[\s\S]*type: boolean/)
     expect(workflow).toContain('FORCE_FULL')
     expect(workflow).toMatch(/test "\$FORCE_FULL" != "true"[\s\S]*--previous/)
+    expect(workflow).toMatch(/classification_mode=.*source-classification\.json[\s\S]*test "\$FORCE_FULL" != "true" && test "\$classification_mode" != "full"[\s\S]*--previous/)
     expect(workflow).toContain('classify-plugins.yml')
     expect(workflow).toContain('plugin-classification-state')
     expect(workflow).toContain('validation-catalog.json')
