@@ -15,18 +15,17 @@ const detailSource = readSource('../pages/plugins/[id].astro')
 const topicSource = readSource('../pages/topics/[topic].astro')
 
 describe('site language controls', () => {
-  it('places a three-part language capsule beside GitHub and removes the Topic button', () => {
-    expect(layoutSource).toContain('class="language-switcher"')
-    expect(layoutSource).toContain('class="language-option__glyph"')
-    expect(layoutSource).toContain('>中</span>')
-    expect(layoutSource).toContain('>A</span>')
-    expect(layoutSource).toContain('>あ</span>')
-    expect(layoutSource).toContain('data-locale="zh-CN"')
-    expect(layoutSource).toContain('data-locale="en"')
-    expect(layoutSource).toContain('data-locale="ja"')
-    expect(layoutSource).toContain('aria-pressed="true"')
-    expect(layoutSource).toMatch(/\.language-switcher \{[^}]*height: 40px/s)
-    expect(layoutSource).toMatch(/@media \(max-width: 767px\)[\s\S]*\.language-switcher \{[^}]*height: 44px/)
+  it('places plain-text language buttons in the footer and removes the Topic button', () => {
+    const headerSource = layoutSource.match(/<header[\s\S]*?<\/header>/)?.[0] ?? ''
+    const footerSource = layoutSource.match(/<footer[\s\S]*?<\/footer>/)?.[0] ?? ''
+
+    expect(headerSource).not.toContain('language-switcher')
+    expect(footerSource).toContain('class="site-footer__language language-switcher"')
+    expect(footerSource).toMatch(/data-locale="zh-CN"[^>]*>中文<\/button>/)
+    expect(footerSource).toMatch(/data-locale="en"[^>]*>English<\/button>/)
+    expect(footerSource).toMatch(/data-locale="ja"[^>]*>日本語<\/button>/)
+    expect(layoutSource).not.toContain('language-option__glyph')
+    expect(layoutSource).toMatch(/\.language-option \{[^}]*border: 0;[^}]*background: transparent;/s)
     expect(layoutSource).not.toContain('<select id="site-language"')
     expect(layoutSource).not.toContain('https://github.com/topics/dsh-plugin')
   })

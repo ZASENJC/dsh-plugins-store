@@ -28,4 +28,11 @@ describe('browser tab icon', () => {
     expect(layout).toContain('favicon.png`} type="image/png" sizes="512x512"')
     expect(layout).not.toContain('favicon.svg')
   })
+
+  it('reuses the browser-tab artwork as the header brand mark', () => {
+    const layout = readFileSync(layoutPath, 'utf8')
+
+    expect(layout).toContain('class="brand__mark"')
+    expect(layout).toContain('src={`${baseUrl}favicon-32.png`}')
+  })
 })

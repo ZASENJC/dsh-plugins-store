@@ -74,35 +74,17 @@ const THEME_STORAGE_KEY = 'dsh-theme'
           aria-label="返回 DeepSeek-Harness 插件市场首页"
           data-i18n-aria-label="site.homeAria"
         >
+          <img
+            class="brand__mark"
+            src={`${baseUrl}favicon-32.png`}
+            alt=""
+            width="28"
+            height="28"
+            aria-hidden="true"
+          />
           <span class="brand__name" data-i18n="site.brand">DeepSeek-Harness 插件市场</span>
         </a>
         <nav aria-label="主导航" data-i18n-aria-label="nav.main">
-          <div class="language-switcher" role="group" aria-label="切换语言" data-i18n-aria-label="language.label">
-            <button
-              class="language-option"
-              type="button"
-              data-locale="zh-CN"
-              aria-label="中文"
-              title="中文"
-              aria-pressed="true"
-            ><span class="language-option__glyph" aria-hidden="true">中</span></button>
-            <button
-              class="language-option"
-              type="button"
-              data-locale="en"
-              aria-label="English"
-              title="English"
-              aria-pressed="false"
-            ><span class="language-option__glyph" aria-hidden="true">A</span></button>
-            <button
-              class="language-option"
-              type="button"
-              data-locale="ja"
-              aria-label="日本語"
-              title="日本語"
-              aria-pressed="false"
-            ><span class="language-option__glyph" aria-hidden="true">あ</span></button>
-          </div>
           <button
             id="theme-toggle"
             class="icon-button theme-toggle"
@@ -170,6 +152,16 @@ const THEME_STORAGE_KEY = 'dsh-theme'
           </span>
         </div>
         <p data-i18n="footer.source">数据来自 GitHub Topic，收录不代表审核、兼容或安全背书。</p>
+        <div
+          class="site-footer__language language-switcher"
+          role="group"
+          aria-label="切换语言"
+          data-i18n-aria-label="language.label"
+        >
+          <button class="language-option" type="button" data-locale="zh-CN" aria-pressed="true">中文</button>
+          <button class="language-option" type="button" data-locale="en" aria-pressed="false">English</button>
+          <button class="language-option" type="button" data-locale="ja" aria-pressed="false">日本語</button>
+        </div>
       </div>
     </footer>
     <script id="site-i18n-data" type="application/json" set:html={serializedDictionaries} is:inline></script>
@@ -378,65 +370,61 @@ const THEME_STORAGE_KEY = 'dsh-theme'
 
   .brand {
     display: inline-flex;
-    align-items: baseline;
+    align-items: center;
     gap: 10px;
     min-width: 0;
   }
 
+  .brand__mark {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    object-fit: contain;
+  }
+
   .brand__name {
+    min-width: 0;
     font-size: 15px;
     line-height: 20px;
   }
 
   .site-header nav {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: 8px;
   }
 
   .language-switcher {
-    display: grid;
-    grid-template-columns: repeat(3, 30px);
+    display: flex;
     align-items: center;
-    height: 40px;
-    border: 1px solid var(--outline);
-    border-radius: 9999px;
-    color: var(--body);
-    overflow: hidden;
+    gap: 14px;
   }
 
   .language-option {
-    display: grid;
-    width: 30px;
-    height: 100%;
-    place-items: center;
+    min-height: 28px;
+    padding: 0;
     border: 0;
     background: transparent;
-    color: inherit;
+    color: var(--mute);
     cursor: pointer;
-    padding: 0;
-    transition: background-color 160ms ease, color 160ms ease;
-  }
-
-  .language-option + .language-option {
-    border-left: 1px solid var(--outline);
+    font-size: 13px;
+    line-height: 20px;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 4px;
+    transition: color 160ms ease, text-decoration-color 160ms ease;
   }
 
   .language-option:hover {
-    background: var(--canvas-soft);
     color: var(--ink);
+    text-decoration-color: currentColor;
   }
 
   .language-option[aria-pressed='true'] {
-    background: var(--ink);
-    color: var(--canvas);
-  }
-
-  .language-option__glyph {
-    font-family: var(--font-mono);
-    font-size: 13px;
+    color: var(--ink);
     font-weight: 600;
-    line-height: 1;
+    text-decoration-color: currentColor;
   }
 
   .site-footer {
@@ -445,9 +433,9 @@ const THEME_STORAGE_KEY = 'dsh-theme'
   }
 
   .site-footer__inner {
-    display: flex;
-    justify-content: space-between;
-    gap: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px 24px;
     padding-block: 48px;
     font-size: 13px;
   }
@@ -493,18 +481,19 @@ const THEME_STORAGE_KEY = 'dsh-theme'
     text-decoration-color: currentColor;
   }
 
+  .site-footer__language {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
   @media (max-width: 767px) {
     .site-header__inner {
       gap: 8px;
     }
 
-    .language-switcher {
-      height: 44px;
-    }
-
     .brand__name {
       display: block;
-      max-width: calc(100vw - 166px);
+      max-width: calc(100vw - 104px);
       overflow: hidden;
       font-size: 13px;
       text-overflow: ellipsis;
@@ -512,8 +501,18 @@ const THEME_STORAGE_KEY = 'dsh-theme'
     }
 
     .site-footer__inner {
-      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
       padding-block: 32px;
+    }
+
+    .site-footer__language {
+      grid-column: 1;
+      grid-row: auto;
+    }
+
+    .language-option {
+      min-height: 44px;
     }
   }
 </style>
