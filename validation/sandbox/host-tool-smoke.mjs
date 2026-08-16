@@ -2,6 +2,8 @@ import { readFile, realpath } from 'node:fs/promises'
 import { resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { awaitWithTimeout, createCapabilityStub, resolvePluginConfig } from './capability-stub.mjs'
+
 const pluginRoot = resolve(process.argv[2] ?? '')
 const smokeMode = process.argv[3] ?? 'loader'
 if (!pluginRoot.startsWith('/validation/workspace/')
@@ -63,14 +65,8 @@ if (!apply) throw new Error('Plugin does not export an apply function')
 // real DSH profile has already proved installation and activation above; this
 // call catches plugins that cannot initialize against the host plugin contract
 // without exposing host files, credentials, or a Docker socket.
-const noop = (..._args) => noop
-const context = new Proxy(noop, {
-  get: (_target, property) => property === 'logger' ? noop : noop,
-  apply: () => noop,
-})
-await Promise.race([
-  Promise.resolve(apply(context, {})),
-  new Promise((_, reject) => setTimeout(() => reject(new Error('Plugin apply timed out')), 30_000)),
-])
+const context = createCapabilityStub()
+const config = resolvePluginConfig(module)
+await awaitWithTimeout(apply(context, config), 30_000)
 
 process.stdout.write(`${JSON.stringify({ smokeMode, packageName, entrypoint, apply: true, invoked: true })}\n`)

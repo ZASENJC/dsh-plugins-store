@@ -9,6 +9,7 @@ RUN npm ci --prefix /validator/toolchain --omit=dev --ignore-scripts \
 ENV PATH="/validator/toolchain/node_modules/.bin:${PATH}"
 
 COPY --chown=node:node validation/sandbox/copy-source.mjs /validator/copy-source.mjs
+COPY --chown=node:node validation/sandbox/capability-stub.mjs /validator/capability-stub.mjs
 COPY --chown=node:node validation/sandbox/host-tool-smoke.mjs /validator/host-tool-smoke.mjs
 COPY --chown=node:node validation/sandbox/postflight.mjs /validator/postflight.mjs
 
