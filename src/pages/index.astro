@@ -1,5 +1,5 @@
 ---
-import { ArrowUpRight, Check, ChevronDown, Copy, Search, Terminal } from '@lucide/astro'
+import { Braces, Check, ChevronDown, Copy, Search, Terminal } from '@lucide/astro'
 
 import CatalogPageNav from '../components/CatalogPageNav.astro'
 import DeepSeekGridMark from '../components/DeepSeekGridMark.astro'
@@ -52,7 +52,7 @@ const validationFilterStatuses = [
 ]
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const storeInstallCommand = 'dsh plugin --profile web add npm:dsh-plugins-store'
-const storeInstallGuideUrl = 'https://github.com/ZASENJC/dsh-plugins-store/tree/main/packages/dsh-plugins-store#一键安装'
+const catalogApiUrl = 'https://api.dshmk.com/'
 const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched)
 const pageTitle = isVerifiedPage
   ? '已验证插件 · DSH 插件市场'
@@ -77,7 +77,7 @@ const pageTitleKey = isVerifiedPage
         <Terminal size={16} stroke-width={1.6} />
         <span id="store-install-title" data-i18n="home.installMarket">安装市场插件</span>
       </div>
-      <div class="store-install-command">
+      <div class="store-install-command store-plugin-command">
         <code id="store-install-command" title={storeInstallCommand}>{storeInstallCommand}</code>
         <button
           id="copy-store-install"
@@ -91,15 +91,24 @@ const pageTitleKey = isVerifiedPage
           <Check class="check-icon" size={16} stroke-width={1.6} />
         </button>
       </div>
-      <a
-        class="store-install-action"
-        href={storeInstallGuideUrl}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <span data-i18n="home.installNow">一键安装</span>
-        <ArrowUpRight size={15} stroke-width={1.6} />
-      </a>
+      <div class="store-install-label store-api-label">
+        <Braces size={16} stroke-width={1.6} />
+        <span id="store-api-title" data-i18n="home.catalogApi">调用市场 API</span>
+      </div>
+      <div class="store-install-command store-api-command" role="group" aria-labelledby="store-api-title">
+        <code id="catalog-api-url" title={catalogApiUrl}>{catalogApiUrl}</code>
+        <button
+          id="copy-catalog-api"
+          type="button"
+          aria-label="复制市场 API 地址"
+          title="复制市场 API 地址"
+          data-i18n-aria-label="home.copyCatalogApi"
+          data-i18n-title="home.copyCatalogApi"
+        >
+          <Copy class="copy-icon" size={16} stroke-width={1.6} />
+          <Check class="check-icon" size={16} stroke-width={1.6} />
+        </button>
+      </div>
       <span id="store-install-status" class="visually-hidden" aria-live="polite"></span>
     </div>
   </section>
@@ -332,25 +341,47 @@ const pageTitleKey = isVerifiedPage
 
     const storeInstallCommand = document.getElementById('store-install-command')
     const copyStoreInstall = document.getElementById('copy-store-install')
+    const catalogApiUrl = document.getElementById('catalog-api-url')
+    const copyCatalogApi = document.getElementById('copy-catalog-api')
     const storeInstallStatus = document.getElementById('store-install-status')
 
-    if (storeInstallCommand && copyStoreInstall && storeInstallStatus) {
-      copyStoreInstall.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(storeInstallCommand.textContent ?? '')
-        copyStoreInstall.classList.add('is-copied')
-        const copiedLabel = translate('home.installCopied')
-        copyStoreInstall.setAttribute('aria-label', copiedLabel)
-        copyStoreInstall.setAttribute('title', copiedLabel)
+    const bindCopyFeedback = (
+      source: HTMLElement | null,
+      button: HTMLElement | null,
+      copyLabelKey: string,
+      copiedLabelKey: string,
+    ) => {
+      if (!source || !button || !storeInstallStatus) return
+
+      button.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(source.textContent ?? '')
+        button.classList.add('is-copied')
+        const copiedLabel = translate(copiedLabelKey)
+        button.setAttribute('aria-label', copiedLabel)
+        button.setAttribute('title', copiedLabel)
         storeInstallStatus.textContent = copiedLabel
         window.setTimeout(() => {
-          copyStoreInstall.classList.remove('is-copied')
-          const copyLabel = translate('home.copyMarketInstall')
-          copyStoreInstall.setAttribute('aria-label', copyLabel)
-          copyStoreInstall.setAttribute('title', copyLabel)
+          button.classList.remove('is-copied')
+          const copyLabel = translate(copyLabelKey)
+          button.setAttribute('aria-label', copyLabel)
+          button.setAttribute('title', copyLabel)
           storeInstallStatus.textContent = ''
         }, 1600)
       })
     }
+
+    bindCopyFeedback(
+      storeInstallCommand,
+      copyStoreInstall,
+      'home.copyMarketInstall',
+      'home.installCopied',
+    )
+    bindCopyFeedback(
+      catalogApiUrl,
+      copyCatalogApi,
+      'home.copyCatalogApi',
+      'home.catalogApiCopied',
+    )
 
     const catalogHead = document.querySelector<HTMLElement>('[data-catalog-head]')
     const supportsMotion = window.matchMedia('(pointer: fine)').matches
@@ -1088,38 +1119,45 @@ const pageTitleKey = isVerifiedPage
 
   .store-install-strip__inner {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 2fr) auto minmax(0, 1fr);
     gap: 12px;
     align-items: center;
     min-height: 56px;
   }
 
   .store-install-label,
-  .store-install-command,
-  .store-install-action {
+  .store-install-command {
     display: flex;
     align-items: center;
   }
 
   .store-install-label {
+    min-height: 36px;
     gap: 8px;
+    align-items: center;
     color: var(--body);
     font-size: 12px;
+    line-height: 18px;
     white-space: nowrap;
   }
 
   .store-install-label :global(svg) {
+    flex: 0 0 auto;
     color: #9fdda9;
   }
 
   .store-install-command {
+    height: 36px;
     min-width: 0;
-    min-height: 36px;
     overflow: hidden;
     border: 1px solid var(--hairline);
     border-radius: 6px;
     background: var(--canvas);
     padding-left: 12px;
+  }
+
+  .store-plugin-command {
+    margin-right: 45px;
   }
 
   .store-install-command code {
@@ -1137,7 +1175,7 @@ const pageTitleKey = isVerifiedPage
   .store-install-command button {
     display: grid;
     width: 36px;
-    min-height: 34px;
+    height: 34px;
     flex: 0 0 auto;
     place-items: center;
     border: 0;
@@ -1160,25 +1198,6 @@ const pageTitleKey = isVerifiedPage
   .store-install-command .is-copied .check-icon {
     display: block;
     color: #9fdda9;
-  }
-
-  .store-install-action {
-    min-height: 36px;
-    justify-content: center;
-    gap: 7px;
-    border: 1px solid var(--outline);
-    border-radius: 6px;
-    color: var(--ink);
-    font-size: 12px;
-    line-height: 18px;
-    padding-inline: 12px;
-    transition: border-color 160ms ease, background-color 160ms ease;
-    white-space: nowrap;
-  }
-
-  .store-install-action:hover {
-    border-color: var(--outline-strong);
-    background: var(--canvas-card);
   }
 
   .catalog-head {
@@ -1552,9 +1571,9 @@ const pageTitleKey = isVerifiedPage
   @media (max-width: 767px) {
     .store-install-strip__inner {
       grid-template-areas:
-        'label action'
-        'command command';
-      grid-template-columns: minmax(0, 1fr) auto;
+        'label command'
+        'api-label api';
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 8px 12px;
       padding-block: 10px;
     }
@@ -1567,9 +1586,16 @@ const pageTitleKey = isVerifiedPage
       grid-area: command;
     }
 
-    .store-install-action {
-      grid-area: action;
-      min-height: 36px;
+    .store-plugin-command {
+      margin-right: 0;
+    }
+
+    .store-api-label {
+      grid-area: api-label;
+    }
+
+    .store-api-command {
+      grid-area: api;
     }
 
     .catalog-head__art {
