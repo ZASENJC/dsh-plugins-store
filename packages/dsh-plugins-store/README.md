@@ -41,7 +41,7 @@ dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-
 ```sh
 npm run build:plugin
 npm pack ./packages/dsh-plugins-store
-dsh plugin --profile web add ./dsh-plugins-store-0.1.0.tgz
+dsh plugin --profile web add ./dsh-plugins-store-0.1.1.tgz
 ```
 
 卸载：
