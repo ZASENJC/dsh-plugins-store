@@ -14,8 +14,8 @@ const validScans = {
 const hostToolSnapshot: RepositoryStructureSnapshot = {
   repository: {
     id: 1001,
-    fullName: 'example/dsh-tool-json',
-    url: 'https://github.com/example/dsh-tool-json',
+    fullName: 'example/tool-json',
+    url: 'https://github.com/example/tool-json',
     sourceSha: 'a'.repeat(40),
     sourcePushedAt: '2026-08-14T08:00:00Z',
     isPrivate: false,
@@ -116,11 +116,15 @@ describe('shadow structure check', () => {
     })
   })
 
-  it('queues a project admitted by the case-insensitive dsh- Topic prefix', () => {
+  it('queues a project admitted by the case-insensitive dsh- repository name prefix', () => {
     const result = runStructureCheck({
       ...hostToolSnapshot,
+      repository: {
+        ...hostToolSnapshot.repository,
+        fullName: 'example/DSH-Plugin',
+      },
       projectType: 'plugin',
-      topics: ['DSH-Plugin', 'deepseek-harness'],
+      topics: ['deepseek-harness'],
       files: {
         'robots.txt': 'User-agent: *\nAllow: /\n',
         'og-image.jpg': undefined,
@@ -141,17 +145,21 @@ describe('shadow structure check', () => {
         currentStatus: 'structure_passed',
         sourceClassification: {
           dshRelevance: 'recognized',
-          relevanceSignals: ['topic:dsh-plugin'],
+          relevanceSignals: ['repository-name:dsh-plugin'],
         },
       },
     })
   })
 
-  it('does not queue a Topic without the required dsh- prefix', () => {
+  it('does not queue a repository name without the required dsh- prefix', () => {
     const result = runStructureCheck({
       ...hostToolSnapshot,
+      repository: {
+        ...hostToolSnapshot.repository,
+        fullName: 'example/not-dsh-plugin',
+      },
       projectType: 'plugin',
-      topics: ['dsh', 'dshplugin', 'not-dsh-plugin'],
+      topics: ['dsh-plugin', 'deepseek-harness'],
       files: {
         'README.md': '# DSH plugin recommendation\n',
       },

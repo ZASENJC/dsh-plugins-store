@@ -9,7 +9,7 @@ import {
 const sourceSha = 'a'.repeat(40)
 
 describe('source classification', () => {
-  it('uses the current Topic-aware classifier binding', () => {
+  it('uses the current repository-name-aware classifier binding', () => {
     expect(SOURCE_CLASSIFIER_VERSION).toBe('0.2.1')
   })
 
@@ -124,10 +124,10 @@ describe('source classification', () => {
   it.each([
     'dsh-plugin',
     'DSH-Theme',
-  ])('admits the case-insensitive dsh- Topic prefix without a source contract: %s', (topic) => {
+  ])('admits the case-insensitive dsh- repository name prefix without a source contract: %s', (repositoryName) => {
     const result = classifySource({
       sourceSha,
-      topics: [topic],
+      repositoryName,
       files: {
         'README.md': '# Community plugin\n',
       },
@@ -135,7 +135,7 @@ describe('source classification', () => {
 
     expect(result).toMatchObject({
       dshRelevance: 'recognized',
-      relevanceSignals: [`topic:${topic.toLowerCase()}`],
+      relevanceSignals: [`repository-name:${repositoryName.toLowerCase()}`],
       projectType: 'plugin',
       typeConfidence: 'high',
     })
@@ -145,10 +145,11 @@ describe('source classification', () => {
     'dsh',
     'dshplugin',
     'not-dsh-plugin',
-  ])('requires dsh- at the beginning of a Topic: %s', (topic) => {
+  ])('requires dsh- at the beginning of the repository name: %s', (repositoryName) => {
     expect(classifySource({
       sourceSha,
-      topics: [topic],
+      repositoryName,
+      topics: ['dsh-plugin'],
       files: {},
     })).toMatchObject({
       dshRelevance: 'unrecognized',
