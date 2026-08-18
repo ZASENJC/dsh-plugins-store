@@ -18,7 +18,7 @@ describe('homepage store plugin install banner', () => {
     expect(homepageSource).toContain('id="catalog-api-url"')
     expect(homepageSource).toContain('id="copy-catalog-api"')
     expect(homepageSource).toContain('aria-live="polite"')
-    expect(homepageSource).toContain('https://api.dshmk.com/')
+    expect(homepageSource).toContain("const catalogApiUrl = 'api.dshmk.com'")
     expect(homepageSource).not.toContain('一键安装')
     expect(homepageSource).not.toContain('storeInstallGuideUrl')
     expect(homepageSource).toContain(
@@ -44,8 +44,8 @@ describe('homepage store plugin install banner', () => {
 
   it('keeps the install command clipped inside its responsive row', () => {
     expect(homepageSource).toContain('.store-install-command code')
-    expect(homepageSource).toContain('class="store-install-command store-plugin-command"')
-    expect(homepageSource).toContain('margin-right: 45px')
+    expect(homepageSource).not.toContain('store-plugin-command')
+    expect(homepageSource).not.toContain('margin-right: 45px')
     expect(homepageSource).toContain('text-overflow: ellipsis')
     expect(homepageSource).toContain(
       'grid-template-columns: auto minmax(0, 2fr) auto minmax(0, 1fr)',
