@@ -1,5 +1,5 @@
 ---
-import { Braces, Check, ChevronDown, Copy, Search, Terminal } from '@lucide/astro'
+import { Braces, Check, ChevronDown, Copy, ExternalLink, Globe2, Search, Terminal } from '@lucide/astro'
 
 import CatalogPageNav from '../components/CatalogPageNav.astro'
 import DeepSeekGridMark from '../components/DeepSeekGridMark.astro'
@@ -53,6 +53,8 @@ const validationFilterStatuses = [
 const baseUrl = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`
 const storeInstallCommand = 'dsh plugin --profile web add npm:dsh-plugins-store'
 const catalogApiUrl = 'https://api.dshmk.com/'
+const stableRelayDomain = 'aitreez.com'
+const stableRelayUrl = 'https://aitreez.com'
 const homepageStructuredData = buildHomepageStructuredData(catalog.stats.fetched)
 const pageTitle = isVerifiedPage
   ? '已验证插件 · DSH 插件市场'
@@ -108,6 +110,36 @@ const pageTitleKey = isVerifiedPage
           <Copy class="copy-icon" size={16} stroke-width={1.6} />
           <Check class="check-icon" size={16} stroke-width={1.6} />
         </button>
+      </div>
+      <div class="store-install-label stable-relay-label">
+        <Globe2 size={16} stroke-width={1.6} />
+        <span id="stable-relay-title" data-i18n="home.stableRelay">稳定中转站</span>
+      </div>
+      <div class="store-install-command stable-relay-command" role="group" aria-labelledby="stable-relay-title">
+        <code id="stable-relay-domain" title={stableRelayDomain}>{stableRelayDomain}</code>
+        <button
+          id="copy-stable-relay"
+          type="button"
+          aria-label="复制稳定中转站域名"
+          title="复制稳定中转站域名"
+          data-i18n-aria-label="home.copyStableRelay"
+          data-i18n-title="home.copyStableRelay"
+        >
+          <Copy class="copy-icon" size={16} stroke-width={1.6} />
+          <Check class="check-icon" size={16} stroke-width={1.6} />
+        </button>
+        <a
+          id="open-stable-relay"
+          href={stableRelayUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="打开稳定中转站"
+          title="打开稳定中转站"
+          data-i18n-aria-label="home.openStableRelay"
+          data-i18n-title="home.openStableRelay"
+        >
+          <ExternalLink size={16} stroke-width={1.6} />
+        </a>
       </div>
       <span id="store-install-status" class="visually-hidden" aria-live="polite"></span>
     </div>
@@ -343,6 +375,8 @@ const pageTitleKey = isVerifiedPage
     const copyStoreInstall = document.getElementById('copy-store-install')
     const catalogApiUrl = document.getElementById('catalog-api-url')
     const copyCatalogApi = document.getElementById('copy-catalog-api')
+    const stableRelayDomain = document.getElementById('stable-relay-domain')
+    const copyStableRelay = document.getElementById('copy-stable-relay')
     const storeInstallStatus = document.getElementById('store-install-status')
 
     const bindCopyFeedback = (
@@ -381,6 +415,12 @@ const pageTitleKey = isVerifiedPage
       copyCatalogApi,
       'home.copyCatalogApi',
       'home.catalogApiCopied',
+    )
+    bindCopyFeedback(
+      stableRelayDomain,
+      copyStableRelay,
+      'home.copyStableRelay',
+      'home.stableRelayCopied',
     )
 
     const catalogHead = document.querySelector<HTMLElement>('[data-catalog-head]')
@@ -1119,7 +1159,7 @@ const pageTitleKey = isVerifiedPage
 
   .store-install-strip__inner {
     display: grid;
-    grid-template-columns: auto minmax(0, 2fr) auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 2fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
     gap: 12px;
     align-items: center;
     min-height: 56px;
@@ -1172,7 +1212,8 @@ const pageTitleKey = isVerifiedPage
     white-space: nowrap;
   }
 
-  .store-install-command button {
+  .store-install-command button,
+  .store-install-command a {
     display: grid;
     width: 36px;
     height: 34px;
@@ -1182,9 +1223,11 @@ const pageTitleKey = isVerifiedPage
     border-left: 1px solid var(--hairline);
     background: transparent;
     color: var(--mute);
+    text-decoration: none;
   }
 
   .store-install-command button:hover,
+  .store-install-command a:hover,
   .store-install-command button.is-copied {
     background: var(--canvas-card);
     color: var(--ink);
@@ -1558,21 +1601,11 @@ const pageTitleKey = isVerifiedPage
   }
 
   @media (max-width: 1023px) {
-    .catalog-head__inner {
-      grid-template-columns: 1fr;
-      gap: 36px;
-    }
-
-    .project-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 767px) {
     .store-install-strip__inner {
       grid-template-areas:
         'label command'
-        'api-label api';
+        'api-label api'
+        'relay-label relay';
       grid-template-columns: auto minmax(0, 1fr);
       gap: 8px 12px;
       padding-block: 10px;
@@ -1598,6 +1631,25 @@ const pageTitleKey = isVerifiedPage
       grid-area: api;
     }
 
+    .stable-relay-label {
+      grid-area: relay-label;
+    }
+
+    .stable-relay-command {
+      grid-area: relay;
+    }
+
+    .catalog-head__inner {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+
+    .project-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767px) {
     .catalog-head__art {
       top: 34%;
       left: -104px;
