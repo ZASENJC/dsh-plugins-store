@@ -56,8 +56,8 @@ export function buildStarTrend(
     .filter(([pointTime]) => pointTime >= dayStartMs - DAY_MS && pointTime < dayStartMs)
     .sort(([left], [right]) => left - right)
     .at(-1)?.[1]
-  const hasPriorTodayPoint = [...byTimestamp.keys()].some((pointTime) => pointTime >= dayStartMs)
-  if (previousDayLastPoint && !hasPriorTodayPoint) {
+  const hasMidnightBaseline = byTimestamp.has(dayStartMs)
+  if (previousDayLastPoint && !hasMidnightBaseline) {
     byTimestamp.set(dayStartMs, {
       capturedAt: new Date(dayStartMs).toISOString(),
       stars: previousDayLastPoint.stars,
