@@ -43,6 +43,24 @@ describe('catalog Star history', () => {
     })
   })
 
+  it('uses the last pre-midnight snapshot as the new Beijing-day baseline', () => {
+    const trend = buildStarTrend({
+      changeToday: 12,
+      points: [
+        { capturedAt: '2026-08-16T15:25:00.000Z', stars: 40 },
+        { capturedAt: '2026-08-16T15:55:00.000Z', stars: 42 },
+      ],
+    }, '2026-08-16T16:25:00.000Z', 45)
+
+    expect(trend).toEqual({
+      changeToday: 3,
+      points: [
+        { capturedAt: '2026-08-16T16:00:00.000Z', stars: 42 },
+        { capturedAt: '2026-08-16T16:25:00.000Z', stars: 45 },
+      ],
+    })
+  })
+
   it('keeps a compact daily curve while preserving its baseline and newest point', () => {
     const endOfDay = '2026-08-16T15:30:00.000Z'
     const points = Array.from({ length: 48 }, (_, index) => ({
