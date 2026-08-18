@@ -61,6 +61,25 @@ describe('catalog Star history', () => {
     })
   })
 
+  it('backfills a zero baseline when the current day already has snapshots', () => {
+    const trend = buildStarTrend({
+      changeToday: 1,
+      points: [
+        { capturedAt: '2026-08-16T15:55:00.000Z', stars: 42 },
+        { capturedAt: '2026-08-16T16:25:00.000Z', stars: 43 },
+      ],
+    }, '2026-08-16T17:25:00.000Z', 45)
+
+    expect(trend).toEqual({
+      changeToday: 3,
+      points: [
+        { capturedAt: '2026-08-16T16:00:00.000Z', stars: 42 },
+        { capturedAt: '2026-08-16T16:25:00.000Z', stars: 43 },
+        { capturedAt: '2026-08-16T17:25:00.000Z', stars: 45 },
+      ],
+    })
+  })
+
   it('keeps a compact daily curve while preserving its baseline and newest point', () => {
     const endOfDay = '2026-08-16T15:30:00.000Z'
     const points = Array.from({ length: 48 }, (_, index) => ({
