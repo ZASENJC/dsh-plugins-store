@@ -26,6 +26,22 @@ describe('homepage store plugin install banner', () => {
     )
   })
 
+  it('shows a copyable stable relay link beside the Store API', () => {
+    expect(homepageSource).toContain('id="stable-relay-title"')
+    expect(homepageSource).toContain('稳定中转站')
+    expect(homepageSource).toContain('id="stable-relay-domain"')
+    expect(homepageSource).toContain('id="copy-stable-relay"')
+    expect(homepageSource).toContain('id="open-stable-relay"')
+    expect(homepageSource).toContain('href={stableRelayUrl}')
+    expect(homepageSource).toContain('target="_blank"')
+    expect(homepageSource).toContain('rel="noopener noreferrer"')
+    expect(homepageSource).toContain("const stableRelayDomain = 'aitreez.com'")
+    expect(homepageSource).toContain("const stableRelayUrl = 'https://aitreez.com'")
+    expect(homepageSource).toContain(
+      "'home.stableRelayCopied'",
+    )
+  })
+
   it('keeps the install command clipped inside its responsive row', () => {
     expect(homepageSource).toContain('.store-install-command code')
     expect(homepageSource).toContain('class="store-install-command store-plugin-command"')
