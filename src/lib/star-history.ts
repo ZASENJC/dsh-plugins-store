@@ -43,7 +43,7 @@ export function buildStarTrend(
   for (const point of previous?.points ?? []) {
     const pointTime = Date.parse(point.capturedAt)
     if (!Number.isFinite(pointTime)
-      || pointTime < dayStartMs
+      || pointTime < dayStartMs - DAY_MS
       || pointTime > capturedAtMs
       || !Number.isFinite(point.stars)
       || point.stars < 0) continue
@@ -52,12 +52,24 @@ export function buildStarTrend(
       stars: Math.round(point.stars),
     })
   }
+  const previousDayLastPoint = [...byTimestamp.entries()]
+    .filter(([pointTime]) => pointTime >= dayStartMs - DAY_MS && pointTime < dayStartMs)
+    .sort(([left], [right]) => left - right)
+    .at(-1)?.[1]
+  const hasPriorTodayPoint = [...byTimestamp.keys()].some((pointTime) => pointTime >= dayStartMs)
+  if (previousDayLastPoint && !hasPriorTodayPoint) {
+    byTimestamp.set(dayStartMs, {
+      capturedAt: new Date(dayStartMs).toISOString(),
+      stars: previousDayLastPoint.stars,
+    })
+  }
   byTimestamp.set(capturedAtMs, {
     capturedAt: new Date(capturedAtMs).toISOString(),
     stars: currentStars,
   })
 
   const today = [...byTimestamp.entries()]
+    .filter(([pointTime]) => pointTime >= dayStartMs)
     .sort(([left], [right]) => left - right)
     .map(([, point]) => point)
   const baseline = today[0]
