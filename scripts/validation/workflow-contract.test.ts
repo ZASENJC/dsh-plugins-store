@@ -37,6 +37,8 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).toContain('Restore latest catalog snapshot for Star history')
     expect(syncWorkflow).toMatch(/Restore latest catalog snapshot for Star history\s+continue-on-error: true/)
     expect(syncWorkflow).toContain('gh run list --workflow sync-catalog.yml')
+    expect(syncWorkflow).toContain('pre_midnight_catalog')
+    expect(syncWorkflow).toContain('Restored ${merged} Star-history baselines')
     expect(syncWorkflow).toContain('Star history will restart from the checked-in catalog')
     expect(syncWorkflow).toContain('plugin-discovery-snapshot')
     expect(syncWorkflow).toContain('plugin-classification-state')

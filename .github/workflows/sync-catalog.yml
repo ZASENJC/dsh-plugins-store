@@ -43,18 +43,82 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           restore_root="$(mktemp -d)"
+          latest_catalog="$restore_root/latest/catalog.json"
+          pre_midnight_catalog="$restore_root/pre-midnight/catalog.json"
           restored=false
-          run_ids="$(gh run list --workflow sync-catalog.yml --branch "$VALIDATION_BRANCH" --status success --limit 20 --json databaseId --jq '.[].databaseId' 2>/dev/null || true)"
-          for run_id in $run_ids; do
-            artifact_dir="$restore_root/$run_id"
-            if gh run download "$run_id" --name plugin-catalog-snapshot --dir "$artifact_dir" 2>/dev/null \
+          current_day_start="$(node -e 'const now=Date.now(); const day=86400000; const offset=8*3600000; console.log(new Date(Math.floor((now + offset) / day) * day - offset).toISOString())')"
+          previous_day_start="$(node -e 'console.log(new Date(Date.parse(process.argv[1]) - 86400000).toISOString())' "$current_day_start")"
+          run_records="$(gh run list --workflow sync-catalog.yml --branch "$VALIDATION_BRANCH" --status success --limit 80 --json databaseId,createdAt --jq '.[] | [.databaseId,.createdAt] | @tsv' 2>/dev/null || true)"
+          latest_run_id="$(printf '%s\n' "$run_records" | head -n 1 | cut -f1)"
+          download_catalog() {
+            local run_id="$1"
+            local artifact_dir="$2"
+            rm -rf "$artifact_dir"
+            gh run download "$run_id" --name plugin-catalog-snapshot --dir "$artifact_dir" 2>/dev/null \
               && test -f "$artifact_dir/catalog.json" \
-              && node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$artifact_dir/catalog.json"; then
-              cp "$artifact_dir/catalog.json" src/data/catalog.json
-              restored=true
+              && node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$artifact_dir/catalog.json"
+          }
+          if test -n "$latest_run_id" \
+            && download_catalog "$latest_run_id" "$restore_root/latest"; then
+            restored=true
+          fi
+          baseline_run_ids="$(printf '%s\n' "$run_records" \
+            | awk -F '\t' -v start="$current_day_start" -v previous="$previous_day_start" '$2 < start && $2 >= previous {print $1}' \
+            | head -n 6)"
+          for run_id in $baseline_run_ids; do
+            if download_catalog "$run_id" "$restore_root/pre-midnight-$run_id" \
+              && CANDIDATE_CATALOG="$restore_root/pre-midnight-$run_id/catalog.json" \
+                DAY_START="$current_day_start" \
+                node -e '
+                  const fs = require("node:fs")
+                  const candidate = JSON.parse(fs.readFileSync(process.env.CANDIDATE_CATALOG, "utf8"))
+                  const generatedAt = Date.parse(candidate.generatedAt)
+                  const dayStart = Date.parse(process.env.DAY_START)
+                  process.exit(Number.isFinite(generatedAt) && generatedAt < dayStart ? 0 : 1)
+                '; then
+              mkdir -p "$restore_root/pre-midnight"
+              cp "$restore_root/pre-midnight-$run_id/catalog.json" "$pre_midnight_catalog"
               break
             fi
           done
+          if test "$restored" = true; then
+            if test -f "$pre_midnight_catalog"; then
+              LATEST_CATALOG="$latest_catalog" \
+              PRE_MIDNIGHT_CATALOG="$pre_midnight_catalog" \
+              DAY_START="$current_day_start" \
+              node <<'NODE'
+              const fs = require('node:fs')
+
+              const latestPath = process.env.LATEST_CATALOG
+              const preMidnightPath = process.env.PRE_MIDNIGHT_CATALOG
+              const dayStart = Date.parse(process.env.DAY_START)
+              const latest = JSON.parse(fs.readFileSync(latestPath, 'utf8'))
+              const preMidnight = JSON.parse(fs.readFileSync(preMidnightPath, 'utf8'))
+              const previousById = new Map((preMidnight.repositories ?? []).map((entry) => [entry.repositoryId, entry]))
+              let merged = 0
+
+              for (const entry of latest.repositories ?? []) {
+                const points = entry.starTrend?.points
+                if (!Array.isArray(points) || points.some((point) => Date.parse(point.capturedAt) === dayStart)) continue
+                const previous = previousById.get(entry.repositoryId)
+                const baseline = (previous?.starTrend?.points ?? [])
+                  .filter((point) => {
+                    const capturedAt = Date.parse(point.capturedAt)
+                    return Number.isFinite(capturedAt) && capturedAt >= dayStart - 86400000 && capturedAt < dayStart
+                  })
+                  .sort((left, right) => Date.parse(left.capturedAt) - Date.parse(right.capturedAt))
+                  .at(-1)
+                if (!baseline) continue
+                entry.starTrend.points = [baseline, ...points.filter((point) => point.capturedAt !== baseline.capturedAt)]
+                merged += 1
+              }
+
+              fs.writeFileSync(latestPath, `${JSON.stringify(latest, null, 2)}\n`)
+              console.log(`Restored ${merged} Star-history baselines from the last pre-midnight catalog snapshot.`)
+          NODE
+            fi
+            cp "$latest_catalog" src/data/catalog.json
+          fi
           rm -rf "$restore_root"
           if test "$restored" = false; then
             echo "Star history will restart from the checked-in catalog; catalog publication will continue."
