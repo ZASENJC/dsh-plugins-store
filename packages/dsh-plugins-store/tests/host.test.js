@@ -7,12 +7,13 @@ describe('DSH host command', () => {
     const registerCommand = vi.fn()
     const registerRoute = vi.fn(() => vi.fn())
     const registerTool = vi.fn()
+    const getTool = vi.fn(() => undefined)
     const registerSkill = vi.fn()
     const on = vi.fn()
     apply({
       commands: { register: registerCommand },
       webServer: { register: registerRoute },
-      tools: { register: registerTool },
+      tools: { get: getTool, register: registerTool },
       skills: { register: registerSkill },
       on,
     })
@@ -61,5 +62,29 @@ describe('DSH host command', () => {
       kind: 'error',
       text: 'Usage: /store',
     })
+  })
+
+  it('reuses Store tools already registered by the community plugin', () => {
+    const registerCommand = vi.fn()
+    const registerRoute = vi.fn(() => vi.fn())
+    const registerTool = vi.fn()
+    const getTool = vi.fn((toolName) => ({ name: toolName }))
+    const registerSkill = vi.fn()
+    const on = vi.fn()
+
+    apply({
+      commands: { register: registerCommand },
+      webServer: { register: registerRoute },
+      tools: { get: getTool, register: registerTool },
+      skills: { register: registerSkill },
+      on,
+    })
+
+    expect(getTool).toHaveBeenCalledWith('store_search')
+    expect(registerTool).not.toHaveBeenCalled()
+    expect(on).not.toHaveBeenCalledWith('tools/pre-execute', expect.any(Function))
+    expect(registerCommand).toHaveBeenCalledOnce()
+    expect(registerRoute).toHaveBeenCalledTimes(3)
+    expect(registerSkill).toHaveBeenCalledOnce()
   })
 })

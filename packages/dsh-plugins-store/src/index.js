@@ -3,6 +3,7 @@ import { createInstallHandler, installPlan } from './installer.js'
 import { createInventoryHandler, createRemoveHandler, listInstalledPlugins, removeInstalledPlugin } from './plugin-manager.js'
 import { loadBundledStoreSkill } from './store-skill.js'
 import { createStoreApprovalGate, createStoreTools } from './store-search.js'
+import { registerCompatibleStoreTools } from './tool-compat.js'
 
 export const name = 'dsh-plugins-store'
 export const inject = ['commands', 'webServer', 'tools', 'skills']
@@ -42,8 +43,10 @@ export function apply(ctx) {
       : { kind: 'error', text: 'Usage: /store' },
   })
 
-  for (const tool of createStoreTools(storeToolOptions())) ctx.tools.register(tool)
-  ctx.on('tools/pre-execute', createStoreApprovalGate())
+  const registeredTools = registerCompatibleStoreTools(ctx.tools, createStoreTools(storeToolOptions()))
+  if (registeredTools.some(({ name }) => name === 'store_install' || name === 'store_remove')) {
+    ctx.on('tools/pre-execute', createStoreApprovalGate())
+  }
   ctx.skills.register(storeSkill)
 
   ctx.webServer.register({
