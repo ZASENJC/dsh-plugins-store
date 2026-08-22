@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-22T04:05:09.646Z",
+  "generatedAt": "2026-08-22T04:58:08.040Z",
   "mode": "incremental",
   "classifierVersion": "0.2.1",
   "records": [
@@ -51,7 +51,7 @@
     {
       "repositoryId": 491345968,
       "fullName": "evil7/deepSea",
-      "sourcePushedAt": "2026-08-22T02:40:02Z",
+      "sourcePushedAt": "2026-08-22T03:30:42Z",
       "sourceSha": "195eab2272481c7fda666074d58deaf204aeaff6",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
@@ -1424,11 +1424,11 @@
     {
       "repositoryId": 1224734286,
       "fullName": "Ikalus1988/MisakaNet",
-      "sourcePushedAt": "2026-08-22T02:50:20Z",
-      "sourceSha": "7fc6bc02a3cbe013eecb4bd9971e2c2e78c4d459",
+      "sourcePushedAt": "2026-08-22T04:00:10Z",
+      "sourceSha": "df2a9b348e7f1b05e5919372010621e3637e71a3",
       "disposition": "include",
       "classification": {
-        "sourceSha": "7fc6bc02a3cbe013eecb4bd9971e2c2e78c4d459",
+        "sourceSha": "df2a9b348e7f1b05e5919372010621e3637e71a3",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -1471,18 +1471,17 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "failed",
-        "disposition": "manual_review",
-        "stage": "structure",
-        "sourceSha": "7fc6bc02a3cbe013eecb4bd9971e2c2e78c4d459",
-        "checkedAt": "2026-08-22T03:11:33.970Z",
+        "status": "inconclusive",
+        "disposition": "retryable",
+        "stage": "sandbox",
+        "sourceSha": "df2a9b348e7f1b05e5919372010621e3637e71a3",
+        "checkedAt": "2026-08-22T04:58:08.040Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": "channel-mcp",
-        "durationMs": 0,
-        "errorCode": "SECURITY_REVIEW_REQUIRED",
-        "attribution": "policy"
+        "executionType": null,
+        "errorCode": "SOURCE_CHANGED_DURING_RUN",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -1847,12 +1846,12 @@
     {
       "repositoryId": 1240554500,
       "fullName": "KCNyu/clawock",
-      "sourcePushedAt": "2026-08-22T03:08:11Z",
-      "sourceSha": "355ebce6de864b8e32b6a8157948e77974844799",
+      "sourcePushedAt": "2026-08-22T04:23:03Z",
+      "sourceSha": "87328c09417a830f06347cd7d73ad90e9bfb5ea0",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "355ebce6de864b8e32b6a8157948e77974844799",
+        "sourceSha": "87328c09417a830f06347cd7d73ad90e9bfb5ea0",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -2812,12 +2811,12 @@
     {
       "repositoryId": 1268795053,
       "fullName": "Coprexist/AIsChat",
-      "sourcePushedAt": "2026-08-22T03:25:02Z",
-      "sourceSha": "18c2e81ac4191cb273303877c9c8898a0ada047c",
+      "sourcePushedAt": "2026-08-22T04:23:18Z",
+      "sourceSha": "3c992811b44c10b5d79751ec66d5f09d020369e4",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "18c2e81ac4191cb273303877c9c8898a0ada047c",
+        "sourceSha": "3c992811b44c10b5d79751ec66d5f09d020369e4",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -2990,11 +2989,11 @@
     {
       "repositoryId": 1276714299,
       "fullName": "AmethystLuna/embedded-workbench",
-      "sourcePushedAt": "2026-08-21T21:05:02Z",
-      "sourceSha": "9728f9a5ca8352460a0ad51287ed0f4fb6c311d0",
+      "sourcePushedAt": "2026-08-22T04:12:43Z",
+      "sourceSha": "38c8632f215cf18ba362b8e8c66beef8c402a81d",
       "disposition": "include",
       "classification": {
-        "sourceSha": "9728f9a5ca8352460a0ad51287ed0f4fb6c311d0",
+        "sourceSha": "38c8632f215cf18ba362b8e8c66beef8c402a81d",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -3037,13 +3036,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "9728f9a5ca8352460a0ad51287ed0f4fb6c311d0",
-        "checkedAt": "2026-08-22T02:14:32.243Z",
+        "sourceSha": "38c8632f215cf18ba362b8e8c66beef8c402a81d",
+        "checkedAt": "2026-08-22T04:50:03.790Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 209786,
+        "durationMs": 50264,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -5345,7 +5344,7 @@
     {
       "repositoryId": 1321152436,
       "fullName": "pulseaiclub/phi",
-      "sourcePushedAt": "2026-08-21T10:03:38Z",
+      "sourcePushedAt": "2026-08-22T04:16:04Z",
       "sourceSha": "f18c66719b5a094c30adbaebe90e5c62ba81bf53",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
@@ -5720,7 +5719,7 @@
     {
       "repositoryId": 1324996099,
       "fullName": "Lum1104/dsh-browser",
-      "sourcePushedAt": "2026-08-22T02:44:11Z",
+      "sourcePushedAt": "2026-08-22T04:17:32Z",
       "sourceSha": "eefd503da96097b41826943f49231f761e448e70",
       "disposition": "include",
       "classification": {
@@ -5765,12 +5764,12 @@
         "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "eefd503da96097b41826943f49231f761e448e70",
-        "checkedAt": "2026-08-22T03:11:37.955Z",
+        "checkedAt": "2026-08-22T04:53:04.182Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 93572,
+        "durationMs": 105172,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -5987,11 +5986,11 @@
     {
       "repositoryId": 1326893710,
       "fullName": "omdsh-dev/DSH-better-sidebar",
-      "sourcePushedAt": "2026-08-21T18:03:27Z",
-      "sourceSha": "646c91cf70883e9a6cd343d176b0c4939c42bc2c",
+      "sourcePushedAt": "2026-08-22T04:10:26Z",
+      "sourceSha": "7dbd9b75e2fd65758d4e55f750319399b91255a2",
       "disposition": "include",
       "classification": {
-        "sourceSha": "646c91cf70883e9a6cd343d176b0c4939c42bc2c",
+        "sourceSha": "7dbd9b75e2fd65758d4e55f750319399b91255a2",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -6030,16 +6029,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "646c91cf70883e9a6cd343d176b0c4939c42bc2c",
-        "checkedAt": "2026-08-22T02:26:45.629Z",
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "structure",
+        "sourceSha": "7dbd9b75e2fd65758d4e55f750319399b91255a2",
+        "checkedAt": "2026-08-22T04:51:19.010Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 187254
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -7508,12 +7509,12 @@
     {
       "repositoryId": 1330942675,
       "fullName": "0xsline/awesome-deepseek-harness",
-      "sourcePushedAt": "2026-08-21T09:34:05Z",
-      "sourceSha": "b154ebd5d7df3db32953ea6efcb24f6dd4ae6492",
+      "sourcePushedAt": "2026-08-22T04:24:52Z",
+      "sourceSha": "78d3f7411b3ee858d8dcb9324ed1d965dd731ad6",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "b154ebd5d7df3db32953ea6efcb24f6dd4ae6492",
+        "sourceSha": "78d3f7411b3ee858d8dcb9324ed1d965dd731ad6",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -7744,11 +7745,11 @@
     {
       "repositoryId": 1331608070,
       "fullName": "bruc3van/dsh-desktop",
-      "sourcePushedAt": "2026-08-21T17:17:04Z",
-      "sourceSha": "95b39d2eefa565a1e7ccf98190a54cb28225c877",
+      "sourcePushedAt": "2026-08-22T03:52:01Z",
+      "sourceSha": "b1721cb31065e4863a8b686f2eb595e3fed40158",
       "disposition": "include",
       "classification": {
-        "sourceSha": "95b39d2eefa565a1e7ccf98190a54cb28225c877",
+        "sourceSha": "b1721cb31065e4863a8b686f2eb595e3fed40158",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -7784,13 +7785,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "95b39d2eefa565a1e7ccf98190a54cb28225c877",
-        "checkedAt": "2026-08-22T02:30:34.591Z",
+        "sourceSha": "b1721cb31065e4863a8b686f2eb595e3fed40158",
+        "checkedAt": "2026-08-22T04:55:29.140Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 204042,
+        "durationMs": 162150,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -8685,12 +8686,12 @@
     {
       "repositoryId": 1333082908,
       "fullName": "hikariming/dshfind",
-      "sourcePushedAt": "2026-08-22T03:15:40Z",
-      "sourceSha": "d1a05b3ddeae8a855b60aa6d6008bfd151b26414",
+      "sourcePushedAt": "2026-08-22T04:15:02Z",
+      "sourceSha": "52855f7e8c5e706cd7a0864c60a5eb10a09c9598",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "d1a05b3ddeae8a855b60aa6d6008bfd151b26414",
+        "sourceSha": "52855f7e8c5e706cd7a0864c60a5eb10a09c9598",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -8899,7 +8900,7 @@
     {
       "repositoryId": 1333111893,
       "fullName": "ccch1mneyyy/dsh-TUI",
-      "sourcePushedAt": "2026-08-22T03:26:32Z",
+      "sourcePushedAt": "2026-08-22T03:55:38Z",
       "sourceSha": "52ae21c4b27dcdea1db5f3f6a655bea77891fe99",
       "disposition": "include",
       "classification": {
@@ -8947,16 +8948,16 @@
       "validation": {
         "status": "failed",
         "disposition": "auto_failed",
-        "stage": "structure",
+        "stage": "sandbox",
         "sourceSha": "52ae21c4b27dcdea1db5f3f6a655bea77891fe99",
-        "checkedAt": "2026-08-22T04:02:11.800Z",
+        "checkedAt": "2026-08-22T04:55:44.229Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "command",
-        "durationMs": 0,
-        "errorCode": "SCANNER_UNAVAILABLE",
-        "attribution": "infrastructure"
+        "durationMs": 97686,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -9924,12 +9925,12 @@
     {
       "repositoryId": 1333144072,
       "fullName": "bruc3van/awesome-dsh-plugin",
-      "sourcePushedAt": "2026-08-21T15:02:53Z",
-      "sourceSha": "8b050aa8694fae933810c696e35288c33e0e5391",
+      "sourcePushedAt": "2026-08-22T04:05:38Z",
+      "sourceSha": "fe132c1b50fbfec155d39cbf6392bbb8f3486c14",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "8b050aa8694fae933810c696e35288c33e0e5391",
+        "sourceSha": "fe132c1b50fbfec155d39cbf6392bbb8f3486c14",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -9984,7 +9985,7 @@
     {
       "repositoryId": 1333146829,
       "fullName": "Ruler4396/dsh-launcher",
-      "sourcePushedAt": "2026-08-22T03:14:11Z",
+      "sourcePushedAt": "2026-08-22T04:06:46Z",
       "sourceSha": "957b0ddbe9cc5967fd95dd198f5fa14c4d07dff1",
       "disposition": "include",
       "classification": {
@@ -10016,16 +10017,16 @@
       "validation": {
         "status": "failed",
         "disposition": "auto_failed",
-        "stage": "sandbox",
+        "stage": "structure",
         "sourceSha": "957b0ddbe9cc5967fd95dd198f5fa14c4d07dff1",
-        "checkedAt": "2026-08-22T04:00:01.082Z",
+        "checkedAt": "2026-08-22T04:53:13.611Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 54121,
-        "errorCode": "DEPENDENCY_INSTALL_FAILED",
-        "attribution": "plugin"
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -10275,11 +10276,11 @@
     {
       "repositoryId": 1333152408,
       "fullName": "whyihaveyou/dsh-suite",
-      "sourcePushedAt": "2026-08-22T03:09:17Z",
-      "sourceSha": "e1c677009d3d30b51c29754667bee49f121d20f9",
+      "sourcePushedAt": "2026-08-22T03:58:21Z",
+      "sourceSha": "8d70d4416d3626cbd306918fa0d907fb43c68c17",
       "disposition": "include",
       "classification": {
-        "sourceSha": "e1c677009d3d30b51c29754667bee49f121d20f9",
+        "sourceSha": "8d70d4416d3626cbd306918fa0d907fb43c68c17",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -10332,8 +10333,8 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "e1c677009d3d30b51c29754667bee49f121d20f9",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "8d70d4416d3626cbd306918fa0d907fb43c68c17",
+        "checkedAt": "2026-08-22T04:58:08.040Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -10590,12 +10591,12 @@
     {
       "repositoryId": 1333167552,
       "fullName": "libukai/awesome-deepseek-harness",
-      "sourcePushedAt": "2026-08-21T08:22:33Z",
-      "sourceSha": "7cba01bae613f5db62c683f7e71d360036568093",
+      "sourcePushedAt": "2026-08-22T04:03:19Z",
+      "sourceSha": "9f2be1099138ea9f1f78c29d6d2b9122c0e1e79d",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "7cba01bae613f5db62c683f7e71d360036568093",
+        "sourceSha": "9f2be1099138ea9f1f78c29d6d2b9122c0e1e79d",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -10686,12 +10687,12 @@
     {
       "repositoryId": 1333173677,
       "fullName": "Dominic789654/awesome-deepseek-harness",
-      "sourcePushedAt": "2026-08-22T02:52:16Z",
-      "sourceSha": "51e6e0aaab2190bd42860512b2dfc5270e93d54a",
+      "sourcePushedAt": "2026-08-22T04:04:24Z",
+      "sourceSha": "880eae7a3b75b8dd4f0f0140120ce4a24ea37b3a",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "51e6e0aaab2190bd42860512b2dfc5270e93d54a",
+        "sourceSha": "880eae7a3b75b8dd4f0f0140120ce4a24ea37b3a",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -13260,11 +13261,11 @@
     {
       "repositoryId": 1333239047,
       "fullName": "HackSing/dsh-plugins",
-      "sourcePushedAt": "2026-08-21T13:08:17Z",
-      "sourceSha": "75d067576f5fbf7c30b62d6bdabc7a50ed85c224",
+      "sourcePushedAt": "2026-08-22T04:17:56Z",
+      "sourceSha": "8761202b38c506328a6cb4e289adae853a387967",
       "disposition": "include",
       "classification": {
-        "sourceSha": "75d067576f5fbf7c30b62d6bdabc7a50ed85c224",
+        "sourceSha": "8761202b38c506328a6cb4e289adae853a387967",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -13290,16 +13291,16 @@
       "validation": {
         "status": "failed",
         "disposition": "auto_failed",
-        "stage": "sandbox",
-        "sourceSha": "75d067576f5fbf7c30b62d6bdabc7a50ed85c224",
-        "checkedAt": "2026-08-22T01:58:47.650Z",
+        "stage": "structure",
+        "sourceSha": "8761202b38c506328a6cb4e289adae853a387967",
+        "checkedAt": "2026-08-22T04:50:45.012Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 222057,
-        "errorCode": "DEPENDENCY_INSTALL_FAILED",
-        "attribution": "plugin"
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -14611,11 +14612,11 @@
     {
       "repositoryId": 1333262226,
       "fullName": "dsh-pub/dsh-pub",
-      "sourcePushedAt": "2026-08-21T12:38:54Z",
-      "sourceSha": "c7fb688d851c0a6cfa1cbd78a15a9a9c218b99ba",
+      "sourcePushedAt": "2026-08-22T03:40:02Z",
+      "sourceSha": "8c658843341c892b2a40fa43b7615d41b4929312",
       "disposition": "include",
       "classification": {
-        "sourceSha": "c7fb688d851c0a6cfa1cbd78a15a9a9c218b99ba",
+        "sourceSha": "8c658843341c892b2a40fa43b7615d41b4929312",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -14656,13 +14657,13 @@
         "status": "inconclusive",
         "disposition": "capability_pending",
         "stage": "sandbox",
-        "sourceSha": "c7fb688d851c0a6cfa1cbd78a15a9a9c218b99ba",
-        "checkedAt": "2026-08-22T02:08:37.214Z",
+        "sourceSha": "8c658843341c892b2a40fa43b7615d41b4929312",
+        "checkedAt": "2026-08-22T04:50:29.504Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "collection",
-        "durationMs": 220723,
+        "durationMs": 68495,
         "errorCode": "COLLECTION_MANIFEST_REQUIRED",
         "attribution": "inconclusive"
       }
@@ -14934,12 +14935,12 @@
     {
       "repositoryId": 1333268405,
       "fullName": "vvlife/awesome-deepseek-harness-plugins",
-      "sourcePushedAt": "2026-08-22T03:23:36Z",
-      "sourceSha": "acfcbae2e31abd0370bc8f4b9c136a2d0fe00633",
+      "sourcePushedAt": "2026-08-22T03:59:10Z",
+      "sourceSha": "45791f5752586e7e0c3d6374ec36a178eaa20ae0",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "acfcbae2e31abd0370bc8f4b9c136a2d0fe00633",
+        "sourceSha": "45791f5752586e7e0c3d6374ec36a178eaa20ae0",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -18413,7 +18414,7 @@
     {
       "repositoryId": 1333320049,
       "fullName": "anweat/dsh-web-search-pro",
-      "sourcePushedAt": "2026-08-22T02:57:04Z",
+      "sourcePushedAt": "2026-08-22T03:37:27Z",
       "sourceSha": "be8407cd7ae299ad5ac1ff066d8d004ac9274fd8",
       "disposition": "include",
       "classification": {
@@ -18456,12 +18457,12 @@
         "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "be8407cd7ae299ad5ac1ff066d8d004ac9274fd8",
-        "checkedAt": "2026-08-22T04:01:13.713Z",
+        "checkedAt": "2026-08-22T04:52:03.354Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 137989
+        "durationMs": 66259
       }
     },
     {
@@ -18521,7 +18522,7 @@
     {
       "repositoryId": 1333321333,
       "fullName": "anywhere-labs/deepseek-harness-desktop",
-      "sourcePushedAt": "2026-08-22T02:18:20Z",
+      "sourcePushedAt": "2026-08-22T04:16:06Z",
       "sourceSha": "6201080cfaa2f9b0864333e9da695cde71d3f1e1",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
@@ -22546,11 +22547,11 @@
     {
       "repositoryId": 1333418376,
       "fullName": "Ericwong5021/deepseek-plugin-store",
-      "sourcePushedAt": "2026-08-22T03:26:21Z",
-      "sourceSha": "0702137dd3e88b6b34d848f3050eec8521b3688a",
+      "sourcePushedAt": "2026-08-22T04:19:27Z",
+      "sourceSha": "514cc93d88ecd18af86ab8f631403b636d69282e",
       "disposition": "include",
       "classification": {
-        "sourceSha": "0702137dd3e88b6b34d848f3050eec8521b3688a",
+        "sourceSha": "514cc93d88ecd18af86ab8f631403b636d69282e",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -22594,8 +22595,8 @@
         "status": "failed",
         "disposition": "manual_review",
         "stage": "structure",
-        "sourceSha": "0702137dd3e88b6b34d848f3050eec8521b3688a",
-        "checkedAt": "2026-08-22T03:58:55.724Z",
+        "sourceSha": "514cc93d88ecd18af86ab8f631403b636d69282e",
+        "checkedAt": "2026-08-22T04:52:46.990Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -23896,7 +23897,7 @@
     {
       "repositoryId": 1333446374,
       "fullName": "ysr666/dsh-vision-router",
-      "sourcePushedAt": "2026-08-22T03:21:33Z",
+      "sourcePushedAt": "2026-08-22T04:11:51Z",
       "sourceSha": "fc64c525c623206c0bca9d49f18f8acf643ba687",
       "disposition": "include",
       "classification": {
@@ -23947,7 +23948,7 @@
         "disposition": "manual_review",
         "stage": "structure",
         "sourceSha": "fc64c525c623206c0bca9d49f18f8acf643ba687",
-        "checkedAt": "2026-08-22T03:58:44.127Z",
+        "checkedAt": "2026-08-22T04:53:54.357Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -25613,12 +25614,12 @@
     {
       "repositoryId": 1333486649,
       "fullName": "ningbainb/deepseek-harness-desktop",
-      "sourcePushedAt": "2026-08-22T03:21:36Z",
-      "sourceSha": "af031f42c0a223d8eb5719138ba0c676b575acec",
+      "sourcePushedAt": "2026-08-22T03:45:23Z",
+      "sourceSha": "6197cb382fc35fd335e842f5e17b27ae40125a99",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "af031f42c0a223d8eb5719138ba0c676b575acec",
+        "sourceSha": "6197cb382fc35fd335e842f5e17b27ae40125a99",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -25628,15 +25629,21 @@
           "ui",
           "data",
           "development",
-          "agent-session",
           "operations",
           "security",
+          "agent-session",
           "lifestyle",
           "communication",
           "model-mcp",
           "research"
         ],
         "matchedSignals": [
+          "apps/dsh-desktop/test/fixtures/migration-3.0/2.3/profile/cordis.patch.yml:parsed",
+          "apps/dsh-desktop/test/fixtures/migration-3.0/2.4/profile/cordis.patch.yml:parsed",
+          "apps/dsh-desktop/test/fixtures/migration-3.0/2.5/profile/cordis.patch.yml:parsed",
+          "apps/dsh-desktop/test/fixtures/migration-3.0/2.6/profile/cordis.patch.yml:parsed",
+          "apps/dsh-desktop/test/fixtures/migration-3.0/2.7/profile/cordis.patch.yml:parsed",
+          "docs/examples/desktop-plugin/cordis.patch.yml:parsed",
           "packages/dsh-aionui-panel/cordis.patch.yml:parsed",
           "packages/dsh-desktop-compat/cordis.patch.yml:parsed",
           "packages/dsh-git-graph/cordis.patch.yml:parsed",
@@ -25682,9 +25689,9 @@
           "ui",
           "data",
           "development",
-          "agent-session",
           "operations",
           "security",
+          "agent-session",
           "lifestyle",
           "communication",
           "model-mcp",
@@ -25698,12 +25705,12 @@
     {
       "repositoryId": 1333490005,
       "fullName": "kejixiaoliang/awesome-dsh-plugins",
-      "sourcePushedAt": "2026-08-22T00:30:44Z",
-      "sourceSha": "8df09530d474cf092e691a23f1793f664400b0a7",
+      "sourcePushedAt": "2026-08-22T03:32:27Z",
+      "sourceSha": "cb63c954821fefd5de85c36c8e3302708a8e1882",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "8df09530d474cf092e691a23f1793f664400b0a7",
+        "sourceSha": "cb63c954821fefd5de85c36c8e3302708a8e1882",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -27723,11 +27730,11 @@
     {
       "repositoryId": 1333568633,
       "fullName": "zp-home/dsh-recommend",
-      "sourcePushedAt": "2026-08-22T02:31:44Z",
-      "sourceSha": "047f3c0e0df04dcf773b7ee6d5e8bd317644ef85",
+      "sourcePushedAt": "2026-08-22T04:01:32Z",
+      "sourceSha": "51ffae46c0020e6940ceab6c6219529bfcfee68d",
       "disposition": "include",
       "classification": {
-        "sourceSha": "047f3c0e0df04dcf773b7ee6d5e8bd317644ef85",
+        "sourceSha": "51ffae46c0020e6940ceab6c6219529bfcfee68d",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -27773,8 +27780,8 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "structure",
-        "sourceSha": "047f3c0e0df04dcf773b7ee6d5e8bd317644ef85",
-        "checkedAt": "2026-08-22T03:12:00.215Z",
+        "sourceSha": "51ffae46c0020e6940ceab6c6219529bfcfee68d",
+        "checkedAt": "2026-08-22T04:53:32.739Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -28012,11 +28019,11 @@
     {
       "repositoryId": 1333579278,
       "fullName": "ZASENJC/dsh-plugins-store",
-      "sourcePushedAt": "2026-08-22T03:18:03Z",
-      "sourceSha": "cda369775212223a918b7d7875c6fe328decfb24",
+      "sourcePushedAt": "2026-08-22T04:05:47Z",
+      "sourceSha": "9845b6408aaf3e5a962218338021516644a0783a",
       "disposition": "include",
       "classification": {
-        "sourceSha": "cda369775212223a918b7d7875c6fe328decfb24",
+        "sourceSha": "9845b6408aaf3e5a962218338021516644a0783a",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -28057,13 +28064,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "cda369775212223a918b7d7875c6fe328decfb24",
-        "checkedAt": "2026-08-22T04:03:46.183Z",
+        "sourceSha": "9845b6408aaf3e5a962218338021516644a0783a",
+        "checkedAt": "2026-08-22T04:55:57.639Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 120922,
+        "durationMs": 111096,
         "errorCode": "PLUGIN_BUILD_FAILED",
         "attribution": "plugin"
       }
@@ -28942,16 +28949,14 @@
     {
       "repositoryId": 1333612974,
       "fullName": "Fishsb/dsh-prompt-enhancer",
-      "sourcePushedAt": "2026-08-22T02:15:42Z",
-      "sourceSha": "08e386facbb9d8854bcf6a2552908fa5b1d3818b",
+      "sourcePushedAt": "2026-08-22T04:21:28Z",
+      "sourceSha": "3fa1cb8293e147ee4d530f836fb7baffedecd97d",
       "disposition": "include",
       "classification": {
-        "sourceSha": "08e386facbb9d8854bcf6a2552908fa5b1d3818b",
+        "sourceSha": "3fa1cb8293e147ee4d530f836fb7baffedecd97d",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
           "repository-name:dsh-prompt-enhancer"
         ],
         "projectType": "plugin",
@@ -28965,9 +28970,8 @@
           "research"
         ],
         "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
           "repository-name:dsh-prompt-enhancer",
+          "cordis.patch.yml:parsed",
           "cordis.patch.yml",
           "SKILL.md",
           "development",
@@ -28982,16 +28986,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "passed",
-        "disposition": "verified",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "08e386facbb9d8854bcf6a2552908fa5b1d3818b",
-        "checkedAt": "2026-08-22T03:09:51.261Z",
+        "sourceSha": "3fa1cb8293e147ee4d530f836fb7baffedecd97d",
+        "checkedAt": "2026-08-22T04:50:22.709Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": "web",
-        "durationMs": 86495
+        "executionType": "host-tool",
+        "durationMs": 62241,
+        "errorCode": "PLUGIN_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -29237,12 +29243,12 @@
     {
       "repositoryId": 1333633428,
       "fullName": "Lixiaoyiao/deepseek-harness-action",
-      "sourcePushedAt": "2026-08-22T03:22:46Z",
-      "sourceSha": "1a1ff9473e9b4452a13a58866330e00ee13b7a62",
+      "sourcePushedAt": "2026-08-22T04:09:10Z",
+      "sourceSha": "bb14c68c0b8f1fc5ddca1fdf03abf56d482c7182",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "1a1ff9473e9b4452a13a58866330e00ee13b7a62",
+        "sourceSha": "bb14c68c0b8f1fc5ddca1fdf03abf56d482c7182",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -29950,7 +29956,7 @@
     {
       "repositoryId": 1333655032,
       "fullName": "anweat/dsh-voice-webspeech",
-      "sourcePushedAt": "2026-08-22T02:57:14Z",
+      "sourcePushedAt": "2026-08-22T03:37:27Z",
       "sourceSha": "38c0120054ce1f241e9e12a4324d9a1d1d2befba",
       "disposition": "include",
       "classification": {
@@ -29989,16 +29995,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "structure",
         "sourceSha": "38c0120054ce1f241e9e12a4324d9a1d1d2befba",
-        "checkedAt": "2026-08-22T04:01:20.199Z",
+        "checkedAt": "2026-08-22T04:52:09.576Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 144475
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -31383,12 +31391,12 @@
     {
       "repositoryId": 1333687644,
       "fullName": "feiyang-dev/DeepSeek-Harness-Desktop",
-      "sourcePushedAt": "2026-08-22T02:57:00Z",
-      "sourceSha": "6a30ac619823de5203ac0053f7de184c5cd6ebde",
+      "sourcePushedAt": "2026-08-22T03:58:15Z",
+      "sourceSha": "ec92890e84c6b08c467438f8f93e5080ce425b4b",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "6a30ac619823de5203ac0053f7de184c5cd6ebde",
+        "sourceSha": "ec92890e84c6b08c467438f8f93e5080ce425b4b",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -32883,11 +32891,11 @@
     {
       "repositoryId": 1333702274,
       "fullName": "anweat/dsh-browser",
-      "sourcePushedAt": "2026-08-22T02:56:59Z",
-      "sourceSha": "90e65951697899736042ff761606899edec4d2af",
+      "sourcePushedAt": "2026-08-22T03:33:48Z",
+      "sourceSha": "abbe5ad039d47432e844c5a7da41df620b2d1e4d",
       "disposition": "include",
       "classification": {
-        "sourceSha": "90e65951697899736042ff761606899edec4d2af",
+        "sourceSha": "abbe5ad039d47432e844c5a7da41df620b2d1e4d",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -32921,13 +32929,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "90e65951697899736042ff761606899edec4d2af",
-        "checkedAt": "2026-08-22T03:14:18.338Z",
+        "sourceSha": "abbe5ad039d47432e844c5a7da41df620b2d1e4d",
+        "checkedAt": "2026-08-22T04:50:22.385Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 78881
+        "durationMs": 64243
       }
     },
     {
@@ -33927,11 +33935,11 @@
     {
       "repositoryId": 1333713967,
       "fullName": "the-beating-light-of-the-nail/dsh-meme-hub",
-      "sourcePushedAt": "2026-08-21T15:22:48Z",
-      "sourceSha": "8960e94889db5ff9b54b6a3c43a8d5d544872a35",
+      "sourcePushedAt": "2026-08-22T03:53:16Z",
+      "sourceSha": "03f106eeed33110708b3ea7cdb9d3386d739b826",
       "disposition": "include",
       "classification": {
-        "sourceSha": "8960e94889db5ff9b54b6a3c43a8d5d544872a35",
+        "sourceSha": "03f106eeed33110708b3ea7cdb9d3386d739b826",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -33962,13 +33970,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "8960e94889db5ff9b54b6a3c43a8d5d544872a35",
-        "checkedAt": "2026-08-22T01:59:04.773Z",
+        "sourceSha": "03f106eeed33110708b3ea7cdb9d3386d739b826",
+        "checkedAt": "2026-08-22T04:55:10.470Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 239180,
+        "durationMs": 76113,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -34255,11 +34263,11 @@
     {
       "repositoryId": 1333717348,
       "fullName": "mario03690/dsh-netcafe",
-      "sourcePushedAt": "2026-08-19T01:47:55Z",
-      "sourceSha": "734245087d410bf19b95b160a32ef941cf162763",
+      "sourcePushedAt": "2026-08-22T03:53:15Z",
+      "sourceSha": "c431a433070913232ebe6c31899d761e08e3b0fe",
       "disposition": "include",
       "classification": {
-        "sourceSha": "734245087d410bf19b95b160a32ef941cf162763",
+        "sourceSha": "c431a433070913232ebe6c31899d761e08e3b0fe",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -34297,13 +34305,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "734245087d410bf19b95b160a32ef941cf162763",
-        "checkedAt": "2026-08-19T03:12:55.974Z",
+        "sourceSha": "c431a433070913232ebe6c31899d761e08e3b0fe",
+        "checkedAt": "2026-08-22T04:53:06.093Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "channel-mcp",
-        "durationMs": 62131,
+        "durationMs": 56517,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -36694,11 +36702,11 @@
     {
       "repositoryId": 1333748599,
       "fullName": "TheYoungChen/dsh-plugin-market",
-      "sourcePushedAt": "2026-08-22T02:49:03Z",
-      "sourceSha": "9b1cf3e363122ad1e465561db6b4392ffffdbb66",
+      "sourcePushedAt": "2026-08-22T04:25:07Z",
+      "sourceSha": "108ecb77968a560d48604a6b944ba362d85c2dc5",
       "disposition": "include",
       "classification": {
-        "sourceSha": "9b1cf3e363122ad1e465561db6b4392ffffdbb66",
+        "sourceSha": "108ecb77968a560d48604a6b944ba362d85c2dc5",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -36731,16 +36739,16 @@
       "validation": {
         "status": "failed",
         "disposition": "auto_failed",
-        "stage": "structure",
-        "sourceSha": "9b1cf3e363122ad1e465561db6b4392ffffdbb66",
-        "checkedAt": "2026-08-22T03:10:17.974Z",
+        "stage": "sandbox",
+        "sourceSha": "108ecb77968a560d48604a6b944ba362d85c2dc5",
+        "checkedAt": "2026-08-22T04:55:08.218Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 0,
-        "errorCode": "SCANNER_UNAVAILABLE",
-        "attribution": "infrastructure"
+        "durationMs": 141228,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -42127,11 +42135,11 @@
     {
       "repositoryId": 1333807290,
       "fullName": "dsh-market/dsh-market",
-      "sourcePushedAt": "2026-08-22T03:14:38Z",
-      "sourceSha": "6ddc69188892db3731b65f5936f62ba0f87c6855",
+      "sourcePushedAt": "2026-08-22T04:10:22Z",
+      "sourceSha": "b9323cc85d0148013384a5aca5215be1922eea36",
       "disposition": "include",
       "classification": {
-        "sourceSha": "6ddc69188892db3731b65f5936f62ba0f87c6855",
+        "sourceSha": "b9323cc85d0148013384a5aca5215be1922eea36",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -42175,8 +42183,8 @@
         "status": "failed",
         "disposition": "manual_review",
         "stage": "structure",
-        "sourceSha": "6ddc69188892db3731b65f5936f62ba0f87c6855",
-        "checkedAt": "2026-08-22T03:59:52.934Z",
+        "sourceSha": "b9323cc85d0148013384a5aca5215be1922eea36",
+        "checkedAt": "2026-08-22T04:53:32.739Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -48048,12 +48056,12 @@
     {
       "repositoryId": 1333890424,
       "fullName": "billLiao/awesome-dsh-plugin",
-      "sourcePushedAt": "2026-08-22T00:01:14Z",
-      "sourceSha": "9c4eeb7ff92040a04cfa20c7bcba39fae2e3a3e2",
+      "sourcePushedAt": "2026-08-22T04:01:08Z",
+      "sourceSha": "48316b0fee0117a4ac4cd7939008e38a5de80e93",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "9c4eeb7ff92040a04cfa20c7bcba39fae2e3a3e2",
+        "sourceSha": "48316b0fee0117a4ac4cd7939008e38a5de80e93",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -49747,7 +49755,7 @@
     {
       "repositoryId": 1333917455,
       "fullName": "anweat/dsh-restart",
-      "sourcePushedAt": "2026-08-22T02:57:08Z",
+      "sourcePushedAt": "2026-08-22T03:37:27Z",
       "sourceSha": "61d6cd10c7e2cd310e9e8b1a241074e52529d061",
       "disposition": "include",
       "classification": {
@@ -49790,12 +49798,12 @@
         "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "61d6cd10c7e2cd310e9e8b1a241074e52529d061",
-        "checkedAt": "2026-08-22T03:58:50.185Z",
+        "checkedAt": "2026-08-22T04:54:46.826Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 84930
+        "durationMs": 77453
       }
     },
     {
@@ -59737,11 +59745,11 @@
     {
       "repositoryId": 1334026221,
       "fullName": "jackuh105/remielle-dsh-plugin",
-      "sourcePushedAt": "2026-08-14T09:48:54Z",
-      "sourceSha": "c64ff04a144fa4e68bdd56639bcc0736ee464ede",
+      "sourcePushedAt": "2026-08-22T03:43:20Z",
+      "sourceSha": "f2aac9a4811389be8f7e37e923a75f13e9fb32bc",
       "disposition": "include",
       "classification": {
-        "sourceSha": "c64ff04a144fa4e68bdd56639bcc0736ee464ede",
+        "sourceSha": "f2aac9a4811389be8f7e37e923a75f13e9fb32bc",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -59771,8 +59779,8 @@
         "status": "failed",
         "disposition": "manual_review",
         "stage": "structure",
-        "sourceSha": "c64ff04a144fa4e68bdd56639bcc0736ee464ede",
-        "checkedAt": "2026-08-16T22:48:50.255Z",
+        "sourceSha": "f2aac9a4811389be8f7e37e923a75f13e9fb32bc",
+        "checkedAt": "2026-08-22T04:53:13.611Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -75518,7 +75526,7 @@
     {
       "repositoryId": 1334315996,
       "fullName": "XMoon/dsh-pi-tui",
-      "sourcePushedAt": "2026-08-22T02:45:48Z",
+      "sourcePushedAt": "2026-08-22T04:08:17Z",
       "sourceSha": "56d017c4869269eb3a0f246f480c46d4dd9ca59f",
       "disposition": "include",
       "classification": {
@@ -75565,7 +75573,7 @@
         "disposition": "manual_review",
         "stage": "structure",
         "sourceSha": "56d017c4869269eb3a0f246f480c46d4dd9ca59f",
-        "checkedAt": "2026-08-22T03:13:45.401Z",
+        "checkedAt": "2026-08-22T04:52:28.860Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -93200,11 +93208,11 @@
     {
       "repositoryId": 1334753622,
       "fullName": "anweat/dsh-assistant-message-forge",
-      "sourcePushedAt": "2026-08-22T02:57:20Z",
-      "sourceSha": "cd397d547dd58de8e7f950235bc04f641e72c956",
+      "sourcePushedAt": "2026-08-22T03:37:27Z",
+      "sourceSha": "af242367494022b5778d4b650f156e754e730f8a",
       "disposition": "include",
       "classification": {
-        "sourceSha": "cd397d547dd58de8e7f950235bc04f641e72c956",
+        "sourceSha": "af242367494022b5778d4b650f156e754e730f8a",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -93218,8 +93226,8 @@
           "agent-session",
           "development",
           "data",
-          "ui",
-          "communication"
+          "communication",
+          "ui"
         ],
         "matchedSignals": [
           "package.json:dsh.bundle.patch",
@@ -93229,8 +93237,8 @@
           "agent-session",
           "development",
           "data",
-          "ui",
-          "communication"
+          "communication",
+          "ui"
         ],
         "typeConfidence": "high",
         "categoryConfidence": "high",
@@ -93240,13 +93248,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "cd397d547dd58de8e7f950235bc04f641e72c956",
-        "checkedAt": "2026-08-22T03:10:45.130Z",
+        "sourceSha": "af242367494022b5778d4b650f156e754e730f8a",
+        "checkedAt": "2026-08-22T04:56:56.113Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 149530
+        "durationMs": 203374
       }
     },
     {
@@ -103852,6 +103860,53 @@
       }
     },
     {
+      "repositoryId": 1334890859,
+      "fullName": "xxccdl/deepseek-harness-desktop",
+      "sourcePushedAt": "2026-08-17T13:24:32Z",
+      "sourceSha": "a9bcbbff9df2df640c769438e52c6b5494941f67",
+      "disposition": "exclude",
+      "exclusionReason": "NO_DSH_CONTRACT",
+      "classification": {
+        "sourceSha": "a9bcbbff9df2df640c769438e52c6b5494941f67",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "unrecognized",
+        "relevanceSignals": [],
+        "projectType": "collection",
+        "category": "agent-session",
+        "categories": [
+          "agent-session",
+          "ui",
+          "security",
+          "data",
+          "development",
+          "communication",
+          "operations",
+          "lifestyle",
+          "model-mcp",
+          "research"
+        ],
+        "matchedSignals": [
+          "plugins/@deepseek-ai/dsh-base/cordis.patch.yml:parsed",
+          "plugins/@deepseek-ai/dsh-web-app/cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "multiple-package.json",
+          "agent-session",
+          "ui",
+          "security",
+          "data",
+          "development",
+          "communication",
+          "operations",
+          "lifestyle",
+          "model-mcp",
+          "research"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      }
+    },
+    {
       "repositoryId": 1334891199,
       "fullName": "Jamailar/beav-deepseek-harness",
       "sourcePushedAt": "2026-08-16T10:27:10Z",
@@ -110927,11 +110982,11 @@
     {
       "repositoryId": 1335002252,
       "fullName": "aust24lzy/dsh-plugin-hub",
-      "sourcePushedAt": "2026-08-22T03:13:35Z",
-      "sourceSha": "41acc0b808a05aa094d8081521e3c74bde884ad8",
+      "sourcePushedAt": "2026-08-22T04:03:17Z",
+      "sourceSha": "2999c5da1ed8df3e4d38ae178b468afe1acb2787",
       "disposition": "include",
       "classification": {
-        "sourceSha": "41acc0b808a05aa094d8081521e3c74bde884ad8",
+        "sourceSha": "2999c5da1ed8df3e4d38ae178b468afe1acb2787",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -110962,13 +111017,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "41acc0b808a05aa094d8081521e3c74bde884ad8",
-        "checkedAt": "2026-08-22T03:58:10.396Z",
+        "sourceSha": "2999c5da1ed8df3e4d38ae178b468afe1acb2787",
+        "checkedAt": "2026-08-22T04:54:34.201Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 50861,
+        "durationMs": 64828,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -111230,17 +111285,18 @@
     },
     {
       "repositoryId": 1335011656,
-      "fullName": "Physicolor/harness-ui-enhancer",
-      "sourcePushedAt": "2026-08-22T03:21:08Z",
-      "sourceSha": "7fb73007783b52978f3314b24b7b96f7484d74be",
+      "fullName": "Physicolor/dsh-ui-harmonizer",
+      "sourcePushedAt": "2026-08-22T04:03:23Z",
+      "sourceSha": "e07cbcb25d86e2524dbf103cb3d098b53ac31651",
       "disposition": "include",
       "classification": {
-        "sourceSha": "7fb73007783b52978f3314b24b7b96f7484d74be",
+        "sourceSha": "e07cbcb25d86e2524dbf103cb3d098b53ac31651",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
           "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed"
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-ui-harmonizer"
         ],
         "projectType": "plugin",
         "category": "ui",
@@ -111255,6 +111311,7 @@
         "matchedSignals": [
           "package.json:dsh.bundle.patch",
           "cordis.patch.yml:parsed",
+          "repository-name:dsh-ui-harmonizer",
           "cordis.patch.yml",
           "ui",
           "development",
@@ -111268,32 +111325,32 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "7fb73007783b52978f3314b24b7b96f7484d74be",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "e07cbcb25d86e2524dbf103cb3d098b53ac31651",
+        "checkedAt": "2026-08-22T04:51:18.824Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 126089
       }
     },
     {
       "repositoryId": 1335011766,
-      "fullName": "Physicolor/harness-widgets",
-      "sourcePushedAt": "2026-08-22T03:21:11Z",
-      "sourceSha": "db6563816fcd962493302b48a057bcdcb40992c6",
+      "fullName": "Physicolor/dsh-widgets",
+      "sourcePushedAt": "2026-08-22T03:53:21Z",
+      "sourceSha": "e8134052cd986e4173b3e9b7f5131e9527e27cbc",
       "disposition": "include",
       "classification": {
-        "sourceSha": "db6563816fcd962493302b48a057bcdcb40992c6",
+        "sourceSha": "e8134052cd986e4173b3e9b7f5131e9527e27cbc",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
           "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed"
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-widgets"
         ],
         "projectType": "plugin",
         "category": "ui",
@@ -111308,6 +111365,7 @@
         "matchedSignals": [
           "package.json:dsh.bundle.patch",
           "cordis.patch.yml:parsed",
+          "repository-name:dsh-widgets",
           "cordis.patch.yml",
           "ui",
           "development",
@@ -111321,17 +111379,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "db6563816fcd962493302b48a057bcdcb40992c6",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "e8134052cd986e4173b3e9b7f5131e9527e27cbc",
+        "checkedAt": "2026-08-22T04:50:53.439Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 100704
       }
     },
     {
@@ -115229,11 +115286,11 @@
     {
       "repositoryId": 1335058602,
       "fullName": "LaplaceYoung/dsh-directorx",
-      "sourcePushedAt": "2026-08-21T13:00:06Z",
-      "sourceSha": "ce84377fa9bfe54c33409b8a1fddf52c2a706d42",
+      "sourcePushedAt": "2026-08-22T04:21:37Z",
+      "sourceSha": "6bed757e941d89035aab1ed8e67e5d2c5a53e8d1",
       "disposition": "include",
       "classification": {
-        "sourceSha": "ce84377fa9bfe54c33409b8a1fddf52c2a706d42",
+        "sourceSha": "6bed757e941d89035aab1ed8e67e5d2c5a53e8d1",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -115280,13 +115337,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "ce84377fa9bfe54c33409b8a1fddf52c2a706d42",
-        "checkedAt": "2026-08-22T02:00:17.803Z",
+        "sourceSha": "6bed757e941d89035aab1ed8e67e5d2c5a53e8d1",
+        "checkedAt": "2026-08-22T04:51:13.215Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 314226,
+        "durationMs": 120480,
         "errorCode": "PLUGIN_SMOKE_FAILED",
         "attribution": "plugin"
       }
@@ -117982,11 +118039,11 @@
     {
       "repositoryId": 1335098475,
       "fullName": "1e0zj/dsh-plugin-mall",
-      "sourcePushedAt": "2026-08-22T00:59:49Z",
-      "sourceSha": "1ad95d9c4d67b12fbdd4a8f9a8dc1e967030d77f",
+      "sourcePushedAt": "2026-08-22T03:39:34Z",
+      "sourceSha": "513c1cf78257493ed5c560fc4480628b7dc3e622",
       "disposition": "include",
       "classification": {
-        "sourceSha": "1ad95d9c4d67b12fbdd4a8f9a8dc1e967030d77f",
+        "sourceSha": "513c1cf78257493ed5c560fc4480628b7dc3e622",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -118025,13 +118082,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "1ad95d9c4d67b12fbdd4a8f9a8dc1e967030d77f",
-        "checkedAt": "2026-08-22T02:29:52.693Z",
+        "sourceSha": "513c1cf78257493ed5c560fc4480628b7dc3e622",
+        "checkedAt": "2026-08-22T04:54:23.454Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 282097,
+        "durationMs": 69843,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -127655,11 +127712,11 @@
     {
       "repositoryId": 1335241492,
       "fullName": "dream-num/dsh-univer-office",
-      "sourcePushedAt": "2026-08-22T03:16:20Z",
-      "sourceSha": "fc22377969d4fb92964abbf6b446a7911b66486c",
+      "sourcePushedAt": "2026-08-22T03:59:45Z",
+      "sourceSha": "e0222951012ff6eddd76e54c94975d9a27fd6032",
       "disposition": "include",
       "classification": {
-        "sourceSha": "fc22377969d4fb92964abbf6b446a7911b66486c",
+        "sourceSha": "e0222951012ff6eddd76e54c94975d9a27fd6032",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -127702,17 +127759,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "fc22377969d4fb92964abbf6b446a7911b66486c",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "e0222951012ff6eddd76e54c94975d9a27fd6032",
+        "checkedAt": "2026-08-22T04:51:30.419Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 123793,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -137815,11 +137873,11 @@
     {
       "repositoryId": 1335530225,
       "fullName": "chen7712369/dsh-web-launcher",
-      "sourcePushedAt": "2026-08-16T03:31:08Z",
-      "sourceSha": "9ddc6f39846b47f3419bf7c2dff92356eaa61a63",
+      "sourcePushedAt": "2026-08-22T04:24:03Z",
+      "sourceSha": "812e5826a657051f55a7a3327f37ed1cfc465329",
       "disposition": "include",
       "classification": {
-        "sourceSha": "9ddc6f39846b47f3419bf7c2dff92356eaa61a63",
+        "sourceSha": "812e5826a657051f55a7a3327f37ed1cfc465329",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -137841,17 +137899,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "9ddc6f39846b47f3419bf7c2dff92356eaa61a63",
-        "checkedAt": "2026-08-16T23:06:19.811Z",
+        "sourceSha": "812e5826a657051f55a7a3327f37ed1cfc465329",
+        "checkedAt": "2026-08-22T04:51:50.190Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SNAPSHOT_LOAD_FAILED",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 65178,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -149079,11 +149138,11 @@
     {
       "repositoryId": 1335718387,
       "fullName": "pengpengyi92/dsh-quant",
-      "sourcePushedAt": "2026-08-22T02:05:02Z",
-      "sourceSha": "9aee6b45e7de75ab3091331cdb016e3d37765c54",
+      "sourcePushedAt": "2026-08-22T04:08:59Z",
+      "sourceSha": "986d9fedd757e06bfab4ab9d9b0ea8930239daa2",
       "disposition": "include",
       "classification": {
-        "sourceSha": "9aee6b45e7de75ab3091331cdb016e3d37765c54",
+        "sourceSha": "986d9fedd757e06bfab4ab9d9b0ea8930239daa2",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -149127,13 +149186,13 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "9aee6b45e7de75ab3091331cdb016e3d37765c54",
-        "checkedAt": "2026-08-22T03:11:23.334Z",
+        "sourceSha": "986d9fedd757e06bfab4ab9d9b0ea8930239daa2",
+        "checkedAt": "2026-08-22T04:52:44.548Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "command",
-        "durationMs": 65360,
+        "durationMs": 54869,
         "errorCode": "SANDBOX_INFRASTRUCTURE_FAILED",
         "attribution": "infrastructure"
       }
@@ -150467,11 +150526,11 @@
     {
       "repositoryId": 1335736564,
       "fullName": "Britneycode/dsh-update-center",
-      "sourcePushedAt": "2026-08-21T03:59:30Z",
-      "sourceSha": "4789788a928a83d658e433a6791e71e040c7bf09",
+      "sourcePushedAt": "2026-08-22T03:54:28Z",
+      "sourceSha": "9046df45b77d2da9c50cdaf46f0de46a1e9608f3",
       "disposition": "include",
       "classification": {
-        "sourceSha": "4789788a928a83d658e433a6791e71e040c7bf09",
+        "sourceSha": "9046df45b77d2da9c50cdaf46f0de46a1e9608f3",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -150509,13 +150568,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "4789788a928a83d658e433a6791e71e040c7bf09",
-        "checkedAt": "2026-08-22T02:10:16.475Z",
+        "sourceSha": "9046df45b77d2da9c50cdaf46f0de46a1e9608f3",
+        "checkedAt": "2026-08-22T04:53:27.267Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 249655,
+        "durationMs": 58407,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -151469,11 +151528,11 @@
     {
       "repositoryId": 1335750234,
       "fullName": "xgone/dsh-remote",
-      "sourcePushedAt": "2026-08-22T03:24:50Z",
-      "sourceSha": "09737b5e9db6a8bd3813704694d4a934f034c505",
+      "sourcePushedAt": "2026-08-22T04:10:43Z",
+      "sourceSha": "e75d604ef04f67e79ec1634956acd3b3263b1eec",
       "disposition": "include",
       "classification": {
-        "sourceSha": "09737b5e9db6a8bd3813704694d4a934f034c505",
+        "sourceSha": "e75d604ef04f67e79ec1634956acd3b3263b1eec",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -151511,13 +151570,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "09737b5e9db6a8bd3813704694d4a934f034c505",
-        "checkedAt": "2026-08-22T03:58:31.477Z",
+        "sourceSha": "e75d604ef04f67e79ec1634956acd3b3263b1eec",
+        "checkedAt": "2026-08-22T04:50:19.295Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 72097
+        "durationMs": 58827
       }
     },
     {
@@ -158701,11 +158760,11 @@
     {
       "repositoryId": 1335843750,
       "fullName": "263311487-ux/dsh-verify",
-      "sourcePushedAt": "2026-08-22T03:25:27Z",
-      "sourceSha": "fb578ff5f224e7397462bcff62d43b711416bfcd",
+      "sourcePushedAt": "2026-08-22T04:03:51Z",
+      "sourceSha": "7d4fb0bec3ae31f40561682a6d75d8a56f5a7ed5",
       "disposition": "include",
       "classification": {
-        "sourceSha": "fb578ff5f224e7397462bcff62d43b711416bfcd",
+        "sourceSha": "7d4fb0bec3ae31f40561682a6d75d8a56f5a7ed5",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -158740,17 +158799,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "fb578ff5f224e7397462bcff62d43b711416bfcd",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "7d4fb0bec3ae31f40561682a6d75d8a56f5a7ed5",
+        "checkedAt": "2026-08-22T04:53:27.694Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "channel-mcp",
+        "durationMs": 84313,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -161144,11 +161204,11 @@
     {
       "repositoryId": 1335896405,
       "fullName": "ChengxiuCDP/dsh-plugin-advisor",
-      "sourcePushedAt": "2026-08-21T03:55:30Z",
-      "sourceSha": "9ae58851ee1c18f4abb72f92f6bf7fcc093fe1e5",
+      "sourcePushedAt": "2026-08-22T03:42:42Z",
+      "sourceSha": "90246ec7072654d5029210d994fd2eadb4cd8b1a",
       "disposition": "include",
       "classification": {
-        "sourceSha": "9ae58851ee1c18f4abb72f92f6bf7fcc093fe1e5",
+        "sourceSha": "90246ec7072654d5029210d994fd2eadb4cd8b1a",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -161178,16 +161238,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "9ae58851ee1c18f4abb72f92f6bf7fcc093fe1e5",
-        "checkedAt": "2026-08-22T02:11:28.264Z",
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "structure",
+        "sourceSha": "90246ec7072654d5029210d994fd2eadb4cd8b1a",
+        "checkedAt": "2026-08-22T04:52:03.381Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 338193
+        "durationMs": 0,
+        "errorCode": "SCANNER_UNAVAILABLE",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -164236,11 +164298,11 @@
     {
       "repositoryId": 1335959869,
       "fullName": "mario03690/dsh-china-facts",
-      "sourcePushedAt": "2026-08-17T01:32:30Z",
-      "sourceSha": "74874d559c62ee37d9a7cabf4b84b0c32bf25dc5",
+      "sourcePushedAt": "2026-08-22T03:53:31Z",
+      "sourceSha": "4754d58a24a26c062ee62091b4fe2e19696a7bf8",
       "disposition": "include",
       "classification": {
-        "sourceSha": "74874d559c62ee37d9a7cabf4b84b0c32bf25dc5",
+        "sourceSha": "4754d58a24a26c062ee62091b4fe2e19696a7bf8",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -164269,13 +164331,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "74874d559c62ee37d9a7cabf4b84b0c32bf25dc5",
-        "checkedAt": "2026-08-17T03:15:59.557Z",
+        "sourceSha": "4754d58a24a26c062ee62091b4fe2e19696a7bf8",
+        "checkedAt": "2026-08-22T04:55:14.342Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 120540,
+        "durationMs": 79985,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -164333,11 +164395,11 @@
     {
       "repositoryId": 1335960058,
       "fullName": "mario03690/dsh-watch",
-      "sourcePushedAt": "2026-08-22T03:16:00Z",
-      "sourceSha": "c9e216497adb29f7bfd55d92328330bc604b73ed",
+      "sourcePushedAt": "2026-08-22T03:53:54Z",
+      "sourceSha": "2358e60e428d7aef135adf54ac818e7ea5105e8e",
       "disposition": "include",
       "classification": {
-        "sourceSha": "c9e216497adb29f7bfd55d92328330bc604b73ed",
+        "sourceSha": "2358e60e428d7aef135adf54ac818e7ea5105e8e",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -164365,17 +164427,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "c9e216497adb29f7bfd55d92328330bc604b73ed",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "2358e60e428d7aef135adf54ac818e7ea5105e8e",
+        "checkedAt": "2026-08-22T04:55:49.125Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 102582,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -164428,11 +164491,11 @@
     {
       "repositoryId": 1335960416,
       "fullName": "mario03690/dsh-docflow",
-      "sourcePushedAt": "2026-08-17T01:32:40Z",
-      "sourceSha": "6d7ef685ca2bfe1dfac9176a5adcf2380b387c53",
+      "sourcePushedAt": "2026-08-22T03:53:26Z",
+      "sourceSha": "3aafa5e34f46a3abd419a819328dba6ed9800a71",
       "disposition": "include",
       "classification": {
-        "sourceSha": "6d7ef685ca2bfe1dfac9176a5adcf2380b387c53",
+        "sourceSha": "3aafa5e34f46a3abd419a819328dba6ed9800a71",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -164461,13 +164524,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "6d7ef685ca2bfe1dfac9176a5adcf2380b387c53",
-        "checkedAt": "2026-08-17T03:20:56.934Z",
+        "sourceSha": "3aafa5e34f46a3abd419a819328dba6ed9800a71",
+        "checkedAt": "2026-08-22T04:50:10.464Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 123172,
+        "durationMs": 52322,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -164475,11 +164538,11 @@
     {
       "repositoryId": 1335960592,
       "fullName": "mario03690/dsh-tables",
-      "sourcePushedAt": "2026-08-17T01:32:43Z",
-      "sourceSha": "bece5e494458895b7fb3c0ff1dd08a3855a5396f",
+      "sourcePushedAt": "2026-08-22T03:53:20Z",
+      "sourceSha": "1ed8159f3962d864ada4ab28437c56a16a469911",
       "disposition": "include",
       "classification": {
-        "sourceSha": "bece5e494458895b7fb3c0ff1dd08a3855a5396f",
+        "sourceSha": "1ed8159f3962d864ada4ab28437c56a16a469911",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -164510,13 +164573,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "bece5e494458895b7fb3c0ff1dd08a3855a5396f",
-        "checkedAt": "2026-08-17T03:21:34.303Z",
+        "sourceSha": "1ed8159f3962d864ada4ab28437c56a16a469911",
+        "checkedAt": "2026-08-22T04:51:17.665Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 108441,
+        "durationMs": 124930,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -164727,11 +164790,11 @@
     {
       "repositoryId": 1335964943,
       "fullName": "mario03690/dsh-imagegen",
-      "sourcePushedAt": "2026-08-22T03:15:57Z",
-      "sourceSha": "df919ed42a1234cc5ddff421a76bbe16697a6fb4",
+      "sourcePushedAt": "2026-08-22T03:53:48Z",
+      "sourceSha": "7e6dc799d71cfb0a483b51105124f8c674ec7ce3",
       "disposition": "include",
       "classification": {
-        "sourceSha": "df919ed42a1234cc5ddff421a76bbe16697a6fb4",
+        "sourceSha": "7e6dc799d71cfb0a483b51105124f8c674ec7ce3",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -164757,17 +164820,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "df919ed42a1234cc5ddff421a76bbe16697a6fb4",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "7e6dc799d71cfb0a483b51105124f8c674ec7ce3",
+        "checkedAt": "2026-08-22T04:51:51.445Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 66433,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -168915,11 +168979,11 @@
     {
       "repositoryId": 1336044501,
       "fullName": "wingsky-1/dsh-plugin-hub",
-      "sourcePushedAt": "2026-08-22T03:21:26Z",
-      "sourceSha": "4a4eb596c93eb834b063a24681fecc4e6b9e55c7",
+      "sourcePushedAt": "2026-08-22T04:23:27Z",
+      "sourceSha": "9de8135811bfb5196075125491bd911bb144e71b",
       "disposition": "include",
       "classification": {
-        "sourceSha": "4a4eb596c93eb834b063a24681fecc4e6b9e55c7",
+        "sourceSha": "9de8135811bfb5196075125491bd911bb144e71b",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -168965,17 +169029,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
-        "stage": "sandbox",
-        "sourceSha": "4a4eb596c93eb834b063a24681fecc4e6b9e55c7",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "status": "failed",
+        "disposition": "manual_review",
+        "stage": "structure",
+        "sourceSha": "9de8135811bfb5196075125491bd911bb144e71b",
+        "checkedAt": "2026-08-22T04:52:03.381Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "channel-mcp",
+        "durationMs": 0,
+        "errorCode": "SECURITY_REVIEW_REQUIRED",
+        "attribution": "policy"
       }
     },
     {
@@ -169437,11 +169502,11 @@
     {
       "repositoryId": 1336050108,
       "fullName": "mario03690/dsh-adversarial-review",
-      "sourcePushedAt": "2026-08-17T01:32:49Z",
-      "sourceSha": "6ff0ad9bea65d963394a53614724e0860baf3e2d",
+      "sourcePushedAt": "2026-08-22T03:53:37Z",
+      "sourceSha": "a105bc7aafa396571fc6e3ef7eba9a924d569871",
       "disposition": "include",
       "classification": {
-        "sourceSha": "6ff0ad9bea65d963394a53614724e0860baf3e2d",
+        "sourceSha": "a105bc7aafa396571fc6e3ef7eba9a924d569871",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -169472,13 +169537,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "6ff0ad9bea65d963394a53614724e0860baf3e2d",
-        "checkedAt": "2026-08-17T03:16:17.853Z",
+        "sourceSha": "a105bc7aafa396571fc6e3ef7eba9a924d569871",
+        "checkedAt": "2026-08-22T04:50:31.875Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "channel-mcp",
-        "durationMs": 133785,
+        "durationMs": 65249,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -169486,11 +169551,11 @@
     {
       "repositoryId": 1336050392,
       "fullName": "mario03690/dsh-product-planning",
-      "sourcePushedAt": "2026-08-17T01:32:52Z",
-      "sourceSha": "4c6124a24abaeb5176062c78642a14cc37b9a825",
+      "sourcePushedAt": "2026-08-22T03:53:43Z",
+      "sourceSha": "a8af6dcfd793d5e89c6b277aabf005a2e2ecf4be",
       "disposition": "include",
       "classification": {
-        "sourceSha": "4c6124a24abaeb5176062c78642a14cc37b9a825",
+        "sourceSha": "a8af6dcfd793d5e89c6b277aabf005a2e2ecf4be",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -169519,13 +169584,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "4c6124a24abaeb5176062c78642a14cc37b9a825",
-        "checkedAt": "2026-08-17T03:15:52.220Z",
+        "sourceSha": "a8af6dcfd793d5e89c6b277aabf005a2e2ecf4be",
+        "checkedAt": "2026-08-22T04:50:23.826Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "channel-mcp",
-        "durationMs": 110279,
+        "durationMs": 63358,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -178087,11 +178152,11 @@
     {
       "repositoryId": 1336127466,
       "fullName": "ywsldxk/dsh-plugin-stars",
-      "sourcePushedAt": "2026-08-22T03:13:59Z",
-      "sourceSha": "80b258ebe9d2bee8f2c86ffad1b280beb4e60715",
+      "sourcePushedAt": "2026-08-22T04:04:14Z",
+      "sourceSha": "40919ab48de7c8c86232312bcafa19326b02246b",
       "disposition": "include",
       "classification": {
-        "sourceSha": "80b258ebe9d2bee8f2c86ffad1b280beb4e60715",
+        "sourceSha": "40919ab48de7c8c86232312bcafa19326b02246b",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -178119,16 +178184,16 @@
       "validation": {
         "status": "failed",
         "disposition": "auto_failed",
-        "stage": "structure",
-        "sourceSha": "80b258ebe9d2bee8f2c86ffad1b280beb4e60715",
-        "checkedAt": "2026-08-22T04:00:06.966Z",
+        "stage": "sandbox",
+        "sourceSha": "40919ab48de7c8c86232312bcafa19326b02246b",
+        "checkedAt": "2026-08-22T04:52:17.606Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 0,
-        "errorCode": "SCANNER_UNAVAILABLE",
-        "attribution": "infrastructure"
+        "durationMs": 58596,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -183029,6 +183094,65 @@
         "validatorVersion": "0.1.2",
         "executionType": "web",
         "durationMs": 89994
+      }
+    },
+    {
+      "repositoryId": 1336274705,
+      "fullName": "whoisjiahao/dsh-feishu-channel",
+      "sourcePushedAt": "2026-08-22T04:13:10Z",
+      "sourceSha": "9fd6faf11a650787f4dc718b86329d899cb3cb4a",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "9fd6faf11a650787f4dc718b86329d899cb3cb4a",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-feishu-channel"
+        ],
+        "projectType": "plugin",
+        "category": "communication",
+        "categories": [
+          "communication",
+          "security",
+          "data",
+          "development",
+          "agent-session",
+          "operations",
+          "ui",
+          "lifestyle"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-feishu-channel",
+          "cordis.patch.yml",
+          "communication",
+          "security",
+          "data",
+          "development",
+          "agent-session",
+          "operations",
+          "ui",
+          "lifestyle"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "inconclusive",
+        "disposition": "retryable",
+        "stage": "sandbox",
+        "sourceSha": "9fd6faf11a650787f4dc718b86329d899cb3cb4a",
+        "checkedAt": "2026-08-22T04:58:08.040Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": null,
+        "errorCode": "SOURCE_CHANGED_DURING_RUN",
+        "attribution": "infrastructure"
       }
     },
     {
@@ -192290,11 +192414,11 @@
     {
       "repositoryId": 1336677036,
       "fullName": "SiriLee/dsh-rewind",
-      "sourcePushedAt": "2026-08-22T02:41:31Z",
-      "sourceSha": "eb31373c7d4f10da8078410edb167ac6e436001e",
+      "sourcePushedAt": "2026-08-22T04:23:16Z",
+      "sourceSha": "f886593dc699a17d2e75e05caad8f444b155198e",
       "disposition": "include",
       "classification": {
-        "sourceSha": "eb31373c7d4f10da8078410edb167ac6e436001e",
+        "sourceSha": "f886593dc699a17d2e75e05caad8f444b155198e",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -192330,13 +192454,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "eb31373c7d4f10da8078410edb167ac6e436001e",
-        "checkedAt": "2026-08-22T03:14:25.503Z",
+        "sourceSha": "f886593dc699a17d2e75e05caad8f444b155198e",
+        "checkedAt": "2026-08-22T04:55:19.577Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 86046
+        "durationMs": 152587
       }
     },
     {
@@ -194146,11 +194270,11 @@
     {
       "repositoryId": 1336755606,
       "fullName": "Willmylife/dsh-dynamic-wallpaper",
-      "sourcePushedAt": "2026-08-22T03:09:59Z",
-      "sourceSha": "b85085e4a46f1f66e4e50c0f1eff2ffee20e9b84",
+      "sourcePushedAt": "2026-08-22T04:12:46Z",
+      "sourceSha": "65f5215d2edef362c915799f891124990ae9c874",
       "disposition": "include",
       "classification": {
-        "sourceSha": "b85085e4a46f1f66e4e50c0f1eff2ffee20e9b84",
+        "sourceSha": "65f5215d2edef362c915799f891124990ae9c874",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -194190,13 +194314,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "b85085e4a46f1f66e4e50c0f1eff2ffee20e9b84",
-        "checkedAt": "2026-08-22T04:03:26.150Z",
+        "sourceSha": "65f5215d2edef362c915799f891124990ae9c874",
+        "checkedAt": "2026-08-22T04:50:18.508Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 74350
+        "durationMs": 60366
       }
     },
     {
@@ -208994,11 +209118,11 @@
     {
       "repositoryId": 1337273054,
       "fullName": "ZoeHao2026/dsh-ui-model-selection-collapsible",
-      "sourcePushedAt": "2026-08-21T15:05:27Z",
-      "sourceSha": "7febbd10262fb16b96fe1e8a0e0dbffd75ccae92",
+      "sourcePushedAt": "2026-08-22T03:41:55Z",
+      "sourceSha": "dead5564dd7f363a9388ba9002a1e9ffc3505627",
       "disposition": "include",
       "classification": {
-        "sourceSha": "7febbd10262fb16b96fe1e8a0e0dbffd75ccae92",
+        "sourceSha": "dead5564dd7f363a9388ba9002a1e9ffc3505627",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -209035,13 +209159,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "7febbd10262fb16b96fe1e8a0e0dbffd75ccae92",
-        "checkedAt": "2026-08-22T02:24:41.810Z",
+        "sourceSha": "dead5564dd7f363a9388ba9002a1e9ffc3505627",
+        "checkedAt": "2026-08-22T04:52:02.287Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 365379
+        "durationMs": 65192
       }
     },
     {
@@ -216116,12 +216240,12 @@
     {
       "repositoryId": 1337900565,
       "fullName": "wgd753/awesome-dsh-plugin",
-      "sourcePushedAt": "2026-08-21T03:47:08Z",
-      "sourceSha": "2192d7d87ba4f5de45f4e7b335f5d971315800b1",
+      "sourcePushedAt": "2026-08-22T03:38:47Z",
+      "sourceSha": "1a15748ddfd7005f53ab54ca207d2e76018d25c5",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "2192d7d87ba4f5de45f4e7b335f5d971315800b1",
+        "sourceSha": "1a15748ddfd7005f53ab54ca207d2e76018d25c5",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -218525,11 +218649,11 @@
     {
       "repositoryId": 1338006486,
       "fullName": "webkubor/dsh-bloom-theme",
-      "sourcePushedAt": "2026-08-20T13:09:04Z",
-      "sourceSha": "528a908bbcc2c75b0085163c42b0b76a6fa34f29",
+      "sourcePushedAt": "2026-08-22T04:22:30Z",
+      "sourceSha": "08946442603d5cb26a30df171ae52c81b31afea5",
       "disposition": "include",
       "classification": {
-        "sourceSha": "528a908bbcc2c75b0085163c42b0b76a6fa34f29",
+        "sourceSha": "08946442603d5cb26a30df171ae52c81b31afea5",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -218543,8 +218667,9 @@
           "ui",
           "development",
           "data",
-          "operations",
           "lifestyle",
+          "operations",
+          "research",
           "security",
           "agent-session"
         ],
@@ -218556,8 +218681,9 @@
           "ui",
           "development",
           "data",
-          "operations",
           "lifestyle",
+          "operations",
+          "research",
           "security",
           "agent-session"
         ],
@@ -218569,13 +218695,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "528a908bbcc2c75b0085163c42b0b76a6fa34f29",
-        "checkedAt": "2026-08-22T02:12:45.634Z",
+        "sourceSha": "08946442603d5cb26a30df171ae52c81b31afea5",
+        "checkedAt": "2026-08-22T04:50:23.657Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 469143
+        "durationMs": 65515
       }
     },
     {
@@ -226181,11 +226307,11 @@
     {
       "repositoryId": 1338300924,
       "fullName": "ZhangFengshun/dsh-remote-ssh",
-      "sourcePushedAt": "2026-08-22T03:17:58Z",
-      "sourceSha": "ee721211078758345a5eebde8422525ba7de9e1d",
+      "sourcePushedAt": "2026-08-22T04:11:33Z",
+      "sourceSha": "11bd8c334c295862ea122091462589f22daaf42e",
       "disposition": "include",
       "classification": {
-        "sourceSha": "ee721211078758345a5eebde8422525ba7de9e1d",
+        "sourceSha": "11bd8c334c295862ea122091462589f22daaf42e",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -226219,13 +226345,13 @@
         "status": "inconclusive",
         "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "ee721211078758345a5eebde8422525ba7de9e1d",
-        "checkedAt": "2026-08-22T04:01:57.064Z",
+        "sourceSha": "11bd8c334c295862ea122091462589f22daaf42e",
+        "checkedAt": "2026-08-22T04:56:59.517Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 124130,
+        "durationMs": 172974,
         "errorCode": "SANDBOX_TIMEOUT",
         "attribution": "infrastructure"
       }
@@ -228131,11 +228257,11 @@
     {
       "repositoryId": 1338408806,
       "fullName": "wanghj040530/dsh-swarm",
-      "sourcePushedAt": "2026-08-22T01:49:43Z",
-      "sourceSha": "35f38593f7229c59acf07b603763b18118d62a9a",
+      "sourcePushedAt": "2026-08-22T04:00:22Z",
+      "sourceSha": "48f3975eeffa1051395266ece56629e09a800851",
       "disposition": "include",
       "classification": {
-        "sourceSha": "35f38593f7229c59acf07b603763b18118d62a9a",
+        "sourceSha": "48f3975eeffa1051395266ece56629e09a800851",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -228166,16 +228292,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "passed",
-        "disposition": "verified",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "35f38593f7229c59acf07b603763b18118d62a9a",
-        "checkedAt": "2026-08-22T03:10:51.756Z",
+        "sourceSha": "48f3975eeffa1051395266ece56629e09a800851",
+        "checkedAt": "2026-08-22T04:53:27.227Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 156156
+        "durationMs": 58367,
+        "errorCode": "PLUGIN_SMOKE_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -230446,11 +230574,11 @@
     {
       "repositoryId": 1338527485,
       "fullName": "lamost423/dsh-trace-compare",
-      "sourcePushedAt": "2026-08-21T07:34:07Z",
-      "sourceSha": "951252169b7200dfd1df9ac8545104a1efdba43e",
+      "sourcePushedAt": "2026-08-22T03:55:15Z",
+      "sourceSha": "ba57c802e65c0d53b406a400548fcb1b3ba9ab72",
       "disposition": "include",
       "classification": {
-        "sourceSha": "951252169b7200dfd1df9ac8545104a1efdba43e",
+        "sourceSha": "ba57c802e65c0d53b406a400548fcb1b3ba9ab72",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -230484,13 +230612,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "951252169b7200dfd1df9ac8545104a1efdba43e",
-        "checkedAt": "2026-08-22T02:29:27.032Z",
+        "sourceSha": "ba57c802e65c0d53b406a400548fcb1b3ba9ab72",
+        "checkedAt": "2026-08-22T04:50:50.151Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 348657
+        "durationMs": 89142
       }
     },
     {
@@ -230808,11 +230936,11 @@
     {
       "repositoryId": 1338542602,
       "fullName": "wqy8593521/dsh-model-pro",
-      "sourcePushedAt": "2026-08-21T14:42:33Z",
-      "sourceSha": "1614dbcf9b4bdd5101ad0d3f83809c61d714068c",
+      "sourcePushedAt": "2026-08-22T04:06:13Z",
+      "sourceSha": "81b0e941b74ffec9e03c506768432b7f984e2373",
       "disposition": "include",
       "classification": {
-        "sourceSha": "1614dbcf9b4bdd5101ad0d3f83809c61d714068c",
+        "sourceSha": "81b0e941b74ffec9e03c506768432b7f984e2373",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -230852,13 +230980,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "1614dbcf9b4bdd5101ad0d3f83809c61d714068c",
-        "checkedAt": "2026-08-22T02:01:37.105Z",
+        "sourceSha": "81b0e941b74ffec9e03c506768432b7f984e2373",
+        "checkedAt": "2026-08-22T04:52:49.111Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 393528
+        "durationMs": 59432
       }
     },
     {
@@ -232289,7 +232417,7 @@
     {
       "repositoryId": 1338615988,
       "fullName": "Sivan757/dsh-agent-plugins-market",
-      "sourcePushedAt": "2026-08-22T03:18:03Z",
+      "sourcePushedAt": "2026-08-22T03:36:34Z",
       "sourceSha": "4e1fff2cc40b84d0545f05e1dee799b220ed6aad",
       "disposition": "include",
       "classification": {
@@ -232336,12 +232464,12 @@
         "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "4e1fff2cc40b84d0545f05e1dee799b220ed6aad",
-        "checkedAt": "2026-08-22T03:58:37.781Z",
+        "checkedAt": "2026-08-22T04:52:18.001Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 82438
+        "durationMs": 92989
       }
     },
     {
@@ -235564,11 +235692,11 @@
     {
       "repositoryId": 1338946084,
       "fullName": "fb0sh/dsh-pentester",
-      "sourcePushedAt": "2026-08-21T14:08:02Z",
-      "sourceSha": "5259788fbbb779c9903ff18e22c84b3c73025e35",
+      "sourcePushedAt": "2026-08-22T03:46:40Z",
+      "sourceSha": "1ef969a5e92347ec7c5e9dc86f05d0555ae80e91",
       "disposition": "include",
       "classification": {
-        "sourceSha": "5259788fbbb779c9903ff18e22c84b3c73025e35",
+        "sourceSha": "1ef969a5e92347ec7c5e9dc86f05d0555ae80e91",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -235610,13 +235738,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "5259788fbbb779c9903ff18e22c84b3c73025e35",
-        "checkedAt": "2026-08-22T02:02:12.167Z",
+        "sourceSha": "1ef969a5e92347ec7c5e9dc86f05d0555ae80e91",
+        "checkedAt": "2026-08-22T04:53:37.473Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 426574
+        "durationMs": 94092
       }
     },
     {
@@ -237957,11 +238085,11 @@
     {
       "repositoryId": 1339059823,
       "fullName": "gehennawu/dsh-service",
-      "sourcePushedAt": "2026-08-21T15:55:18Z",
-      "sourceSha": "6f71b231cbded6158f5fa53e09a350a6abc771fb",
+      "sourcePushedAt": "2026-08-22T03:54:28Z",
+      "sourceSha": "50db13e93667e66ea1385079fde49a394a726946",
       "disposition": "include",
       "classification": {
-        "sourceSha": "6f71b231cbded6158f5fa53e09a350a6abc771fb",
+        "sourceSha": "50db13e93667e66ea1385079fde49a394a726946",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -237995,13 +238123,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "6f71b231cbded6158f5fa53e09a350a6abc771fb",
-        "checkedAt": "2026-08-22T02:34:12.189Z",
+        "sourceSha": "50db13e93667e66ea1385079fde49a394a726946",
+        "checkedAt": "2026-08-22T04:54:38.674Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 421640
+        "durationMs": 69301
       }
     },
     {
@@ -272702,11 +272830,11 @@
     {
       "repositoryId": 1340581082,
       "fullName": "CNSeniorious000/dsh-generative-ui",
-      "sourcePushedAt": "2026-08-22T03:28:26Z",
-      "sourceSha": "f417a9a60c54ff44b64ea297966f342584bdab12",
+      "sourcePushedAt": "2026-08-22T04:09:02Z",
+      "sourceSha": "8c277d971a10804d3feb696bad96705c66a3a40d",
       "disposition": "include",
       "classification": {
-        "sourceSha": "f417a9a60c54ff44b64ea297966f342584bdab12",
+        "sourceSha": "8c277d971a10804d3feb696bad96705c66a3a40d",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -272721,9 +272849,9 @@
           "ui",
           "agent-session",
           "data",
+          "security",
           "research",
-          "communication",
-          "security"
+          "communication"
         ],
         "matchedSignals": [
           "package.json:dsh.bundle.patch",
@@ -272734,26 +272862,27 @@
           "ui",
           "agent-session",
           "data",
+          "security",
           "research",
-          "communication",
-          "security"
+          "communication"
         ],
         "typeConfidence": "high",
         "categoryConfidence": "high",
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "f417a9a60c54ff44b64ea297966f342584bdab12",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "8c277d971a10804d3feb696bad96705c66a3a40d",
+        "checkedAt": "2026-08-22T04:56:48.361Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 195622,
+        "errorCode": "PLUGIN_BUILD_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -273694,11 +273823,11 @@
     {
       "repositoryId": 1340672727,
       "fullName": "jhuanxx44/dsh-sseye",
-      "sourcePushedAt": "2026-08-21T13:38:56Z",
-      "sourceSha": "7d5cc072269a0b17953f60f0ac3fb91040b99727",
+      "sourcePushedAt": "2026-08-22T04:22:07Z",
+      "sourceSha": "a90250c3faca873f76eaf7114e4eaef3001b5364",
       "disposition": "include",
       "classification": {
-        "sourceSha": "7d5cc072269a0b17953f60f0ac3fb91040b99727",
+        "sourceSha": "a90250c3faca873f76eaf7114e4eaef3001b5364",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -273732,13 +273861,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "7d5cc072269a0b17953f60f0ac3fb91040b99727",
-        "checkedAt": "2026-08-22T02:01:32.557Z",
+        "sourceSha": "a90250c3faca873f76eaf7114e4eaef3001b5364",
+        "checkedAt": "2026-08-22T04:55:21.201Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 385321
+        "durationMs": 86844
       }
     },
     {
@@ -274412,7 +274541,7 @@
     {
       "repositoryId": 1340787045,
       "fullName": "nickhelion/dsh-plugins",
-      "sourcePushedAt": "2026-08-22T03:29:05Z",
+      "sourcePushedAt": "2026-08-22T03:53:49Z",
       "sourceSha": "c1d78a2f3b584643d15ef71ea387bef28b0c96df",
       "disposition": "include",
       "classification": {
@@ -274464,12 +274593,12 @@
         "disposition": "capability_pending",
         "stage": "sandbox",
         "sourceSha": "c1d78a2f3b584643d15ef71ea387bef28b0c96df",
-        "checkedAt": "2026-08-22T03:58:33.655Z",
+        "checkedAt": "2026-08-22T04:50:01.821Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "collection",
-        "durationMs": 73959,
+        "durationMs": 48295,
         "errorCode": "COLLECTION_MANIFEST_REQUIRED",
         "attribution": "inconclusive"
       }
@@ -282124,7 +282253,7 @@
     {
       "repositoryId": 1340830161,
       "fullName": "ly028716/dsh-memory-plugin",
-      "sourcePushedAt": "2026-08-22T03:12:33Z",
+      "sourcePushedAt": "2026-08-22T03:45:44Z",
       "sourceSha": "196694c176868cfeccb163c5102fd2a42acdeb6a",
       "disposition": "include",
       "classification": {
@@ -282167,7 +282296,7 @@
         "disposition": "manual_review",
         "stage": "structure",
         "sourceSha": "196694c176868cfeccb163c5102fd2a42acdeb6a",
-        "checkedAt": "2026-08-22T04:01:45.261Z",
+        "checkedAt": "2026-08-22T04:51:49.679Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
@@ -282399,11 +282528,11 @@
     {
       "repositoryId": 1340838178,
       "fullName": "duhu2000/dsh-mcp-connector",
-      "sourcePushedAt": "2026-08-21T15:21:16Z",
-      "sourceSha": "940abc47d85d6031721ff038524f7b9887960520",
+      "sourcePushedAt": "2026-08-22T04:17:53Z",
+      "sourceSha": "faa3165937cc3fcef5ac4688abae6a86b5aa3cea",
       "disposition": "include",
       "classification": {
-        "sourceSha": "940abc47d85d6031721ff038524f7b9887960520",
+        "sourceSha": "faa3165937cc3fcef5ac4688abae6a86b5aa3cea",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -282443,13 +282572,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "940abc47d85d6031721ff038524f7b9887960520",
-        "checkedAt": "2026-08-22T02:01:09.580Z",
+        "sourceSha": "faa3165937cc3fcef5ac4688abae6a86b5aa3cea",
+        "checkedAt": "2026-08-22T04:50:05.360Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 367677,
+        "durationMs": 51834,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -316465,68 +316594,6 @@
       }
     },
     {
-      "repositoryId": 1341340570,
-      "fullName": "EdwardHamu/dsh-glassmorphism-theme",
-      "sourcePushedAt": "2026-08-22T00:29:39Z",
-      "sourceSha": "513d3e6fda73a3967942e427f23bc535d6ea606d",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "513d3e6fda73a3967942e427f23bc535d6ea606d",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-glassmorphism-theme"
-        ],
-        "projectType": "plugin",
-        "category": "development",
-        "categories": [
-          "development",
-          "data",
-          "operations",
-          "agent-session",
-          "security",
-          "ui",
-          "research",
-          "communication",
-          "lifestyle"
-        ],
-        "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-glassmorphism-theme",
-          "cordis.patch.yml",
-          "SKILL.md",
-          "multiple-package.json",
-          "development",
-          "data",
-          "operations",
-          "agent-session",
-          "security",
-          "ui",
-          "research",
-          "communication",
-          "lifestyle"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "513d3e6fda73a3967942e427f23bc535d6ea606d",
-        "checkedAt": "2026-08-22T02:05:01.321Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "web",
-        "durationMs": 595728
-      }
-    },
-    {
       "repositoryId": 1341343606,
       "fullName": "kedoupi/dsh-plugins",
       "sourcePushedAt": "2026-08-21T05:26:01Z",
@@ -317883,18 +317950,18 @@
     },
     {
       "repositoryId": 1341458804,
-      "fullName": "WSYXIUBA/dsh-plugin-constellation",
-      "sourcePushedAt": "2026-08-21T06:44:24Z",
-      "sourceSha": "364a20ed1b6280c7778fe14527fe702e57f920fa",
+      "fullName": "WSYXIUBA/dsh-plugin-starmap",
+      "sourcePushedAt": "2026-08-22T03:57:56Z",
+      "sourceSha": "7c12317a2299e1d06b0e0ad70f53e412261d45b6",
       "disposition": "include",
       "classification": {
-        "sourceSha": "364a20ed1b6280c7778fe14527fe702e57f920fa",
+        "sourceSha": "7c12317a2299e1d06b0e0ad70f53e412261d45b6",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
           "package.json:dsh.bundle.patch",
           "cordis.patch.yml:parsed",
-          "repository-name:dsh-plugin-constellation"
+          "repository-name:dsh-plugin-starmap"
         ],
         "projectType": "plugin",
         "category": "development",
@@ -317906,7 +317973,7 @@
         "matchedSignals": [
           "package.json:dsh.bundle.patch",
           "cordis.patch.yml:parsed",
-          "repository-name:dsh-plugin-constellation",
+          "repository-name:dsh-plugin-starmap",
           "cordis.patch.yml",
           "development",
           "ui",
@@ -317920,13 +317987,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "364a20ed1b6280c7778fe14527fe702e57f920fa",
-        "checkedAt": "2026-08-22T02:09:56.908Z",
+        "sourceSha": "7c12317a2299e1d06b0e0ad70f53e412261d45b6",
+        "checkedAt": "2026-08-22T04:53:07.840Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 890883,
+        "durationMs": 58264,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -318233,56 +318300,6 @@
       }
     },
     {
-      "repositoryId": 1341477242,
-      "fullName": "Mr-SYGao/dsh-feishu-reader",
-      "sourcePushedAt": "2026-08-21T08:49:20Z",
-      "sourceSha": "feb52b63687093e80a2e89527cf034e66ed2fa62",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "feb52b63687093e80a2e89527cf034e66ed2fa62",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "repository-name:dsh-feishu-reader"
-        ],
-        "projectType": "plugin",
-        "category": "development",
-        "categories": [
-          "development",
-          "communication",
-          "data",
-          "lifestyle"
-        ],
-        "matchedSignals": [
-          "repository-name:dsh-feishu-reader",
-          "lib/cordis.patch.yml:parsed",
-          "cordis.patch.yml",
-          "multiple-package.json",
-          "development",
-          "communication",
-          "data",
-          "lifestyle"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "failed",
-        "disposition": "auto_failed",
-        "stage": "sandbox",
-        "sourceSha": "feb52b63687093e80a2e89527cf034e66ed2fa62",
-        "checkedAt": "2026-08-22T02:04:02.662Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 537378,
-        "errorCode": "PLUGIN_SMOKE_FAILED",
-        "attribution": "plugin"
-      }
-    },
-    {
       "repositoryId": 1341478559,
       "fullName": "Shrbuz/dsh-web-notes",
       "sourcePushedAt": "2026-08-21T22:53:51Z",
@@ -318339,7 +318356,7 @@
     {
       "repositoryId": 1341483445,
       "fullName": "skyf0xx/hedgehog-core-deepseek-harness",
-      "sourcePushedAt": "2026-08-21T12:10:15Z",
+      "sourcePushedAt": "2026-08-22T04:11:52Z",
       "sourceSha": "6f20d5a074d853960518796fe7bd7ec664d4174f",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
@@ -322146,56 +322163,6 @@
       }
     },
     {
-      "repositoryId": 1341713986,
-      "fullName": "uckkk/dsh-in2cm",
-      "sourcePushedAt": "2026-08-21T11:09:38Z",
-      "sourceSha": "2519c0593d5e19c3ad7ad0571a5dca30e95d50db",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "2519c0593d5e19c3ad7ad0571a5dca30e95d50db",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-in2cm"
-        ],
-        "projectType": "plugin",
-        "category": "data",
-        "categories": [
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-in2cm",
-          "cordis.patch.yml",
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "2519c0593d5e19c3ad7ad0571a5dca30e95d50db",
-        "checkedAt": "2026-08-22T02:04:01.158Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 533922
-      }
-    },
-    {
       "repositoryId": 1341715174,
       "fullName": "uckkk/dsh-ireland",
       "sourcePushedAt": "2026-08-21T11:09:43Z",
@@ -324676,56 +324643,6 @@
       }
     },
     {
-      "repositoryId": 1341745520,
-      "fullName": "uckkk/dsh-inhg2hpa",
-      "sourcePushedAt": "2026-08-21T11:44:40Z",
-      "sourceSha": "1508e05f09b9af0dd19c84b65afdbc3a1d67d74d",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "1508e05f09b9af0dd19c84b65afdbc3a1d67d74d",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-inhg2hpa"
-        ],
-        "projectType": "plugin",
-        "category": "data",
-        "categories": [
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-inhg2hpa",
-          "cordis.patch.yml",
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "1508e05f09b9af0dd19c84b65afdbc3a1d67d74d",
-        "checkedAt": "2026-08-22T02:27:57.980Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 667902
-      }
-    },
-    {
       "repositoryId": 1341745524,
       "fullName": "baihejiangnan/dsh-plugin-pack-ai-share-template",
       "sourcePushedAt": "2026-08-21T11:41:09Z",
@@ -326045,58 +325962,6 @@
       }
     },
     {
-      "repositoryId": 1341802475,
-      "fullName": "uckkk/dsh-future-robot-pet",
-      "sourcePushedAt": "2026-08-21T12:45:16Z",
-      "sourceSha": "1996f36a51a62c1e8474481be2f335575b3f5dad",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "1996f36a51a62c1e8474481be2f335575b3f5dad",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-future-robot-pet"
-        ],
-        "projectType": "plugin",
-        "category": "data",
-        "categories": [
-          "data",
-          "lifestyle",
-          "communication",
-          "security",
-          "development"
-        ],
-        "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-future-robot-pet",
-          "cordis.patch.yml",
-          "data",
-          "lifestyle",
-          "communication",
-          "security",
-          "development"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "1996f36a51a62c1e8474481be2f335575b3f5dad",
-        "checkedAt": "2026-08-22T02:28:00.672Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 564241
-      }
-    },
-    {
       "repositoryId": 1341804313,
       "fullName": "uckkk/dsh-lebanon",
       "sourcePushedAt": "2026-08-21T12:47:10Z",
@@ -326444,56 +326309,6 @@
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
         "durationMs": 615050
-      }
-    },
-    {
-      "repositoryId": 1341806404,
-      "fullName": "uckkk/dsh-future-space-colonization",
-      "sourcePushedAt": "2026-08-21T12:49:36Z",
-      "sourceSha": "0915c6c6a4530b9e1073c6287cd198f7e98dbf99",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "0915c6c6a4530b9e1073c6287cd198f7e98dbf99",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-future-space-colonization"
-        ],
-        "projectType": "plugin",
-        "category": "data",
-        "categories": [
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-future-space-colonization",
-          "cordis.patch.yml",
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "0915c6c6a4530b9e1073c6287cd198f7e98dbf99",
-        "checkedAt": "2026-08-22T02:15:17.052Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 550232
       }
     },
     {
@@ -328266,56 +328081,6 @@
       }
     },
     {
-      "repositoryId": 1341821186,
-      "fullName": "uckkk/dsh-gadolinium",
-      "sourcePushedAt": "2026-08-21T13:06:34Z",
-      "sourceSha": "3aee446166ae9aa527b7d23afbccf49c3057c161",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "3aee446166ae9aa527b7d23afbccf49c3057c161",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-gadolinium"
-        ],
-        "projectType": "plugin",
-        "category": "data",
-        "categories": [
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-gadolinium",
-          "cordis.patch.yml",
-          "data",
-          "communication",
-          "security",
-          "development"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "3aee446166ae9aa527b7d23afbccf49c3057c161",
-        "checkedAt": "2026-08-22T02:15:26.053Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 559233
-      }
-    },
-    {
       "repositoryId": 1341822938,
       "fullName": "uckkk/dsh-kwh2mj",
       "sourcePushedAt": "2026-08-21T13:08:36Z",
@@ -329013,49 +328778,6 @@
         "durationMs": 628634,
         "errorCode": "SANDBOX_TIMEOUT",
         "attribution": "infrastructure"
-      }
-    },
-    {
-      "repositoryId": 1341833763,
-      "fullName": "siweimofang/dsh-plugin-zhishe-bikeng-qa",
-      "sourcePushedAt": "2026-08-21T13:20:31Z",
-      "sourceSha": "0bc240a88dec7af4347b0e2e243ea4a38e968b82",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "0bc240a88dec7af4347b0e2e243ea4a38e968b82",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "repository-name:dsh-plugin-zhishe-bikeng-qa"
-        ],
-        "projectType": "plugin",
-        "category": "data",
-        "categories": [
-          "data"
-        ],
-        "matchedSignals": [
-          "repository-name:dsh-plugin-zhishe-bikeng-qa",
-          "cordis.patch.yml:parsed",
-          "cordis.patch.yml",
-          "data"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "failed",
-        "disposition": "auto_failed",
-        "stage": "sandbox",
-        "sourceSha": "0bc240a88dec7af4347b0e2e243ea4a38e968b82",
-        "checkedAt": "2026-08-22T02:17:57.634Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "host-tool",
-        "durationMs": 693751,
-        "errorCode": "PLUGIN_SMOKE_FAILED",
-        "attribution": "plugin"
       }
     },
     {
@@ -329857,11 +329579,11 @@
     {
       "repositoryId": 1341862770,
       "fullName": "liznee/dsh-speech-input",
-      "sourcePushedAt": "2026-08-22T03:28:08Z",
-      "sourceSha": "922e718304bc787e74e8ffbbfff1f8dbe2cd589e",
+      "sourcePushedAt": "2026-08-22T03:57:07Z",
+      "sourceSha": "c46bdc760c5dca8a0fbe336c29c2001e9d9b8961",
       "disposition": "include",
       "classification": {
-        "sourceSha": "922e718304bc787e74e8ffbbfff1f8dbe2cd589e",
+        "sourceSha": "c46bdc760c5dca8a0fbe336c29c2001e9d9b8961",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -329896,17 +329618,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "922e718304bc787e74e8ffbbfff1f8dbe2cd589e",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "c46bdc760c5dca8a0fbe336c29c2001e9d9b8961",
+        "checkedAt": "2026-08-22T04:50:36.485Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 75476
       }
     },
     {
@@ -330014,60 +329735,6 @@
       }
     },
     {
-      "repositoryId": 1341875486,
-      "fullName": "TheHeartFickle/dsh-conversation-folding",
-      "sourcePushedAt": "2026-08-22T02:44:37Z",
-      "sourceSha": "e6393112d929daf09497003576f17480c30335f0",
-      "disposition": "include",
-      "classification": {
-        "sourceSha": "e6393112d929daf09497003576f17480c30335f0",
-        "classifierVersion": "0.2.1",
-        "dshRelevance": "recognized",
-        "relevanceSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-conversation-folding"
-        ],
-        "projectType": "plugin",
-        "category": "development",
-        "categories": [
-          "development",
-          "agent-session",
-          "data",
-          "ui",
-          "communication",
-          "security"
-        ],
-        "matchedSignals": [
-          "package.json:dsh.bundle.patch",
-          "cordis.patch.yml:parsed",
-          "repository-name:dsh-conversation-folding",
-          "cordis.patch.yml",
-          "development",
-          "agent-session",
-          "data",
-          "ui",
-          "communication",
-          "security"
-        ],
-        "typeConfidence": "high",
-        "categoryConfidence": "high",
-        "confidence": "high"
-      },
-      "validation": {
-        "status": "passed",
-        "disposition": "verified",
-        "stage": "sandbox",
-        "sourceSha": "e6393112d929daf09497003576f17480c30335f0",
-        "checkedAt": "2026-08-22T03:09:24.961Z",
-        "dshVersion": "0.1.0-rc.6",
-        "platform": "linux-x64",
-        "validatorVersion": "0.1.2",
-        "executionType": "web",
-        "durationMs": 58825
-      }
-    },
-    {
       "repositoryId": 1341877632,
       "fullName": "cokiscarazo-rgb/dsh-plugin-message-timeline-navigation",
       "sourcePushedAt": "2026-08-21T14:16:12Z",
@@ -330172,11 +329839,11 @@
     {
       "repositoryId": 1341893937,
       "fullName": "chenjie1129/remotion-video-plugin",
-      "sourcePushedAt": "2026-08-22T02:55:12Z",
-      "sourceSha": "bc23671b7e8da036196925dbfcca69090c4403f2",
+      "sourcePushedAt": "2026-08-22T04:10:34Z",
+      "sourceSha": "9385479c46360dbbd0ede5aa56038fb70301dda1",
       "disposition": "include",
       "classification": {
-        "sourceSha": "bc23671b7e8da036196925dbfcca69090c4403f2",
+        "sourceSha": "9385479c46360dbbd0ede5aa56038fb70301dda1",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -330211,13 +329878,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "bc23671b7e8da036196925dbfcca69090c4403f2",
-        "checkedAt": "2026-08-22T03:09:41.895Z",
+        "sourceSha": "9385479c46360dbbd0ede5aa56038fb70301dda1",
+        "checkedAt": "2026-08-22T04:54:31.480Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 83755
+        "durationMs": 77869
       }
     },
     {
@@ -331166,11 +330833,11 @@
     {
       "repositoryId": 1341986568,
       "fullName": "log-li/dsh-auto-mode",
-      "sourcePushedAt": "2026-08-22T03:16:44Z",
-      "sourceSha": "ea8af90266d99a77fd920564973ab092c916e15b",
+      "sourcePushedAt": "2026-08-22T04:21:15Z",
+      "sourceSha": "7217f013826af439acc704a6681845bc02638e06",
       "disposition": "include",
       "classification": {
-        "sourceSha": "ea8af90266d99a77fd920564973ab092c916e15b",
+        "sourceSha": "7217f013826af439acc704a6681845bc02638e06",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -331206,13 +330873,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "ea8af90266d99a77fd920564973ab092c916e15b",
-        "checkedAt": "2026-08-22T04:02:43.616Z",
+        "sourceSha": "7217f013826af439acc704a6681845bc02638e06",
+        "checkedAt": "2026-08-22T04:51:40.348Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 71437,
+        "durationMs": 55161,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -331582,11 +331249,11 @@
     {
       "repositoryId": 1342065278,
       "fullName": "Wenaixi/dsh-superpower",
-      "sourcePushedAt": "2026-08-21T19:11:28Z",
-      "sourceSha": "6b7bd0397d31faf18633ce19ae9200b0ee7c82b7",
+      "sourcePushedAt": "2026-08-22T04:10:42Z",
+      "sourceSha": "51a95f51cc72faf443944beb5c8845523b657820",
       "disposition": "include",
       "classification": {
-        "sourceSha": "6b7bd0397d31faf18633ce19ae9200b0ee7c82b7",
+        "sourceSha": "51a95f51cc72faf443944beb5c8845523b657820",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -331633,13 +331300,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "6b7bd0397d31faf18633ce19ae9200b0ee7c82b7",
-        "checkedAt": "2026-08-22T02:38:19.667Z",
+        "sourceSha": "51a95f51cc72faf443944beb5c8845523b657820",
+        "checkedAt": "2026-08-22T04:51:41.412Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 669118,
+        "durationMs": 56225,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -331751,11 +331418,11 @@
     {
       "repositoryId": 1342084531,
       "fullName": "Wenaixi/dsh-ponytail",
-      "sourcePushedAt": "2026-08-22T03:23:48Z",
-      "sourceSha": "1aae9b5de0f2457ae4ed6aef345eab4509bd848a",
+      "sourcePushedAt": "2026-08-22T04:21:12Z",
+      "sourceSha": "c810cda18e7b5400ac94d55bbf9ccea669ccaec2",
       "disposition": "include",
       "classification": {
-        "sourceSha": "1aae9b5de0f2457ae4ed6aef345eab4509bd848a",
+        "sourceSha": "c810cda18e7b5400ac94d55bbf9ccea669ccaec2",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -331793,17 +331460,18 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "failed",
+        "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "1aae9b5de0f2457ae4ed6aef345eab4509bd848a",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "c810cda18e7b5400ac94d55bbf9ccea669ccaec2",
+        "checkedAt": "2026-08-22T04:50:37.097Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "host-tool",
+        "durationMs": 70471,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
       }
     },
     {
@@ -332736,11 +332404,11 @@
     {
       "repositoryId": 1342327562,
       "fullName": "lxxz1918/dsh-theme-customizer",
-      "sourcePushedAt": "2026-08-22T03:28:17Z",
-      "sourceSha": "353757faef5d2b7f95a0c680c591b3cf2cc07467",
+      "sourcePushedAt": "2026-08-22T04:15:15Z",
+      "sourceSha": "b42eaf30d9f39673d3c5ac766ad26d3cd155d365",
       "disposition": "include",
       "classification": {
-        "sourceSha": "353757faef5d2b7f95a0c680c591b3cf2cc07467",
+        "sourceSha": "b42eaf30d9f39673d3c5ac766ad26d3cd155d365",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -332774,13 +332442,13 @@
         "status": "passed",
         "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "353757faef5d2b7f95a0c680c591b3cf2cc07467",
-        "checkedAt": "2026-08-22T03:58:37.999Z",
+        "sourceSha": "b42eaf30d9f39673d3c5ac766ad26d3cd155d365",
+        "checkedAt": "2026-08-22T04:51:45.342Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 78303
+        "durationMs": 60155
       }
     },
     {
@@ -332995,11 +332663,11 @@
     {
       "repositoryId": 1342354716,
       "fullName": "leonardoxr/dsh-routed-subagent",
-      "sourcePushedAt": "2026-08-22T03:13:40Z",
-      "sourceSha": "ce2b442841bc885bb83783d2e4f45e1c459967bf",
+      "sourcePushedAt": "2026-08-22T03:58:42Z",
+      "sourceSha": "1e8c94d436415c600dd584e5910fba1f6b05b953",
       "disposition": "include",
       "classification": {
-        "sourceSha": "ce2b442841bc885bb83783d2e4f45e1c459967bf",
+        "sourceSha": "1e8c94d436415c600dd584e5910fba1f6b05b953",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -333037,13 +332705,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "ce2b442841bc885bb83783d2e4f45e1c459967bf",
-        "checkedAt": "2026-08-22T03:58:25.616Z",
+        "sourceSha": "1e8c94d436415c600dd584e5910fba1f6b05b953",
+        "checkedAt": "2026-08-22T04:52:05.413Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 68929,
+        "durationMs": 68318,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -333152,11 +332820,11 @@
     {
       "repositoryId": 1342367174,
       "fullName": "Nigel211/dsh-text2img-compress",
-      "sourcePushedAt": "2026-08-22T02:53:22Z",
-      "sourceSha": "6255a742cc4cc8ceee5f53a38863201bced76a43",
+      "sourcePushedAt": "2026-08-22T04:19:27Z",
+      "sourceSha": "209aa7306904afd780b0c8c25aa41e0398c37431",
       "disposition": "include",
       "classification": {
-        "sourceSha": "6255a742cc4cc8ceee5f53a38863201bced76a43",
+        "sourceSha": "209aa7306904afd780b0c8c25aa41e0398c37431",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -333192,13 +332860,13 @@
         "status": "failed",
         "disposition": "auto_failed",
         "stage": "sandbox",
-        "sourceSha": "6255a742cc4cc8ceee5f53a38863201bced76a43",
-        "checkedAt": "2026-08-22T03:15:01.241Z",
+        "sourceSha": "209aa7306904afd780b0c8c25aa41e0398c37431",
+        "checkedAt": "2026-08-22T04:52:46.622Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "web",
-        "durationMs": 97779,
+        "durationMs": 56943,
         "errorCode": "DEPENDENCY_INSTALL_FAILED",
         "attribution": "plugin"
       }
@@ -333350,12 +333018,12 @@
     {
       "repositoryId": 1342382831,
       "fullName": "baosfeng/my-dsh-plugins",
-      "sourcePushedAt": "2026-08-22T03:16:40Z",
-      "sourceSha": "65567bff441ab843fec51ae1c3cb126d93506cc4",
+      "sourcePushedAt": "2026-08-22T04:24:19Z",
+      "sourceSha": "7bdc68f97edf59ecdbe39562c8362f505a6d56dd",
       "disposition": "exclude",
       "exclusionReason": "NO_DSH_CONTRACT",
       "classification": {
-        "sourceSha": "65567bff441ab843fec51ae1c3cb126d93506cc4",
+        "sourceSha": "7bdc68f97edf59ecdbe39562c8362f505a6d56dd",
         "classifierVersion": "0.2.1",
         "dshRelevance": "unrecognized",
         "relevanceSignals": [],
@@ -333464,11 +333132,11 @@
     {
       "repositoryId": 1342391245,
       "fullName": "liznee/dsh-file-resource",
-      "sourcePushedAt": "2026-08-22T03:26:25Z",
-      "sourceSha": "2b0dafd906cf3569a3710d0570ad1813a4b9ab0b",
+      "sourcePushedAt": "2026-08-22T04:10:01Z",
+      "sourceSha": "cc85b6194b80e2583eab25ce521c323d41e9679b",
       "disposition": "include",
       "classification": {
-        "sourceSha": "2b0dafd906cf3569a3710d0570ad1813a4b9ab0b",
+        "sourceSha": "cc85b6194b80e2583eab25ce521c323d41e9679b",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -333501,17 +333169,16 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "inconclusive",
-        "disposition": "retryable",
+        "status": "passed",
+        "disposition": "verified",
         "stage": "sandbox",
-        "sourceSha": "2b0dafd906cf3569a3710d0570ad1813a4b9ab0b",
-        "checkedAt": "2026-08-22T04:05:09.646Z",
+        "sourceSha": "cc85b6194b80e2583eab25ce521c323d41e9679b",
+        "checkedAt": "2026-08-22T04:50:48.435Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": null,
-        "errorCode": "SOURCE_CHANGED_DURING_RUN",
-        "attribution": "infrastructure"
+        "executionType": "web",
+        "durationMs": 81809
       }
     },
     {
@@ -333570,11 +333237,11 @@
     {
       "repositoryId": 1342403120,
       "fullName": "MS666666/dsh-archive-manager",
-      "sourcePushedAt": "2026-08-22T03:22:48Z",
-      "sourceSha": "289ab35b7eddea63b685a539a69437c5c7e67c80",
+      "sourcePushedAt": "2026-08-22T03:58:46Z",
+      "sourceSha": "a4791110d572b8b16a204e1997c62103c71f4520",
       "disposition": "include",
       "classification": {
-        "sourceSha": "289ab35b7eddea63b685a539a69437c5c7e67c80",
+        "sourceSha": "a4791110d572b8b16a204e1997c62103c71f4520",
         "classifierVersion": "0.2.1",
         "dshRelevance": "recognized",
         "relevanceSignals": [
@@ -333605,22 +333272,23 @@
         "confidence": "high"
       },
       "validation": {
-        "status": "passed",
-        "disposition": "verified",
+        "status": "inconclusive",
+        "disposition": "retryable",
         "stage": "sandbox",
-        "sourceSha": "289ab35b7eddea63b685a539a69437c5c7e67c80",
-        "checkedAt": "2026-08-22T04:04:15.458Z",
+        "sourceSha": "a4791110d572b8b16a204e1997c62103c71f4520",
+        "checkedAt": "2026-08-22T04:58:08.040Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
-        "executionType": "web",
-        "durationMs": 58640
+        "executionType": null,
+        "errorCode": "SOURCE_CHANGED_DURING_RUN",
+        "attribution": "infrastructure"
       }
     },
     {
       "repositoryId": 1342404020,
       "fullName": "fan56/dsh-llm-net-retry",
-      "sourcePushedAt": "2026-08-22T03:16:26Z",
+      "sourcePushedAt": "2026-08-22T03:47:17Z",
       "sourceSha": "a665096d82d6209085cf0c02fc6f88975f4c75ee",
       "disposition": "include",
       "classification": {
@@ -333659,18 +333327,66 @@
         "disposition": "verified",
         "stage": "sandbox",
         "sourceSha": "a665096d82d6209085cf0c02fc6f88975f4c75ee",
-        "checkedAt": "2026-08-22T04:01:46.212Z",
+        "checkedAt": "2026-08-22T04:50:36.564Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 86281
+        "durationMs": 76096
+      }
+    },
+    {
+      "repositoryId": 1342404087,
+      "fullName": "JarvisChu/dsh-obsidian-note",
+      "sourcePushedAt": "2026-08-22T03:17:08Z",
+      "sourceSha": "141254be899f3cf3452bd7f05a39848dcb289949",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "141254be899f3cf3452bd7f05a39848dcb289949",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-obsidian-note"
+        ],
+        "projectType": "plugin",
+        "category": "data",
+        "categories": [
+          "data",
+          "agent-session",
+          "development"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-obsidian-note",
+          "cordis.patch.yml",
+          "data",
+          "agent-session",
+          "development"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "passed",
+        "disposition": "verified",
+        "stage": "sandbox",
+        "sourceSha": "141254be899f3cf3452bd7f05a39848dcb289949",
+        "checkedAt": "2026-08-22T04:51:48.497Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "host-tool",
+        "durationMs": 63310
       }
     },
     {
       "repositoryId": 1342406010,
       "fullName": "xuanyuanluoxue/computer-use-vision",
-      "sourcePushedAt": "2026-08-22T03:20:29Z",
+      "sourcePushedAt": "2026-08-22T03:47:17Z",
       "sourceSha": "c568073e361403cb5925585ce5508e521ff6d6ef",
       "disposition": "include",
       "classification": {
@@ -333717,14 +333433,532 @@
         "disposition": "auto_failed",
         "stage": "sandbox",
         "sourceSha": "c568073e361403cb5925585ce5508e521ff6d6ef",
-        "checkedAt": "2026-08-22T04:02:52.463Z",
+        "checkedAt": "2026-08-22T04:52:20.462Z",
         "dshVersion": "0.1.0-rc.6",
         "platform": "linux-x64",
         "validatorVersion": "0.1.2",
         "executionType": "host-tool",
-        "durationMs": 67202,
+        "durationMs": 61452,
         "errorCode": "PLUGIN_BUILD_FAILED",
         "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342407232,
+      "fullName": "mario03690/dsh-validate",
+      "sourcePushedAt": "2026-08-22T03:53:59Z",
+      "sourceSha": "065f209efc3066e70a1f000e6870e678e4e8551e",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "065f209efc3066e70a1f000e6870e678e4e8551e",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-validate"
+        ],
+        "projectType": "plugin",
+        "category": "model-mcp",
+        "categories": [
+          "model-mcp",
+          "development",
+          "data"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-validate",
+          "cordis.patch.yml",
+          "model-mcp",
+          "development",
+          "data"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "065f209efc3066e70a1f000e6870e678e4e8551e",
+        "checkedAt": "2026-08-22T04:51:21.015Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "channel-mcp",
+        "durationMs": 128280,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342407454,
+      "fullName": "mario03690/dsh-devkit",
+      "sourcePushedAt": "2026-08-22T03:54:05Z",
+      "sourceSha": "c30a3a4c5728a3ccd9351fae2833c19c38bb42e5",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "c30a3a4c5728a3ccd9351fae2833c19c38bb42e5",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-devkit"
+        ],
+        "projectType": "plugin",
+        "category": "model-mcp",
+        "categories": [
+          "model-mcp",
+          "development",
+          "data"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-devkit",
+          "cordis.patch.yml",
+          "model-mcp",
+          "development",
+          "data"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "c30a3a4c5728a3ccd9351fae2833c19c38bb42e5",
+        "checkedAt": "2026-08-22T04:50:42.745Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "channel-mcp",
+        "durationMs": 81736,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342407544,
+      "fullName": "mario03690/dsh-duizhang",
+      "sourcePushedAt": "2026-08-22T03:54:11Z",
+      "sourceSha": "bdc9148918d3d118586b5707eed302e7730a1072",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "bdc9148918d3d118586b5707eed302e7730a1072",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-duizhang"
+        ],
+        "projectType": "plugin",
+        "category": "model-mcp",
+        "categories": [
+          "model-mcp",
+          "development",
+          "data",
+          "lifestyle"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-duizhang",
+          "cordis.patch.yml",
+          "model-mcp",
+          "development",
+          "data",
+          "lifestyle"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "bdc9148918d3d118586b5707eed302e7730a1072",
+        "checkedAt": "2026-08-22T04:50:52.458Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "channel-mcp",
+        "durationMs": 85832,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342407606,
+      "fullName": "mario03690/dsh-kuajing",
+      "sourcePushedAt": "2026-08-22T03:54:16Z",
+      "sourceSha": "fc6d89f36d0767dc9af0dbd98dd44d3281d9d491",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "fc6d89f36d0767dc9af0dbd98dd44d3281d9d491",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-kuajing"
+        ],
+        "projectType": "plugin",
+        "category": "model-mcp",
+        "categories": [
+          "model-mcp",
+          "development",
+          "data",
+          "lifestyle"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-kuajing",
+          "cordis.patch.yml",
+          "model-mcp",
+          "development",
+          "data",
+          "lifestyle"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "fc6d89f36d0767dc9af0dbd98dd44d3281d9d491",
+        "checkedAt": "2026-08-22T04:52:07.456Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "channel-mcp",
+        "durationMs": 70361,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342407668,
+      "fullName": "mario03690/dsh-writer",
+      "sourcePushedAt": "2026-08-22T03:54:21Z",
+      "sourceSha": "85be88ddf8f3a61c8ceff97a603189a6da078928",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "85be88ddf8f3a61c8ceff97a603189a6da078928",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-writer"
+        ],
+        "projectType": "plugin",
+        "category": "model-mcp",
+        "categories": [
+          "model-mcp",
+          "development",
+          "communication",
+          "data",
+          "research"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-writer",
+          "cordis.patch.yml",
+          "model-mcp",
+          "development",
+          "communication",
+          "data",
+          "research"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "85be88ddf8f3a61c8ceff97a603189a6da078928",
+        "checkedAt": "2026-08-22T04:50:07.583Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "channel-mcp",
+        "durationMs": 54057,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342418573,
+      "fullName": "yanglingrise/dsh-erii-boot-splash",
+      "sourcePushedAt": "2026-08-22T03:45:59Z",
+      "sourceSha": "406f106b8294e80ddde95e24561f088fbfe843c0",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "406f106b8294e80ddde95e24561f088fbfe843c0",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-erii-boot-splash"
+        ],
+        "projectType": "plugin",
+        "category": "ui",
+        "categories": [
+          "ui",
+          "development",
+          "data",
+          "lifestyle"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-erii-boot-splash",
+          "cordis.patch.yml",
+          "ui",
+          "development",
+          "data",
+          "lifestyle"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "passed",
+        "disposition": "verified",
+        "stage": "sandbox",
+        "sourceSha": "406f106b8294e80ddde95e24561f088fbfe843c0",
+        "checkedAt": "2026-08-22T04:50:28.429Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "web",
+        "durationMs": 67961
+      }
+    },
+    {
+      "repositoryId": 1342420623,
+      "fullName": "Jokasa7/dsh-product-subagent-console",
+      "sourcePushedAt": "2026-08-22T04:01:28Z",
+      "sourceSha": "46eeaad8883d3597b1d82ed1db2bed0f186df21a",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "46eeaad8883d3597b1d82ed1db2bed0f186df21a",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-product-subagent-console"
+        ],
+        "projectType": "plugin",
+        "category": "agent-session",
+        "categories": [
+          "agent-session",
+          "development",
+          "ui",
+          "data",
+          "operations"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-product-subagent-console",
+          "cordis.patch.yml",
+          "agent-session",
+          "development",
+          "ui",
+          "data",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "46eeaad8883d3597b1d82ed1db2bed0f186df21a",
+        "checkedAt": "2026-08-22T04:50:17.672Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "web",
+        "durationMs": 64146,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342422592,
+      "fullName": "jieguanya/tugu-dsh-balance-widget",
+      "sourcePushedAt": "2026-08-22T03:55:03Z",
+      "sourceSha": "9d662f0c7c0a2d007f38213f1f288f0d7560d856",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "9d662f0c7c0a2d007f38213f1f288f0d7560d856",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed"
+        ],
+        "projectType": "plugin",
+        "category": "ui",
+        "categories": [
+          "ui",
+          "data",
+          "development",
+          "operations"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "ui",
+          "data",
+          "development",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "passed",
+        "disposition": "verified",
+        "stage": "sandbox",
+        "sourceSha": "9d662f0c7c0a2d007f38213f1f288f0d7560d856",
+        "checkedAt": "2026-08-22T04:51:56.418Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "web",
+        "durationMs": 71406
+      }
+    },
+    {
+      "repositoryId": 1342427928,
+      "fullName": "frederico-kluser/dsh-plugin-dev",
+      "sourcePushedAt": "2026-08-22T04:03:05Z",
+      "sourceSha": "79a48bd3b4b6902d39c5285a151ad8ea0f5b446f",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "79a48bd3b4b6902d39c5285a151ad8ea0f5b446f",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "repository-name:dsh-plugin-dev"
+        ],
+        "projectType": "plugin",
+        "category": "security",
+        "categories": [
+          "security",
+          "development",
+          "data",
+          "ui",
+          "communication",
+          "research",
+          "agent-session",
+          "model-mcp",
+          "operations"
+        ],
+        "matchedSignals": [
+          "repository-name:dsh-plugin-dev",
+          "examples/minimal/cordis.patch.yml:parsed",
+          "cordis.patch.yml",
+          "SKILL.md",
+          "security",
+          "development",
+          "data",
+          "ui",
+          "communication",
+          "research",
+          "agent-session",
+          "model-mcp",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "failed",
+        "disposition": "auto_failed",
+        "stage": "sandbox",
+        "sourceSha": "79a48bd3b4b6902d39c5285a151ad8ea0f5b446f",
+        "checkedAt": "2026-08-22T04:51:47.034Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "channel-mcp",
+        "durationMs": 61847,
+        "errorCode": "DEPENDENCY_INSTALL_FAILED",
+        "attribution": "plugin"
+      }
+    },
+    {
+      "repositoryId": 1342434091,
+      "fullName": "whisperflo/dsh-deepseek-console",
+      "sourcePushedAt": "2026-08-22T04:18:41Z",
+      "sourceSha": "623fa53efaca48016ffc4d5ce102599a754e42d6",
+      "disposition": "include",
+      "classification": {
+        "sourceSha": "623fa53efaca48016ffc4d5ce102599a754e42d6",
+        "classifierVersion": "0.2.1",
+        "dshRelevance": "recognized",
+        "relevanceSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-deepseek-console"
+        ],
+        "projectType": "plugin",
+        "category": "data",
+        "categories": [
+          "data",
+          "development",
+          "operations"
+        ],
+        "matchedSignals": [
+          "package.json:dsh.bundle.patch",
+          "cordis.patch.yml:parsed",
+          "repository-name:dsh-deepseek-console",
+          "cordis.patch.yml",
+          "data",
+          "development",
+          "operations"
+        ],
+        "typeConfidence": "high",
+        "categoryConfidence": "high",
+        "confidence": "high"
+      },
+      "validation": {
+        "status": "passed",
+        "disposition": "verified",
+        "stage": "sandbox",
+        "sourceSha": "623fa53efaca48016ffc4d5ce102599a754e42d6",
+        "checkedAt": "2026-08-22T04:52:09.959Z",
+        "dshVersion": "0.1.0-rc.6",
+        "platform": "linux-x64",
+        "validatorVersion": "0.1.2",
+        "executionType": "web",
+        "durationMs": 72864
       }
     }
   ]
