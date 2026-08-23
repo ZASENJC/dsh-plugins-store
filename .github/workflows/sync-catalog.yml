@@ -315,7 +315,7 @@ jobs:
                   const record = archiveById.get(repository.id)
                   return record
                     && record.disposition === 'include'
-                    && record.sourcePushedAt === repository.pushed_at
+                    && record.fullName.toLowerCase() === repository.full_name.toLowerCase()
                     && record.classification?.dshRelevance === 'recognized'
                 })
                 .map((repository) => repository.id))
@@ -356,6 +356,15 @@ jobs:
                 if (entry.pushedAt !== record.sourcePushedAt) {
                   if (record.validation && entry.validation.overall !== 'expired') {
                     throw new Error(`Changed repository ${record.repositoryId} did not expire archived validation`)
+                  }
+                  if (entry.classificationSource === 'source') {
+                    throw new Error(`Changed repository ${record.repositoryId} exposed stale source classification`)
+                  }
+                  if (entry.verified || entry.validation.overall === 'verified') {
+                    throw new Error(`Changed repository ${record.repositoryId} retained stale verification`)
+                  }
+                  if (entry.install !== undefined) {
+                    throw new Error(`Changed repository ${record.repositoryId} exposed an install reference before reclassification`)
                   }
                   continue
                 }

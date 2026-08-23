@@ -387,8 +387,15 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
     })
   })
 
-  it('hides a changed plugin until its DSH relevance is reclassified at the new source', () => {
+  it('keeps a changed recognized plugin visible without stale classification or install authority', () => {
     const previousPushedAt = '2026-08-13T20:00:00Z'
+    const staleInstallReference = extractInstallReference(`
+## Install
+
+\`\`\`sh
+dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
+\`\`\`
+`)
     const archive: SourceClassificationArchive = {
       schemaVersion: 1,
       generatedAt: '2026-08-16T09:00:00Z',
@@ -431,11 +438,20 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
         structure: { status: 'passed' as const },
         sandbox: { status: 'passed' as const },
       }]]),
-      new Map(),
+      new Map([[githubRepository.id, staleInstallReference]]),
       archive,
     )
 
-    expect(catalog.repositories).toEqual([])
+    expect(catalog.repositories).toHaveLength(1)
+    expect(catalog.repositories[0]).toMatchObject({
+      repositoryId: githubRepository.id,
+      classificationSource: 'topics',
+      classificationSignals: [],
+      verified: false,
+      validation: { overall: 'expired', reason: '仓库源码已更新' },
+      status: { verification: 'not-verified' },
+    })
+    expect(catalog.repositories[0].install).toBeUndefined()
   })
 
   it('uses the current classification archive to exclude unrelated repositories and expose source signals', () => {

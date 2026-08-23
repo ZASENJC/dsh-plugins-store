@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest'
 import {
   buildSourceClassificationArchive,
   buildValidationCatalog,
+  currentSourceClassification,
   filterCatalogRepositoriesByArchive,
+  isCatalogVisibleByArchive,
   isCurrentSourceClassificationArchive,
+  isIncludedByCurrentArchive,
   mergeSourceValidationHistory,
   parseSourceClassificationArchive,
   selectSourceClassificationTargets,
@@ -99,7 +102,7 @@ describe('source classification archive', () => {
     })).toBe(true)
   })
 
-  it('publishes only current include records and fails closed without an archive', () => {
+  it('retains previously recognized repositories without granting stale source trust', () => {
     const archive = parseSourceClassificationArchive({
       schemaVersion: 1,
       generatedAt: '2026-08-16T01:00:00Z',
@@ -124,18 +127,51 @@ describe('source classification archive', () => {
         sourcePushedAt: '2026-08-15T00:00:00Z',
         sourceSha: null,
         disposition: 'inconclusive',
+      }, {
+        repositoryId: 5,
+        fullName: 'owner/stale',
+        sourcePushedAt: '2026-08-15T00:00:00Z',
+        sourceSha: 'e'.repeat(40),
+        disposition: 'include',
+        classification: { ...pluginClassification, sourceSha: 'e'.repeat(40) },
+      }, {
+        repositoryId: 6,
+        fullName: 'owner/old-name',
+        sourcePushedAt: '2026-08-15T00:00:00Z',
+        sourceSha: 'f'.repeat(40),
+        disposition: 'include',
+        classification: { ...pluginClassification, sourceSha: 'f'.repeat(40) },
+      }, {
+        repositoryId: 7,
+        fullName: 'owner/unrecognized',
+        sourcePushedAt: '2026-08-15T00:00:00Z',
+        sourceSha: appClassification.sourceSha,
+        disposition: 'include',
+        classification: appClassification,
       }],
     })
     const repositories = [
-      { id: 1, pushed_at: '2026-08-15T00:00:00Z' },
-      { id: 2, pushed_at: '2026-08-15T00:00:00Z' },
-      { id: 3, pushed_at: '2026-08-15T00:00:00Z' },
-      { id: 4, pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 1, full_name: 'owner/plugin', pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 2, full_name: 'owner/excluded', pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 3, full_name: 'owner/new', pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 4, full_name: 'owner/first-seen', pushed_at: '2026-08-15T00:00:00Z' },
+      { id: 5, full_name: 'OWNER/stale', pushed_at: '2026-08-16T00:00:00Z' },
+      { id: 6, full_name: 'owner/new-name', pushed_at: '2026-08-16T00:00:00Z' },
+      { id: 7, full_name: 'owner/unrecognized', pushed_at: '2026-08-15T00:00:00Z' },
     ]
 
     expect(filterCatalogRepositoriesByArchive(repositories, archive).map(({ id }) => id))
-      .toEqual([1])
+      .toEqual([1, 5])
     expect(filterCatalogRepositoriesByArchive(repositories, null)).toEqual([])
+    expect(isCatalogVisibleByArchive({ repositoryId: 5, fullName: 'owner/stale' }, archive)).toBe(true)
+    expect(isIncludedByCurrentArchive({
+      repositoryId: 5,
+      pushedAt: '2026-08-16T00:00:00Z',
+    }, archive)).toBe(false)
+    expect(currentSourceClassification({
+      repositoryId: 5,
+      pushedAt: '2026-08-16T00:00:00Z',
+    }, archive)).toBeUndefined()
   })
 
   it('selects every active repository on the first run and retries inconclusive repositories later', () => {
@@ -160,6 +196,41 @@ describe('source classification archive', () => {
       .toEqual([1, 3])
     expect(selectSourceClassificationTargets(discovery, previous, true).map(({ repositoryId }) => repositoryId))
       .toEqual([1, 2, 3])
+  })
+
+  it('reclassifies a renamed repository instead of inheriting its old namespace trust', () => {
+    const previous = parseSourceClassificationArchive({
+      schemaVersion: 1,
+      generatedAt: '2026-08-15T01:00:00Z',
+      mode: 'incremental',
+      classifierVersion: SOURCE_CLASSIFIER_VERSION,
+      records: [{
+        repositoryId: 1,
+        fullName: 'owner/plugin',
+        sourcePushedAt: discovery.repositories[0].pushedAt,
+        sourceSha: pluginClassification.sourceSha,
+        disposition: 'include',
+        classification: pluginClassification,
+      }],
+    })
+    const renamed: SourceDiscoverySnapshot = {
+      ...discovery,
+      repositories: [{ ...discovery.repositories[0], fullName: 'other-owner/plugin' }],
+    }
+
+    expect(selectSourceClassificationTargets(renamed, previous, false).map(({ repositoryId }) => repositoryId))
+      .toEqual([1])
+    expect(buildSourceClassificationArchive({
+      discovery: renamed,
+      previous,
+      results: [],
+      mode: 'incremental',
+      generatedAt: '2026-08-16T01:00:00Z',
+    }).records[0]).toMatchObject({
+      fullName: 'other-owner/plugin',
+      disposition: 'inconclusive',
+      failureCode: 'CLASSIFICATION_NOT_OBSERVED',
+    })
   })
 
   it('keeps a current source exclusion reusable but never applies a stale exclusion to a changed repository', () => {

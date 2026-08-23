@@ -12,7 +12,7 @@ import {
 } from './source-classification'
 import {
   currentSourceClassification,
-  isIncludedByCurrentArchive,
+  isCatalogVisibleByArchive,
   type SourceClassificationArchive,
 } from './source-classification-archive'
 import {
@@ -261,22 +261,30 @@ export function buildCatalog(
   )
   const entries = sortCatalogEntries(
     [...uniqueRepositories.values()]
-      .filter((repository) => classificationArchive === null || isIncludedByCurrentArchive({
+      .filter((repository) => classificationArchive === null || isCatalogVisibleByArchive({
         repositoryId: repository.id,
-        pushedAt: repository.pushed_at,
+        fullName: repository.full_name,
       }, classificationArchive))
-      .map((repository) => createCatalogEntry(
-      repository,
-      normalizedVerifiedNames,
-      validationRecords.get(repository.id),
-      installReferences.get(repository.id),
-      currentSourceClassification({
-        repositoryId: repository.id,
-        pushedAt: repository.pushed_at,
-      }, classificationArchive),
-      previousEntries.get(repository.id)?.starTrend,
-      generatedAt,
-    )),
+      .map((repository) => {
+        const sourceClassification = currentSourceClassification({
+          repositoryId: repository.id,
+          pushedAt: repository.pushed_at,
+        }, classificationArchive)
+        // Stale visibility is only a continuity affordance. README-derived
+        // install authority remains bound to a current source classification.
+        const installReference = classificationArchive === null || sourceClassification !== undefined
+          ? installReferences.get(repository.id)
+          : undefined
+        return createCatalogEntry(
+          repository,
+          normalizedVerifiedNames,
+          validationRecords.get(repository.id),
+          installReference,
+          sourceClassification,
+          previousEntries.get(repository.id)?.starTrend,
+          generatedAt,
+        )
+      }),
     'recommended',
     generatedAt,
   )
