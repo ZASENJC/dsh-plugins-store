@@ -4,6 +4,8 @@ export const DEFAULT_CATALOG_URLS = Object.freeze([
   'https://api.dshmk.com/',
 ])
 
+const MARKET_SITE_URL = 'https://dshmk.com/'
+
 export const CATEGORY_LABELS = Object.freeze({
   ui: '界面体验',
   development: '开发工具',
@@ -216,7 +218,8 @@ export function buildCatalogDetailUrl(catalogUrl, repositoryId) {
     return null
   }
   try {
-    const url = new URL(catalogUrl)
+    new URL(catalogUrl)
+    const url = new URL(MARKET_SITE_URL)
     url.pathname = `/plugins/${encodeURIComponent(String(repositoryId))}`
     url.search = ''
     url.hash = ''
