@@ -133,7 +133,7 @@ describe('conversation store search', () => {
     expect(result.results[0]).toMatchObject({
       repositoryId: '101',
       fullName: 'owner/sidebar-search',
-      detailUrl: 'https://catalog.example.test/plugins/101',
+      detailUrl: 'https://dshmk.com/plugins/101',
       validation: { overall: 'verified', label: '已验证', verified: true },
       install: { available: true },
     })
@@ -278,7 +278,7 @@ describe('conversation store search', () => {
       status: 'passed',
       checkedAt: '2026-08-16T00:02:00Z',
     })
-    expect(result.detailUrl).toBe('https://catalog.example.test/plugins/101')
+    expect(result.detailUrl).toBe('https://dshmk.com/plugins/101')
   })
 
   it('joins direct dependencies to the catalog and reports update state', async () => {

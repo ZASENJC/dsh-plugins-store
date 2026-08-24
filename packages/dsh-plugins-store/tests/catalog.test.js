@@ -425,11 +425,11 @@ describe('remote catalog state', () => {
     })
   })
 
-  it('derives the market detail route from the configured catalog API origin', () => {
+  it('uses the public market site for detail routes instead of the catalog API origin', () => {
     expect(buildCatalogDetailUrl(
-      'https://catalog.example.test/catalog.json',
+      'https://api.dshmk.com/',
       'github:123',
-    )).toBe('https://catalog.example.test/plugins/github%3A123')
+    )).toBe('https://dshmk.com/plugins/github%3A123')
   })
 
   it('bypasses the browser cache for an explicit API refresh', async () => {
