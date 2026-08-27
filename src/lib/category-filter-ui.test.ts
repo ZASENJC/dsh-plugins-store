@@ -9,9 +9,9 @@ const homepageSource = readFileSync(
 )
 
 describe('homepage category filter', () => {
-  it('hides the project type row on the default homepage while retaining it for catalog pages', () => {
+  it('hides the project type row on all catalog pages', () => {
     expect(homepageSource).not.toContain('<select id="type-filter"')
-    expect(homepageSource).toMatch(/<div class="filter-group" data-filter-group="type" hidden=\{isDirectoryPage\}>/)
+    expect(homepageSource).toMatch(/<div class="filter-group" data-filter-group="type" hidden>/)
     expect(homepageSource).toContain('data-filter-group="type"')
     expect(homepageSource).toContain('data-filter-group="category"')
     expect(homepageSource).toContain('data-filter-group="ranking"')
