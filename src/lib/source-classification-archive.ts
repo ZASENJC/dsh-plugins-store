@@ -404,6 +404,7 @@ export function selectSourceClassificationTargets(
     if (full) return true
     const record = previousById.get(repository.repositoryId)
     return record === undefined
+      || record.fullName.toLowerCase() !== repository.fullName.toLowerCase()
       || record.sourcePushedAt !== repository.pushedAt
       || record.disposition === 'inconclusive'
   })
@@ -441,9 +442,12 @@ export function buildSourceClassificationArchive({
   const previousById = new Map(previous?.records.map((record) => [record.repositoryId, record]) ?? [])
   const records = discovery.repositories.map((repository): SourceClassificationArchiveRecord => {
     const result = resultById.get(repository.repositoryId)
-    if (result && result.sourcePushedAt === repository.pushedAt) return result
+    if (result
+      && result.fullName.toLowerCase() === repository.fullName.toLowerCase()
+      && result.sourcePushedAt === repository.pushedAt) return result
     const old = previousById.get(repository.repositoryId)
     if (mode === 'incremental' && old?.sourcePushedAt === repository.pushedAt
+      && old.fullName.toLowerCase() === repository.fullName.toLowerCase()
       && previous?.classifierVersion === SOURCE_CLASSIFIER_VERSION) return old
     return {
       repositoryId: repository.repositoryId,
@@ -538,15 +542,30 @@ export function validationRecordsFromArchive(
   return records
 }
 
-export function filterCatalogRepositoriesByArchive<T extends { id: number, pushed_at: string }>(
+export function filterCatalogRepositoriesByArchive<T extends { id: number, full_name: string }>(
   repositories: readonly T[],
   archive: SourceClassificationArchive | null,
 ): T[] {
   if (archive === null) return []
-  return repositories.filter((repository) => isIncludedByCurrentArchive({
+  return repositories.filter((repository) => isCatalogVisibleByArchive({
     repositoryId: repository.id,
-    pushedAt: repository.pushed_at,
+    fullName: repository.full_name,
   }, archive))
+}
+
+// Catalog visibility is intentionally less strict than source-derived trust.
+// A previously recognized repository may remain discoverable while a new push
+// waits for classification, but every trust-bearing consumer below still
+// requires the existing exact pushed_at binding.
+export function isCatalogVisibleByArchive(
+  repository: Pick<SourceDiscoveryRepository, 'repositoryId' | 'fullName'>,
+  archive: SourceClassificationArchive | null,
+): boolean {
+  if (!isCurrentSourceClassificationArchive(archive)) return false
+  const record = archive.records.find(({ repositoryId }) => repositoryId === repository.repositoryId)
+  return record?.fullName.toLowerCase() === repository.fullName.toLowerCase()
+    && record.disposition === 'include'
+    && record.classification?.dshRelevance === 'recognized'
 }
 
 export function currentSourceClassification(

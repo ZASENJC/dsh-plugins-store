@@ -63,15 +63,17 @@ function canHaveInstallReference(
   repository: GitHubRepository,
   classificationArchive: SourceClassificationArchive | null,
 ): boolean {
+  const sourceClassification = currentSourceClassification({
+    repositoryId: repository.id,
+    pushedAt: repository.pushed_at,
+  }, classificationArchive)
+  if (sourceClassification === undefined) return false
   return canExtractInstallReference({
     fullName: repository.full_name,
     name: repository.name,
     description: repository.description ?? '',
     topics: repository.topics ?? [],
-  }, currentSourceClassification({
-    repositoryId: repository.id,
-    pushedAt: repository.pushed_at,
-  }, classificationArchive))
+  }, sourceClassification)
 }
 
 async function fetchRawReadme(repository: GitHubRepository): Promise<string | null> {
