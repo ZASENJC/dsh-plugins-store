@@ -7,6 +7,14 @@ const homepageSource = readFileSync(
   fileURLToPath(new URL('../pages/index.astro', import.meta.url)),
   'utf8',
 )
+const projectCardSource = readFileSync(
+  fileURLToPath(new URL('../components/ProjectCard.astro', import.meta.url)),
+  'utf8',
+)
+const rankingListItemSource = readFileSync(
+  fileURLToPath(new URL('../components/RankingListItem.astro', import.meta.url)),
+  'utf8',
+)
 
 describe('homepage category filter', () => {
   it('hides the project type row on all catalog pages', () => {
@@ -42,5 +50,12 @@ describe('homepage category filter', () => {
     expect(homepageSource).toContain('class="category-filter__count"')
     expect(homepageSource).toMatch(/\.category-filter__label \{[^}]*font-size: 14px[^}]*font-weight: 600/s)
     expect(homepageSource).toMatch(/\.category-filter__count \{[^}]*font-size: 11px[^}]*font-weight: 600/s)
+  })
+
+  it('does not render project type text in catalog cards or ranking rows', () => {
+    expect(projectCardSource).not.toContain('data-field="project-type"')
+    expect(projectCardSource).not.toContain('getProjectTypeLabel')
+    expect(rankingListItemSource).not.toContain('data-field="project-type"')
+    expect(rankingListItemSource).not.toContain('getProjectTypeLabel')
   })
 })
