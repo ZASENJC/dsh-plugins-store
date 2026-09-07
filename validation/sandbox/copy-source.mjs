@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path'
 
 const source = resolve(process.argv[2] ?? '')
 const destination = resolve(process.argv[3] ?? '')
-if (!source || !destination.startsWith('/validation/workspace/')) throw new Error('Invalid copy boundary')
+if (!source.startsWith('/source') || !destination.startsWith('/validation/workspace/')) throw new Error('Invalid copy boundary')
 
 async function rejectLinks(path) {
   for (const name of await readdir(path)) {
