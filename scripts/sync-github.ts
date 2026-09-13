@@ -4,10 +4,12 @@ import { fileURLToPath } from 'node:url'
 
 import {
   buildCatalog,
+  limitPublishedCatalog,
   VERIFIED_REPOSITORY_OVERRIDES,
   type Catalog,
   type GitHubRepository,
 } from '../src/lib/catalog'
+import { MAX_PUBLISHED_REPOSITORIES } from '../src/lib/publication-budget'
 import { extractVerifiedRepositoryNames } from '../src/lib/github-content'
 import {
   canExtractInstallReference,
@@ -210,9 +212,11 @@ async function sync() {
     currentClassificationArchive,
     previousCatalog,
   )
-  const catalog = currentClassificationArchive === null && previousCatalog !== null
-    ? previousCatalog
-    : refreshedCatalog
+  const catalog = limitPublishedCatalog(
+    currentClassificationArchive === null && previousCatalog !== null
+      ? previousCatalog
+      : refreshedCatalog,
+  )
   await mkdir(dirname(outputPath), { recursive: true })
   await writeFile(outputPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
 
@@ -235,7 +239,7 @@ async function sync() {
     : previousCatalog
       ? '缺失或版本过期，未接纳新项目并保留最后有效目录'
       : '缺失或版本过期，已按 fail-closed 规则停止公开准入'
-  console.log(`源码分类档案${archiveState}；Topic 候选 ${repositories.length} 个；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库到 ${outputPath}`)
+  console.log(`源码分类档案${archiveState}；Topic 候选 ${repositories.length} 个；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库（发布上限 ${MAX_PUBLISHED_REPOSITORIES}）到 ${outputPath}`)
 }
 
 await sync()

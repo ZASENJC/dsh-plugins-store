@@ -26,6 +26,7 @@ import {
   resolveCatalogInstallReference,
   type InstallReference,
 } from './install-reference'
+import { selectPublishedByRank } from './publication-budget'
 import { buildStarTrend, type StarTrend } from './star-history'
 
 export const VERIFICATION_DIRECTORY_URL = 'https://github.com/qing3a/dsh-plugin-verify#verified-%E7%9B%AE%E5%BD%95'
@@ -259,46 +260,33 @@ export function buildCatalog(
   const previousEntries = new Map(
     (previousCatalog?.repositories ?? []).map((entry) => [entry.repositoryId, entry]),
   )
-  const entries = sortCatalogEntries(
-    [...uniqueRepositories.values()]
-      .filter((repository) => classificationArchive === null || isCatalogVisibleByArchive({
+  const created = [...uniqueRepositories.values()]
+    .filter((repository) => classificationArchive === null || isCatalogVisibleByArchive({
+      repositoryId: repository.id,
+      fullName: repository.full_name,
+    }, classificationArchive))
+    .map((repository) => {
+      const sourceClassification = currentSourceClassification({
         repositoryId: repository.id,
-        fullName: repository.full_name,
-      }, classificationArchive))
-      .map((repository) => {
-        const sourceClassification = currentSourceClassification({
-          repositoryId: repository.id,
-          pushedAt: repository.pushed_at,
-        }, classificationArchive)
-        // Stale visibility is only a continuity affordance. README-derived
-        // install authority remains bound to a current source classification.
-        const installReference = classificationArchive === null || sourceClassification !== undefined
-          ? installReferences.get(repository.id)
-          : undefined
-        return createCatalogEntry(
-          repository,
-          normalizedVerifiedNames,
-          validationRecords.get(repository.id),
-          installReference,
-          sourceClassification,
-          previousEntries.get(repository.id)?.starTrend,
-          generatedAt,
-        )
-      }),
-    'recommended',
-    generatedAt,
-  )
-  const categoryCounts: Partial<Record<Category, number>> = {}
-  const typeCounts: Partial<Record<ProjectType, number>> = {}
-  const validationCounts: Partial<Record<ValidationOverall, number>> = {}
+        pushedAt: repository.pushed_at,
+      }, classificationArchive)
+      // Stale visibility is only a continuity affordance. README-derived
+      // install authority remains bound to a current source classification.
+      const installReference = classificationArchive === null || sourceClassification !== undefined
+        ? installReferences.get(repository.id)
+        : undefined
+      return createCatalogEntry(
+        repository,
+        normalizedVerifiedNames,
+        validationRecords.get(repository.id),
+        installReference,
+        sourceClassification,
+        previousEntries.get(repository.id)?.starTrend,
+        generatedAt,
+      )
+    })
 
-  for (const entry of entries) {
-    categoryCounts[entry.category] = (categoryCounts[entry.category] ?? 0) + 1
-    typeCounts[entry.projectType] = (typeCounts[entry.projectType] ?? 0) + 1
-    validationCounts[entry.validation.overall] = (validationCounts[entry.validation.overall] ?? 0) + 1
-  }
-
-  return {
+  return limitPublishedCatalog({
     schemaVersion: 1,
     generatedAt,
     source: {
@@ -307,14 +295,44 @@ export function buildCatalog(
       url: 'https://github.com/topics/dsh-plugin',
     },
     stats: {
-      fetched: entries.length,
+      fetched: created.length,
       reportedByGitHub,
-      verified: entries.filter((entry) => entry.verified).length,
+      verified: created.filter((entry) => entry.verified).length,
+      categories: {},
+      projectTypes: {},
+      validationStatuses: {},
+    },
+    repositories: created,
+  })
+}
+
+export function limitPublishedCatalog(catalog: Catalog): Catalog {
+  const repositories = sortCatalogEntries(
+    selectPublishedByRank(catalog.repositories),
+    'recommended',
+    catalog.generatedAt,
+  )
+  const categoryCounts: Partial<Record<Category, number>> = {}
+  const typeCounts: Partial<Record<ProjectType, number>> = {}
+  const validationCounts: Partial<Record<ValidationOverall, number>> = {}
+
+  for (const entry of repositories) {
+    categoryCounts[entry.category] = (categoryCounts[entry.category] ?? 0) + 1
+    typeCounts[entry.projectType] = (typeCounts[entry.projectType] ?? 0) + 1
+    validationCounts[entry.validation.overall] = (validationCounts[entry.validation.overall] ?? 0) + 1
+  }
+
+  return {
+    ...catalog,
+    stats: {
+      ...catalog.stats,
+      fetched: repositories.length,
+      verified: repositories.filter((entry) => entry.verified).length,
       categories: categoryCounts,
       projectTypes: typeCounts,
       validationStatuses: validationCounts,
     },
-    repositories: entries,
+    repositories,
   }
 }
 

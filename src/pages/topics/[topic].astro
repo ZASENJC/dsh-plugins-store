@@ -5,6 +5,7 @@ import ProjectCard from '../../components/ProjectCard.astro'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { sortCatalogEntries, type Catalog, type CatalogEntry } from '../../lib/catalog'
 import { catalogData } from '../../lib/catalog-data'
+import { selectPublishedTopics } from '../../lib/publication-budget'
 
 interface Props {
   topic: string
@@ -13,8 +14,7 @@ interface Props {
 
 export function getStaticPaths() {
   const catalog = catalogData as Catalog
-  const topics = [...new Set(catalog.repositories.flatMap((repository) => repository.topics))]
-    .sort((left, right) => left.localeCompare(right))
+  const topics = selectPublishedTopics(catalog.repositories)
 
   return topics.map((topic) => ({
     params: { topic },

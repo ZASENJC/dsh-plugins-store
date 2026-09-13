@@ -276,6 +276,9 @@ jobs:
           npm test
           npm run build
 
+      - name: Verify publication budget
+        run: npx tsx scripts/verify-dist-budget.ts
+
       - name: Verify generated catalog preserves upstream archives
         run: |
           node <<'NODE'
@@ -320,9 +323,12 @@ jobs:
                 })
                 .map((repository) => repository.id))
               const actualVisibleIds = new Set(source.repositories.map((entry) => entry.repositoryId))
-              if (expectedVisibleIds.size !== actualVisibleIds.size
-                || [...expectedVisibleIds].some((repositoryId) => !actualVisibleIds.has(repositoryId))) {
-                throw new Error(`Catalog visibility does not match source archive: expected ${expectedVisibleIds.size}, got ${actualVisibleIds.size}`)
+              const MAX_PUBLISHED_REPOSITORIES = 2500
+              if ([...actualVisibleIds].some((repositoryId) => !expectedVisibleIds.has(repositoryId))) {
+                throw new Error('Catalog contains a repository not admitted by source classification')
+              }
+              if (actualVisibleIds.size !== Math.min(MAX_PUBLISHED_REPOSITORIES, expectedVisibleIds.size)) {
+                throw new Error(`Catalog publication size mismatch: expected ${Math.min(MAX_PUBLISHED_REPOSITORIES, expectedVisibleIds.size)}, got ${actualVisibleIds.size}`)
               }
               const excludedIds = archive.records
                 .filter((record) => record.disposition !== 'include'

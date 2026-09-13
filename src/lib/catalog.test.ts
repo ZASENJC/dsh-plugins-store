@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildCatalog,
   createCatalogEntry,
+  limitPublishedCatalog,
   formatCompactNumber,
   formatRelativeDate,
   getCatalogDefinitions,
@@ -11,6 +12,7 @@ import {
   mixRecommendedEntries,
   sortCatalogEntries,
 } from './catalog'
+import { MAX_PUBLISHED_REPOSITORIES } from './publication-budget'
 import type { SourceClassificationArchive } from './source-classification-archive'
 import { SOURCE_CLASSIFIER_VERSION } from './source-classification'
 import { extractInstallReference } from './install-reference'
@@ -743,5 +745,54 @@ dsh plugin --profile web add github:PlutoKeating/dsh-lark-bot
     expect(getEmptyCatalog().repositories).toEqual([])
     expect(getCatalogDefinitions().categories.some(({ id }) => id === 'security')).toBe(true)
     expect(getCatalogDefinitions().projectTypes.some(({ id }) => id === 'plugin')).toBe(true)
+  })
+
+  it('caps the public catalog so static pages cannot grow without bound', () => {
+    const repositories = Array.from({ length: MAX_PUBLISHED_REPOSITORIES + 4 }, (_, index) => ({
+      ...githubRepository,
+      id: index + 1,
+      name: `plugin-${index + 1}`,
+      full_name: `owner/plugin-${index + 1}`,
+      stargazers_count: index,
+      pushed_at: `2026-09-${String((index % 28) + 1).padStart(2, '0')}T00:00:00Z`,
+    }))
+    const catalog = buildCatalog(
+      repositories,
+      '2026-09-13T16:32:35.000Z',
+      repositories.length + 200,
+    )
+
+    expect(catalog.repositories).toHaveLength(MAX_PUBLISHED_REPOSITORIES)
+    expect(catalog.stats.fetched).toBe(MAX_PUBLISHED_REPOSITORIES)
+    expect(catalog.stats.reportedByGitHub).toBe(repositories.length + 200)
+    expect(catalog.repositories.map(({ repositoryId }) => repositoryId)).toEqual(
+      Array.from({ length: MAX_PUBLISHED_REPOSITORIES }, (_, index) => repositories.length - index),
+    )
+  })
+
+  it('caps a previously published catalog that grew past the budget', () => {
+    const oversized = buildCatalog(
+      Array.from({ length: 8 }, (_, index) => ({
+        ...githubRepository,
+        id: index + 1,
+        name: `plugin-${index + 1}`,
+        full_name: `owner/plugin-${index + 1}`,
+        stargazers_count: index,
+      })),
+      '2026-09-13T16:32:35.000Z',
+      8,
+    )
+
+    const capped = limitPublishedCatalog({
+      ...oversized,
+      repositories: [
+        ...oversized.repositories,
+        ...Array.from({ length: MAX_PUBLISHED_REPOSITORIES }, () => oversized.repositories[0]),
+      ].map((entry, index) => ({ ...entry, repositoryId: index + 1, stars: index })),
+    })
+
+    expect(capped.repositories).toHaveLength(MAX_PUBLISHED_REPOSITORIES)
+    expect(capped.stats.fetched).toBe(MAX_PUBLISHED_REPOSITORIES)
+    expect(capped.stats.reportedByGitHub).toBe(8)
   })
 })

@@ -77,6 +77,10 @@ describe('decoupled incremental validation workflows', () => {
     expect(syncWorkflow).not.toMatch(/needs:\s+.*validat/)
     expect(syncWorkflow).toContain('DEPLOY_SSH_KEY')
     expect(syncWorkflow).toContain('--workflow classify-plugins.yml')
+    expect(syncWorkflow).toContain('MAX_PUBLISHED_REPOSITORIES = 2500')
+    expect(syncWorkflow).toContain('Math.min(MAX_PUBLISHED_REPOSITORIES, expectedVisibleIds.size)')
+    expect(syncWorkflow).toContain('Verify publication budget')
+    expect(syncWorkflow).toContain('npx tsx scripts/verify-dist-budget.ts')
   })
 
   it('runs chained validation from the classified catalog without deployment credentials', async () => {
