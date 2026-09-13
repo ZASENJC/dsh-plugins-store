@@ -3,7 +3,7 @@ import { ArrowUpRight, CircleDot, GitFork, Star } from '@lucide/astro'
 
 import type { CatalogEntry } from '../lib/catalog'
 import { formatCompactNumber, formatRelativeDate } from '../lib/catalog'
-import { getCategory, getProjectTypeLabel } from '../lib/classification'
+import { getCategory } from '../lib/classification'
 
 interface Props {
   repository: CatalogEntry
@@ -35,7 +35,6 @@ const searchable = [
   <div class="project-card__topline">
     <span class="category-dot" data-field="category-dot" style={`--category-color: ${category.color}`}></span>
     <span class="mono-label" data-field="category" data-i18n={`category.${repository.category}`}>{category.label}</span>
-    <span class="project-card__type" data-field="project-type" data-i18n={`projectType.${repository.projectType}`}>{getProjectTypeLabel(repository.projectType)}</span>
   </div>
 
   <div class="project-card__identity">
@@ -150,12 +149,6 @@ const searchable = [
     flex: 0 0 auto;
     border-radius: 50%;
     background: var(--category-color);
-  }
-
-  .project-card__type {
-    margin-left: auto;
-    color: var(--mute);
-    font-size: 12px;
   }
 
   .project-card__identity {

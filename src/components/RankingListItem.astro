@@ -3,7 +3,7 @@ import { ArrowUpRight, Star } from '@lucide/astro'
 
 import type { CatalogEntry } from '../lib/catalog'
 import { formatCompactNumber, formatRelativeDate } from '../lib/catalog'
-import { getCategory, getProjectTypeLabel } from '../lib/classification'
+import { getCategory } from '../lib/classification'
 import { buildSparklinePoints, type RankingMode } from '../lib/ranking'
 
 interface Props {
@@ -46,8 +46,6 @@ const metric = mode === 'stars'
         <span data-field="owner">{repository.owner.login}</span>
         <i aria-hidden="true"></i>
         <span data-field="category" data-i18n={`category.${repository.category}`}>{category.label}</span>
-        <i aria-hidden="true"></i>
-        <span data-field="project-type" data-i18n={`projectType.${repository.projectType}`}>{getProjectTypeLabel(repository.projectType)}</span>
       </p>
     </div>
   </div>

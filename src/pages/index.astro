@@ -578,7 +578,6 @@ const pageTitleKey = isVerifiedPage
     const createCard = (repository) => {
       const card = sourceCard.cloneNode(true)
       const category = categoryById.get(repository.category)
-      const projectType = typeById.get(repository.projectType)
       const detailSearch = getCatalogDetailSearch()
       const detailUrl = `${baseUrl}plugins/${repository.slug}${detailSearch}`
       const searchable = [
@@ -599,9 +598,6 @@ const pageTitleKey = isVerifiedPage
       const categoryLabel = card.querySelector('[data-field="category"]')
       categoryLabel.dataset.i18n = `category.${repository.category}`
       setText(card, '[data-field="category"]', t(categoryLabel.dataset.i18n, {}, category.label))
-      const projectTypeLabel = card.querySelector('[data-field="project-type"]')
-      projectTypeLabel.dataset.i18n = `projectType.${repository.projectType}`
-      setText(card, '[data-field="project-type"]', t(projectTypeLabel.dataset.i18n, {}, projectType.label))
       const validationLabel = card.querySelector('[data-field="validation-label"]')
       validationLabel.dataset.i18n = `validation.status.${repository.validation.overall}`
       setText(card, '[data-field="validation-label"]', t(validationLabel.dataset.i18n, {}, repository.validation.label))
@@ -929,7 +925,6 @@ const pageTitleKey = isVerifiedPage
     const createRow = (repository, rank) => {
       const row = sourceRow.cloneNode(true)
       const category = categoryById.get(repository.category)
-      const projectType = typeById.get(repository.projectType)
       const detailUrl = `${baseUrl}plugins/${repository.slug}${getRankingDetailSearch()}`
       const changeToday = repository.starTrend.changeToday
 
@@ -955,10 +950,6 @@ const pageTitleKey = isVerifiedPage
       const categoryLabel = row.querySelector('[data-field="category"]')
       categoryLabel.dataset.i18n = `category.${repository.category}`
       categoryLabel.textContent = t(categoryLabel.dataset.i18n, {}, category?.label ?? repository.category)
-      const projectTypeLabel = row.querySelector('[data-field="project-type"]')
-      projectTypeLabel.dataset.i18n = `projectType.${repository.projectType}`
-      projectTypeLabel.textContent = t(projectTypeLabel.dataset.i18n, {}, projectType?.label ?? repository.projectType)
-
       const metricLabel = row.querySelector('[data-field="metric-label"]')
       const metricValue = row.querySelector('[data-field="star-change"], [data-field="metric-value"]')
       const sparklineWrap = row.querySelector('[data-field="sparkline-wrap"]')
