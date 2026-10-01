@@ -14,6 +14,8 @@ import {
 const API_URL = 'https://api.github.com'
 const COMMIT_REQUEST_TIMEOUT_MS = 30_000
 const TRANSIENT_RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000, 60_000] as const
+const MAX_RATE_LIMIT_WAITS = 3
+const MAX_RATE_LIMIT_WAIT_MS = 120_000
 
 interface GitHubCommitResponse {
   sha: string
@@ -48,6 +50,21 @@ function isTransientStatus(status: number): boolean {
   return status === 408 || status >= 500
 }
 
+function isRateLimited(response: Response): boolean {
+  const remaining = response.headers.get('x-ratelimit-remaining')
+  return response.status === 429 || (response.status === 403 && remaining === '0')
+}
+
+function rateLimitWaitMs(response: Response, now: number): number {
+  const retryAfter = Number(response.headers.get('retry-after'))
+  const resetAt = Number(response.headers.get('x-ratelimit-reset'))
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return retryAfter * 1000
+  if (Number.isFinite(resetAt) && resetAt > 0) {
+    return Math.max(1_000, resetAt * 1000 - now + 1_000)
+  }
+  return 60_000
+}
+
 export async function resolvePinnedSourceSha(
   repository: ShadowCatalogRepository,
   {
@@ -58,16 +75,19 @@ export async function resolvePinnedSourceSha(
       console.warn(message)
     },
     timeoutSignal = (ms: number) => AbortSignal.timeout(ms),
+    now = Date.now,
   }: {
     fetchImpl?: typeof fetch
     token?: string
     sleep?: (ms: number) => Promise<void>
     warn?: (message: string) => void
     timeoutSignal?: (ms: number) => AbortSignal
+    now?: () => number
   } = {},
 ): Promise<string> {
   const path = `/repositories/${repository.repositoryId}/commits/${encodeURIComponent(repository.defaultBranch)}`
   let transientRetries = 0
+  let rateLimitWaits = 0
 
   async function pauseForTransient(detail: string): Promise<boolean> {
     const waitMs = TRANSIENT_RETRY_DELAYS_MS[transientRetries]
@@ -100,7 +120,17 @@ export async function resolvePinnedSourceSha(
       return commit.sha.toLowerCase()
     }
 
-    if (isTransientStatus(response.status) && await pauseForTransient(String(response.status))) continue
+    if (isRateLimited(response)) {
+      const waitMs = rateLimitWaitMs(response, now())
+      rateLimitWaits += 1
+      if (rateLimitWaits <= MAX_RATE_LIMIT_WAITS && waitMs <= MAX_RATE_LIMIT_WAIT_MS) {
+        warn(`GitHub commit rate limited for ${path}; waiting ${Math.ceil(waitMs / 1000)}s before retry ${rateLimitWaits}/${MAX_RATE_LIMIT_WAITS}`)
+        await sleep(waitMs)
+        continue
+      }
+    } else if (isTransientStatus(response.status) && await pauseForTransient(String(response.status))) {
+      continue
+    }
     const remaining = response.headers.get('x-ratelimit-remaining')
     throw new Error(`GitHub commit request failed: ${response.status}; remaining=${remaining ?? 'unknown'}`)
   }

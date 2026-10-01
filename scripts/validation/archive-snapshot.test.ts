@@ -236,13 +236,11 @@ describe('pinned source SHA request recovery', () => {
     expect(client.calls[0]?.init?.signal).toBe(client.signals[0])
   })
 
-  it('throws 401, 403, 422, and 429 immediately without retrying', async () => {
+  it('throws 401, 403 with quota, and 422 immediately without retrying', async () => {
     const cases = [
       { status: 401, remaining: '0', message: 'GitHub commit request failed: 401; remaining=0' },
-      { status: 403, remaining: '0', message: 'GitHub commit request failed: 403; remaining=0' },
       { status: 403, remaining: '4', message: 'GitHub commit request failed: 403; remaining=4' },
       { status: 422, remaining: '9', message: 'GitHub commit request failed: 422; remaining=9' },
-      { status: 429, remaining: '0', message: 'GitHub commit request failed: 429; remaining=0' },
     ]
     for (const testCase of cases) {
       const client = scriptedCommitClient([
@@ -254,6 +252,58 @@ describe('pinned source SHA request recovery', () => {
       expect(client.warnings).toEqual([])
       expect(client.timeouts).toEqual([30_000])
     }
+  })
+
+  it('waits out a 429 with retry-after and still returns the pinned SHA', async () => {
+    const sourceSha = '0'.repeat(40)
+    const client = scriptedCommitClient([
+      commitResponse(429, { 'retry-after': '4' }),
+      okCommit(sourceSha),
+    ])
+
+    await expect(resolvePinnedSourceSha(repository, client.options)).resolves.toBe(sourceSha)
+    expect(client.sleeps).toEqual([4_000])
+    expect(client.calls).toHaveLength(2)
+    expect(client.warnings).toEqual([
+      'GitHub commit rate limited for /repositories/42/commits/main; waiting 4s before retry 1/3',
+    ])
+  })
+
+  it('waits out a 403 with exhausted rate limit using x-ratelimit-reset', async () => {
+    const now = 1_700_000_000_000
+    const sourceSha = '1'.repeat(40)
+    const client = scriptedCommitClient([
+      commitResponse(403, {
+        'x-ratelimit-remaining': '0',
+        'x-ratelimit-reset': String(Math.ceil(now / 1000) + 30),
+      }),
+      okCommit(sourceSha),
+    ])
+
+    await expect(resolvePinnedSourceSha(repository, { ...client.options, now: () => now }))
+      .resolves.toBe(sourceSha)
+    expect(client.sleeps).toEqual([31_000])
+  })
+
+  it('throws after three bounded rate-limit waits', async () => {
+    const limited = () => commitResponse(429, { 'retry-after': '30', 'x-ratelimit-remaining': '0' })
+    const client = scriptedCommitClient([limited(), limited(), limited(), limited()])
+
+    expect(await rejectedMessage(resolvePinnedSourceSha(repository, client.options)))
+      .toBe('GitHub commit request failed: 429; remaining=0')
+    expect(client.calls).toHaveLength(4)
+    expect(client.sleeps).toEqual([30_000, 30_000, 30_000])
+  })
+
+  it('does not wait when the required rate-limit wait exceeds the bound', async () => {
+    const client = scriptedCommitClient([
+      commitResponse(429, { 'retry-after': '600', 'x-ratelimit-remaining': '0' }),
+    ])
+
+    expect(await rejectedMessage(resolvePinnedSourceSha(repository, client.options)))
+      .toBe('GitHub commit request failed: 429; remaining=0')
+    expect(client.calls).toHaveLength(1)
+    expect(client.sleeps).toEqual([])
   })
 
   it('applies a fresh timeout signal to the commit request', async () => {

@@ -269,7 +269,7 @@ function recoveryClient(
   }
 }
 
-function loadWith(client: RecoveryClient, token = 'test-token') {
+function loadWith(client: RecoveryClient, token = 'test-token', now?: () => number) {
   return loadGitHubSnapshot(repository, {
     fetchImpl: client.fetchImpl,
     token,
@@ -277,6 +277,7 @@ function loadWith(client: RecoveryClient, token = 'test-token') {
     sleep: client.sleep,
     warn: client.warn,
     timeoutSignal: client.timeoutSignal,
+    now,
   })
 }
 
@@ -368,11 +369,9 @@ describe('GitHub snapshot request recovery', () => {
       headers: Record<string, string>
     }> = [
       { status: 401, statusText: 'Unauthorized', headers: { 'x-ratelimit-remaining': '0' } },
-      { status: 403, statusText: 'Forbidden', headers: { 'x-ratelimit-remaining': '0' } },
       { status: 403, statusText: 'Forbidden', headers: { 'x-ratelimit-remaining': '5' } },
       { status: 404, statusText: 'Not Found', headers: {} },
       { status: 422, statusText: 'Unprocessable Entity', headers: {} },
-      { status: 429, statusText: 'Too Many Requests', headers: { 'retry-after': '4' } },
     ]
 
     for (const testCase of cases) {
@@ -391,6 +390,64 @@ describe('GitHub snapshot request recovery', () => {
       expect(client.calls[0]?.init?.signal).toBeInstanceOf(AbortSignal)
       expect(client.calls[0]?.init?.signal).toBe(client.signals[0])
     }
+  })
+
+  it('waits out a 429 with retry-after and still succeeds', async () => {
+    const client = recoveryClient((url, callIndex) => {
+      if (callIndex === 1) {
+        return statusResponse(429, 'Too Many Requests', { 'retry-after': '4' })
+      }
+      return routeEmptySnapshot(url)
+    })
+
+    const snapshot = await loadWith(client)
+
+    expect(snapshot.repository.sourceSha).toBe(emptyTreeSha)
+    expect(client.sleeps).toEqual([4_000])
+    expect(client.warnings).toEqual([
+      'GitHub snapshot rate limited on /repositories/42, waiting 4s before retry (1/3)',
+    ])
+  })
+
+  it('waits out a 403 with exhausted rate limit using x-ratelimit-reset', async () => {
+    const now = 1_700_000_000_000
+    const resetAt = Math.ceil(now / 1000) + 30
+    const client = recoveryClient((url, callIndex) => {
+      if (callIndex === 1) {
+        return statusResponse(403, 'Forbidden', {
+          'x-ratelimit-remaining': '0',
+          'x-ratelimit-reset': String(resetAt),
+        })
+      }
+      return routeEmptySnapshot(url)
+    })
+
+    const snapshot = await loadWith(client, 'test-token', () => now)
+
+    expect(snapshot.repository.sourceSha).toBe(emptyTreeSha)
+    expect(client.sleeps).toEqual([31_000])
+  })
+
+  it('throws after three bounded rate-limit waits', async () => {
+    const client = recoveryClient(() => statusResponse(429, 'Too Many Requests', {
+      'retry-after': '30',
+    }))
+
+    expect(await rejectedMessage(loadWith(client)))
+      .toBe('GitHub API request failed: 429 /repositories/42')
+    expect(client.calls).toHaveLength(4)
+    expect(client.sleeps).toEqual([30_000, 30_000, 30_000])
+  })
+
+  it('does not wait when the required rate-limit wait exceeds the bound', async () => {
+    const client = recoveryClient(() => statusResponse(429, 'Too Many Requests', {
+      'retry-after': '600',
+    }))
+
+    expect(await rejectedMessage(loadWith(client)))
+      .toBe('GitHub API request failed: 429 /repositories/42')
+    expect(client.calls).toHaveLength(1)
+    expect(client.sleeps).toEqual([])
   })
 
   it('applies a fresh 30s timeout signal on every successful snapshot request', async () => {

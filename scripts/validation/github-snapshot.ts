@@ -41,12 +41,15 @@ interface GitHubBlobResponse {
 
 const REQUEST_TIMEOUT_MS = 30_000
 const TRANSIENT_RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000, 60_000] as const
+const MAX_RATE_LIMIT_WAITS = 3
+const MAX_RATE_LIMIT_WAIT_MS = 120_000
 
 interface SnapshotFetchClient {
   fetchImpl: typeof fetch
   sleep: (ms: number) => Promise<void>
   warn: (message: string) => void
   timeoutSignal: (ms: number) => AbortSignal
+  now: () => number
   token?: string
 }
 
@@ -64,6 +67,7 @@ function resolveSnapshotFetch(dependencies: {
   sleep?: (ms: number) => Promise<void>
   warn?: (message: string) => void
   timeoutSignal?: (ms: number) => AbortSignal
+  now?: () => number
 }): Omit<SnapshotFetchClient, 'token'> {
   return {
     fetchImpl: dependencies.fetchImpl ?? fetch,
@@ -74,6 +78,7 @@ function resolveSnapshotFetch(dependencies: {
       console.warn(message)
     }),
     timeoutSignal: dependencies.timeoutSignal ?? ((ms: number) => AbortSignal.timeout(ms)),
+    now: dependencies.now ?? Date.now,
   }
 }
 
@@ -89,6 +94,21 @@ function describeThrown(error: unknown): string {
 
 function isTransientStatus(status: number): boolean {
   return status === 408 || status >= 500
+}
+
+function isRateLimited(response: Response): boolean {
+  const remaining = response.headers.get('x-ratelimit-remaining')
+  return response.status === 429 || (response.status === 403 && remaining === '0')
+}
+
+function rateLimitWaitMs(response: Response, now: number): number {
+  const retryAfter = Number(response.headers.get('retry-after'))
+  const resetAt = Number(response.headers.get('x-ratelimit-reset'))
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return retryAfter * 1000
+  if (Number.isFinite(resetAt) && resetAt > 0) {
+    return Math.max(1_000, resetAt * 1000 - now + 1_000)
+  }
+  return 60_000
 }
 
 function httpFailureDetail(response: Response): string {
@@ -109,9 +129,11 @@ async function fetchJson<T>(
     sleep,
     warn,
     timeoutSignal,
+    now,
   }: SnapshotFetchClient,
 ): Promise<T> {
   let transientRetries = 0
+  let rateLimitWaits = 0
 
   async function pauseForTransient(detail: string): Promise<boolean> {
     const waitMs = TRANSIENT_RETRY_DELAYS_MS[transientRetries]
@@ -137,7 +159,15 @@ async function fetchJson<T>(
 
     if (response.ok) return response.json() as Promise<T>
 
-    if (isTransientStatus(response.status) && await pauseForTransient(httpFailureDetail(response))) {
+    if (isRateLimited(response)) {
+      const waitMs = rateLimitWaitMs(response, now())
+      rateLimitWaits += 1
+      if (rateLimitWaits <= MAX_RATE_LIMIT_WAITS && waitMs <= MAX_RATE_LIMIT_WAIT_MS) {
+        warn(`GitHub snapshot rate limited on ${path}, waiting ${Math.ceil(waitMs / 1000)}s before retry (${rateLimitWaits}/${MAX_RATE_LIMIT_WAITS})`)
+        await sleep(waitMs)
+        continue
+      }
+    } else if (isTransientStatus(response.status) && await pauseForTransient(httpFailureDetail(response))) {
       continue
     }
 
@@ -164,6 +194,7 @@ export async function loadGitHubSnapshot(
     sleep,
     warn,
     timeoutSignal,
+    now,
   }: {
     fetchImpl?: typeof fetch
     token?: string
@@ -172,11 +203,12 @@ export async function loadGitHubSnapshot(
     sleep?: (ms: number) => Promise<void>
     warn?: (message: string) => void
     timeoutSignal?: (ms: number) => AbortSignal
+    now?: () => number
   },
 ): Promise<RepositoryStructureSnapshot> {
   const repositoryId = catalogRepository.repositoryId
   const client: SnapshotFetchClient = {
-    ...resolveSnapshotFetch({ fetchImpl, sleep, warn, timeoutSignal }),
+    ...resolveSnapshotFetch({ fetchImpl, sleep, warn, timeoutSignal, now }),
     token,
   }
   const metadata = await fetchJson<GitHubRepositoryResponse>(`/repositories/${repositoryId}`, client)
