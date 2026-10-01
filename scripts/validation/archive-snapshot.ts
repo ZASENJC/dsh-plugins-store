@@ -12,6 +12,8 @@ import {
 } from './github-snapshot'
 
 const API_URL = 'https://api.github.com'
+const COMMIT_REQUEST_TIMEOUT_MS = 30_000
+const TRANSIENT_RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000, 60_000] as const
 
 interface GitHubCommitResponse {
   sha: string
@@ -26,29 +28,82 @@ function getHeaders(token?: string): HeadersInit {
   }
 }
 
+function defaultSleep(ms: number): Promise<void> {
+  return new Promise((resolveSleep) => {
+    setTimeout(resolveSleep, ms)
+  })
+}
+
+function describeThrown(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.name && error.message && error.message !== error.name) {
+      return `${error.name}: ${error.message}`
+    }
+    return error.message || error.name || 'network error'
+  }
+  return String(error)
+}
+
+function isTransientStatus(status: number): boolean {
+  return status === 408 || status >= 500
+}
+
 export async function resolvePinnedSourceSha(
   repository: ShadowCatalogRepository,
   {
     fetchImpl = fetch,
     token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+    sleep = defaultSleep,
+    warn = (message: string) => {
+      console.warn(message)
+    },
+    timeoutSignal = (ms: number) => AbortSignal.timeout(ms),
   }: {
     fetchImpl?: typeof fetch
     token?: string
+    sleep?: (ms: number) => Promise<void>
+    warn?: (message: string) => void
+    timeoutSignal?: (ms: number) => AbortSignal
   } = {},
 ): Promise<string> {
-  const response = await fetchImpl(
-    `${API_URL}/repositories/${repository.repositoryId}/commits/${encodeURIComponent(repository.defaultBranch)}`,
-    { headers: getHeaders(token) },
-  )
-  if (!response.ok) {
+  const path = `/repositories/${repository.repositoryId}/commits/${encodeURIComponent(repository.defaultBranch)}`
+  let transientRetries = 0
+
+  async function pauseForTransient(detail: string): Promise<boolean> {
+    const waitMs = TRANSIENT_RETRY_DELAYS_MS[transientRetries]
+    if (waitMs === undefined) return false
+    transientRetries += 1
+    const seconds = Math.ceil(waitMs / 1000)
+    warn(`GitHub commit request failed (${detail}) for ${path}; waiting ${seconds}s before retry ${transientRetries}/${TRANSIENT_RETRY_DELAYS_MS.length}`)
+    await sleep(waitMs)
+    return true
+  }
+
+  while (true) {
+    let response: Response
+    try {
+      response = await fetchImpl(`${API_URL}${path}`, {
+        headers: getHeaders(token),
+        signal: timeoutSignal(COMMIT_REQUEST_TIMEOUT_MS),
+      })
+    } catch (error) {
+      const detail = describeThrown(error)
+      if (await pauseForTransient(detail)) continue
+      throw new Error(`GitHub commit request failed: ${detail}; remaining=unknown`)
+    }
+
+    if (response.ok) {
+      const commit = await response.json() as GitHubCommitResponse
+      if (!/^[a-f0-9]{40}$/i.test(commit.sha)) {
+        throw new Error(`GitHub repository ${repository.repositoryId} returned an invalid source SHA`)
+      }
+      return commit.sha.toLowerCase()
+    }
+
+    if (isTransientStatus(response.status) && await pauseForTransient(String(response.status))) continue
     const remaining = response.headers.get('x-ratelimit-remaining')
     throw new Error(`GitHub commit request failed: ${response.status}; remaining=${remaining ?? 'unknown'}`)
   }
-  const commit = await response.json() as GitHubCommitResponse
-  if (!/^[a-f0-9]{40}$/i.test(commit.sha)) {
-    throw new Error(`GitHub repository ${repository.repositoryId} returned an invalid source SHA`)
-  }
-  return commit.sha.toLowerCase()
 }
 
 async function inventoryFiles(sourceDirectory: string): Promise<Record<string, string>> {
