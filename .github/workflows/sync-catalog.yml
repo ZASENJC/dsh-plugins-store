@@ -18,6 +18,7 @@ jobs:
   sync:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     env:
       VALIDATION_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
       VALIDATION_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}

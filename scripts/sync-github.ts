@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import {
   buildCatalog,
@@ -54,10 +54,79 @@ function getHeaders(accept = 'application/vnd.github+json'): HeadersInit {
   return headers
 }
 
-async function fetchRenderedReadme(fullName: string): Promise<Response> {
+export interface GitHubFetchDependencies {
+  fetchImpl?: (input: string, init?: RequestInit) => Promise<Response>
+  sleep?: (ms: number) => Promise<void>
+  warn?: (message: string) => void
+  now?: () => number
+  timeoutSignal?: (ms: number) => AbortSignal
+}
+
+function resolveGitHubFetch(dependencies: GitHubFetchDependencies = {}) {
+  return {
+    fetchImpl: dependencies.fetchImpl ?? fetch,
+    sleep: dependencies.sleep ?? ((ms: number) => new Promise<void>((resolveSleep) => {
+      setTimeout(resolveSleep, ms)
+    })),
+    warn: dependencies.warn ?? ((message: string) => {
+      console.warn(message)
+    }),
+    now: dependencies.now ?? Date.now,
+    timeoutSignal: dependencies.timeoutSignal ?? ((ms: number) => AbortSignal.timeout(ms)),
+  }
+}
+
+const SEARCH_REQUEST_TIMEOUT_MS = 30_000
+const TRANSIENT_RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000, 60_000] as const
+
+function describeThrown(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.name && error.message && error.message !== error.name) {
+      return `${error.name}: ${error.message}`
+    }
+    return error.message || error.name || '网络错误'
+  }
+  return String(error)
+}
+
+function transientRetryWarning(detail: string, waitMs: number, attempt: number): string {
+  const seconds = Math.ceil(waitMs / 1000)
+  return `GitHub Search 请求失败（${detail}），等待 ${seconds} 秒后重试（第 ${attempt}/${TRANSIENT_RETRY_DELAYS_MS.length} 次）`
+}
+
+function githubHttpError(response: Response): Error {
+  const remaining = response.headers.get('x-ratelimit-remaining')
+  return new Error(`GitHub API 请求失败：${response.status} ${response.statusText}，剩余额度 ${remaining ?? '未知'}`)
+}
+
+function isRateLimited(response: Response): boolean {
+  const remaining = response.headers.get('x-ratelimit-remaining')
+  return response.status === 429 || (response.status === 403 && remaining === '0')
+}
+
+function isTransientStatus(status: number): boolean {
+  return status === 408 || status >= 500
+}
+
+function rateLimitWaitMs(response: Response, now: number): number {
+  const retryAfter = Number(response.headers.get('retry-after'))
+  const resetAt = Number(response.headers.get('x-ratelimit-reset'))
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return retryAfter * 1000
+  if (Number.isFinite(resetAt) && resetAt > 0) {
+    return Math.max(1_000, resetAt * 1000 - now + 1_000)
+  }
+  return 60_000
+}
+
+export async function fetchRenderedReadme(
+  fullName: string,
+  dependencies: GitHubFetchDependencies = {},
+): Promise<Response> {
+  const { fetchImpl, timeoutSignal } = resolveGitHubFetch(dependencies)
   const repositoryPath = fullName.split('/').map(encodeURIComponent).join('/')
-  return fetch(`${API_URL}/repos/${repositoryPath}/readme`, {
+  return fetchImpl(`${API_URL}/repos/${repositoryPath}/readme`, {
     headers: getHeaders('application/vnd.github.html+json'),
+    signal: timeoutSignal(README_TIMEOUT_MS),
   })
 }
 
@@ -120,31 +189,55 @@ async function fetchInstallReferences(
   return references
 }
 
-async function fetchPage(
+export async function fetchPage(
   page: number,
   partition: SearchPartition,
   request: SearchRequestOptions,
+  dependencies: GitHubFetchDependencies = {},
 ): Promise<SearchPage> {
+  const { fetchImpl, sleep, warn, now, timeoutSignal } = resolveGitHubFetch(dependencies)
   const query = buildSearchQuery(page, partition, request)
-  while (true) {
-    const response = await fetch(`${SEARCH_URL}?${query}`, { headers: getHeaders() })
-    if (response.ok) return response.json() as Promise<SearchPage>
+  const url = `${SEARCH_URL}?${query}`
+  let transientRetries = 0
 
-    const remaining = response.headers.get('x-ratelimit-remaining')
-    const retryAfter = Number(response.headers.get('retry-after'))
-    const resetAt = Number(response.headers.get('x-ratelimit-reset'))
-    const rateLimited = response.status === 429 || (response.status === 403 && remaining === '0')
-    if (!rateLimited) {
-      throw new Error(`GitHub API 请求失败：${response.status} ${response.statusText}，剩余额度 ${remaining ?? '未知'}`)
+  async function pauseForTransient(detail: string): Promise<boolean> {
+    const waitMs = TRANSIENT_RETRY_DELAYS_MS[transientRetries]
+    if (waitMs === undefined) return false
+    transientRetries += 1
+    warn(transientRetryWarning(detail, waitMs, transientRetries))
+    await sleep(waitMs)
+    return true
+  }
+
+  while (true) {
+    let response: Response
+    try {
+      response = await fetchImpl(url, {
+        headers: getHeaders(),
+        signal: timeoutSignal(SEARCH_REQUEST_TIMEOUT_MS),
+      })
+    } catch (error) {
+      const detail = describeThrown(error)
+      if (await pauseForTransient(detail)) continue
+      throw new Error(`GitHub API 请求失败：${detail}，剩余额度 未知`)
     }
 
-    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
-      ? retryAfter * 1000
-      : Number.isFinite(resetAt) && resetAt > 0
-        ? Math.max(1000, resetAt * 1000 - Date.now() + 1000)
-        : 60_000
-    console.warn(`GitHub Search 达到速率限制，等待 ${Math.ceil(waitMs / 1000)} 秒后继续`)
-    await new Promise((resolve) => setTimeout(resolve, waitMs))
+    if (response.ok) return response.json() as Promise<SearchPage>
+
+    if (isRateLimited(response)) {
+      const waitMs = rateLimitWaitMs(response, now())
+      warn(`GitHub Search 达到速率限制，等待 ${Math.ceil(waitMs / 1000)} 秒后继续`)
+      await sleep(waitMs)
+      continue
+    }
+
+    if (isTransientStatus(response.status)) {
+      const detail = `${response.status} ${response.statusText}`
+      if (await pauseForTransient(detail)) continue
+      throw githubHttpError(response)
+    }
+
+    throw githubHttpError(response)
   }
 }
 
@@ -242,4 +335,7 @@ async function sync() {
   console.log(`源码分类档案${archiveState}；Topic 候选 ${repositories.length} 个；活动发现快照 ${allRepositories.length} 个；目录收录 ${catalog.stats.fetched}/${reportedByGitHub} 个仓库（发布上限 ${MAX_PUBLISHED_REPOSITORIES}）到 ${outputPath}`)
 }
 
-await sync()
+const entrypoint = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : ''
+if (import.meta.url === entrypoint) {
+  await sync()
+}
