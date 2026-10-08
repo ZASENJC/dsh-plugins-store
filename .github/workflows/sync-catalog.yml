@@ -15,8 +15,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sync:
+  dedupe:
+    # The server timer may fire more than once per slot (e.g. a second host
+    # still running dsh-plugins-store-dispatch.timer). Runs are serialized by
+    # the concurrency group, so a duplicate dispatch only starts after the
+    # first one finished. Skip it when a sibling dispatch created within the
+    # same slot already succeeded; a failed sibling is retried by this run.
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - name: Skip duplicate timer dispatch
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          skip=false
+          if test "$EVENT_NAME" = "workflow_dispatch"; then
+            created_at="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at || true)"
+            if test -n "$created_at"; then
+              sibling="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/sync-catalog.yml/runs?event=workflow_dispatch&per_page=20" \
+                --jq ".workflow_runs[]
+                  | select(.id != $GITHUB_RUN_ID and .conclusion == \"success\")
+                  | select((.created_at | fromdateiso8601) <= (\"$created_at\" | fromdateiso8601)
+                       and (.created_at | fromdateiso8601) >= ((\"$created_at\" | fromdateiso8601) - 180))
+                  | .id" | head -n 1 || true)"
+              if test -n "$sibling"; then
+                echo "Run $sibling from the same dispatch slot already published; skipping duplicate."
+                skip=true
+              fi
+            fi
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
+  sync:
+    needs: dedupe
+    if: needs.dedupe.outputs.skip != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -403,18 +440,45 @@ jobs:
           chmod 600 ~/.ssh/dsh-store-deploy ~/.ssh/known_hosts
 
       - name: Publish to dshmk.com
+        timeout-minutes: 12
         env:
           DEPLOY_HOST: ${{ secrets.DSH_DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DSH_DEPLOY_PORT }}
           DEPLOY_USER: ${{ secrets.DSH_DEPLOY_USER }}
           SOURCE_COMMIT: ${{ github.sha }}
         run: |
+          set -o pipefail
           deploy_sha="$(printf '%s' "$SOURCE_COMMIT:$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT" | sha256sum | cut -c1-40)"
-          tar -C dist -czf - . | ssh \
-            -i ~/.ssh/dsh-store-deploy \
-            -p "$DEPLOY_PORT" \
-            -o BatchMode=yes \
-            -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "deploy $deploy_sha"
+          archive="$RUNNER_TEMP/site.tar.gz"
+          tar -C dist -czf "$archive" .
+          echo "Upload archive: $(du -h "$archive" | cut -f1)"
+          # 255 = ssh could not connect/authenticate or the link dropped;
+          # 124 = receiver upload timeout. Both are worth a retry. Receiver
+          # rejections (64-66) and the ulimit trap (153) are deterministic.
+          for attempt in 1 2 3; do
+            status=0
+            ssh \
+              -i ~/.ssh/dsh-store-deploy \
+              -p "$DEPLOY_PORT" \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              -o ConnectTimeout=20 \
+              -o ConnectionAttempts=2 \
+              -o ServerAliveInterval=15 \
+              -o ServerAliveCountMax=4 \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              "deploy $deploy_sha" < "$archive" || status=$?
+            if test "$status" -eq 0; then
+              exit 0
+            fi
+            echo "::warning::Publish attempt $attempt failed with exit $status"
+            case "$status" in
+              124|255) ;;
+              *) exit "$status" ;;
+            esac
+            if test "$attempt" -lt 3; then
+              sleep $((attempt * 30))
+            fi
+          done
+          exit "$status"

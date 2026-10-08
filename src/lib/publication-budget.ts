@@ -5,7 +5,7 @@
  * 512 MiB extracted, and keeps three releases on disk.
  *
  * GitHub-hosted ubuntu-latest gives about 14 GB disk and 7 GB RAM. The
- * receiver upload timeout is 120s, so the compressed tarball must stay well
+ * receiver upload timeout is 300s, so the compressed tarball must stay well
  * below the 128 MiB file-size trap.
  *
  * Publication caps target ~60-75% of those limits so star history, extra
@@ -14,7 +14,7 @@
 export const DEPLOY_MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
 export const DEPLOY_MAX_EXTRACTED_BYTES = 512 * 1024 * 1024
 export const DEPLOY_MAX_ARCHIVE_ENTRIES = 10_000
-export const DEPLOY_UPLOAD_TIMEOUT_SECONDS = 120
+export const DEPLOY_UPLOAD_TIMEOUT_SECONDS = 300
 
 export const PUBLISH_COMPRESSED_BUDGET_BYTES = Math.floor(DEPLOY_MAX_ARCHIVE_BYTES * 0.75)
 export const PUBLISH_EXTRACTED_BUDGET_BYTES = Math.floor(DEPLOY_MAX_EXTRACTED_BYTES * 0.75)
