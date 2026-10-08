@@ -20,7 +20,8 @@ jobs:
     # still running dsh-plugins-store-dispatch.timer). Runs are serialized by
     # the concurrency group, so a duplicate dispatch only starts after the
     # first one finished. Skip it when a sibling dispatch created within the
-    # same slot already succeeded; a failed sibling is retried by this run.
+    # same slot (either before or after this one, since queue order is not
+    # guaranteed) already succeeded; a failed sibling is retried by this run.
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != ''
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -40,8 +41,8 @@ jobs:
               sibling="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/sync-catalog.yml/runs?event=workflow_dispatch&per_page=20" \
                 --jq ".workflow_runs[]
                   | select(.id != $GITHUB_RUN_ID and .conclusion == \"success\")
-                  | select((.created_at | fromdateiso8601) <= (\"$created_at\" | fromdateiso8601)
-                       and (.created_at | fromdateiso8601) >= ((\"$created_at\" | fromdateiso8601) - 180))
+                  | select(((.created_at | fromdateiso8601) - (\"$created_at\" | fromdateiso8601)) as $d
+                       | $d <= 180 and $d >= -180)
                   | .id" | head -n 1 || true)"
               if test -n "$sibling"; then
                 echo "Run $sibling from the same dispatch slot already published; skipping duplicate."
