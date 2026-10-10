@@ -1,17 +1,25 @@
 import * as React from 'react'
 import {
   Button,
-  IconCheckOutline16,
-  IconCloseOutline16,
-  IconCopyOutline16,
-  IconCordisPluginOutline14,
-  IconDownloadOutline16,
-  IconRefreshOutline16,
-  IconTrashOutline16,
-  IconWarningOutline16,
   Modal,
   writeClipboard,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+import * as Primitives from '@deepseek-ai/dsh-client-ui-primitives'
+
+// Icon names were renamed in dsh 0.2 (size suffixes like `16`/`14` became
+// `Medium`/`Regular`). Resolve with fallback so the client bundle works on
+// both old (0.1.x) and new (0.2.x) runtimes instead of crashing the
+// `settings.plugins.tab` slot with React error #130 (undefined element type).
+const {
+  IconCheckOutline16 = Primitives.IconCheckOutlineMedium,
+  IconCloseOutline16 = Primitives.IconCloseOutlineMedium,
+  IconCopyOutline16 = Primitives.IconCopyOutlineMedium,
+  IconCordisPluginOutline14 = Primitives.IconCordisPluginOutlineMedium,
+  IconDownloadOutline16 = Primitives.IconDownloadOutlineMedium,
+  IconRefreshOutline16 = Primitives.IconRefreshOutlineMedium,
+  IconTrashOutline16 = Primitives.IconTrashOutlineMedium,
+  IconWarningOutline16 = Primitives.IconWarningOutlineMedium,
+} = Primitives
 import {
   CATEGORY_LABELS,
   PROJECT_TYPE_LABELS,
