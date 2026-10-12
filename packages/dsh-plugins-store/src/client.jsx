@@ -5,7 +5,7 @@ import { consumeLocalInstallRequest } from './deep-link.js'
 import { NS, en, zh } from './locales.js'
 import { installStyles } from './styles.js'
 
-export const inject = ['slots', 'locale', 'sessions', 'workspaces']
+export const inject = ['slots', 'locale', 'sessions', 'uiWorkspace']
 
 export function apply(ctx) {
   const catalogStore = new CatalogStore()
@@ -26,7 +26,7 @@ export function apply(ctx) {
     id: 'plugin-store-dialog',
     order: 40,
     locale: NS,
-    inject: () => ({ catalogStore, dialogController, sessions: ctx.sessions, workspaces: ctx.workspaces }),
+    inject: () => ({ catalogStore, dialogController, sessions: ctx.sessions, uiWorkspace: ctx.uiWorkspace }),
   }, StoreOverlay))
 
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
@@ -35,7 +35,7 @@ export function apply(ctx) {
     order: 20,
     label: () => t('settings.tab'),
     locale: NS,
-    inject: () => ({ catalogStore, sessions: ctx.sessions, workspaces: ctx.workspaces }),
+    inject: () => ({ catalogStore, sessions: ctx.sessions, uiWorkspace: ctx.uiWorkspace }),
   }, StoreSettingsTab))
 
   const installRequest = consumeLocalInstallRequest()

@@ -51,12 +51,15 @@ function waitForCurrentSession(sessions, previousId) {
   })
 }
 
+function openSession(sessions, uiWorkspace, sessionId) {
+  if (typeof uiWorkspace?.openSession === 'function') uiWorkspace.openSession(sessionId)
+  else sessions.open?.(sessionId)
+}
+
 async function resolveNewSession(sessions, workspaces) {
   const previousId = currentSessionId(sessions)
   if (typeof sessions?.create === 'function') {
-    const id = await sessions.create({})
-    sessions.open?.(id)
-    return id
+    return sessions.create({})
   }
   if (typeof workspaces?.startSession !== 'function') {
     throw new Error('当前 DSH 未提供新建会话能力')
@@ -75,12 +78,28 @@ async function resolveNewSession(sessions, workspaces) {
 export async function sendInstallFailureToAgent({
   sessions,
   workspaces,
+  uiWorkspace,
   fullName,
   install,
   error,
 }) {
   const sessionId = await resolveNewSession(sessions, workspaces)
-  const session = sessions?.binding?.(sessionId)?.session
+  const reference = typeof sessions?.retain === 'function'
+    ? sessions.retain(sessionId, { source: 'controllerOperation' })
+    : undefined
+  try {
+    const binding = reference === undefined
+      ? sessions?.binding?.(sessionId)
+      : await reference.ready
+    openSession(sessions, uiWorkspace, sessionId)
+    await promptAnalysis(binding?.session, { fullName, install, error })
+    return sessionId
+  } finally {
+    reference?.release()
+  }
+}
+
+async function promptAnalysis(session, { fullName, install, error }) {
   if (typeof session?.prompt !== 'function') {
     throw new Error('新建会话尚未准备好接收消息')
   }
@@ -90,5 +109,4 @@ export async function sendInstallFailureToAgent({
   if (result?.ok === false) {
     throw new Error(result.error?.message ?? 'AGENT 消息发送失败')
   }
-  return sessionId
 }

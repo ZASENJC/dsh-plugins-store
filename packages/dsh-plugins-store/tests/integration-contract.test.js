@@ -31,11 +31,14 @@ describe('installable DSH plugin package', () => {
       publishConfig: { access: 'public' },
     })
     expect(manifest.dsh.client.inject).toEqual(expect.arrayContaining([
-      '@deepseek-ai/dsh-client-runtime',
+      '@deepseek-ai/dsh-api-session-controller',
+      '@deepseek-ai/dsh-client-ui-workspace',
       '@deepseek-ai/dsh-client-ui-commands',
       '@deepseek-ai/dsh-client-ui-conversation',
       '@deepseek-ai/dsh-client-ui-settings-plugins',
     ]))
+    expect(manifest.dsh.client.inject).not.toContain('@deepseek-ai/dsh-client-runtime')
+    expect(manifest.peerDependencies['@deepseek-ai/dsh-native-command']).toBe('^0.2.1-alpha.2')
     expect(manifest.scripts).toHaveProperty('prepack', 'node build.mjs')
     expect(manifest.scripts).not.toHaveProperty('prepare')
     expect(manifest.files).toContain('skills')
@@ -54,10 +57,20 @@ describe('installable DSH plugin package', () => {
     expect(source).toContain('StoreOverlay')
     expect(source).not.toContain('conversation.session.header.utilities')
     expect(source).not.toContain('StoreHeaderAction')
-    expect(source).toContain('workspaces: ctx.workspaces')
+    expect(source).toContain('uiWorkspace: ctx.uiWorkspace')
     expect(source).toContain('ctx.sessions')
     expect(source).toContain('settings.plugins.tab')
     expect(source).toContain('commandName === \'store\'')
+  })
+
+  it('uses the current primitives icon exports without changing their rendered sizes', () => {
+    const source = readFileSync(componentsPath, 'utf8')
+    for (const icon of ['Check', 'Close', 'Copy', 'CordisPlugin', 'Download', 'Refresh', 'Trash', 'Warning']) {
+      expect(source).toContain(`Icon${icon}OutlineRegular`)
+      expect(source).not.toMatch(new RegExp(`Icon${icon}Outline(?:14|16)`))
+    }
+    expect(source).toContain('size={14}')
+    expect(source).toContain('size={16}')
   })
 
   it('renders the same discovery view in the modal and settings without an install executor', () => {

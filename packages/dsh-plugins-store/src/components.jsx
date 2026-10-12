@@ -1,14 +1,14 @@
 import * as React from 'react'
 import {
   Button,
-  IconCheckOutline16,
-  IconCloseOutline16,
-  IconCopyOutline16,
-  IconCordisPluginOutline14,
-  IconDownloadOutline16,
-  IconRefreshOutline16,
-  IconTrashOutline16,
-  IconWarningOutline16,
+  IconCheckOutlineRegular,
+  IconCloseOutlineRegular,
+  IconCopyOutlineRegular,
+  IconCordisPluginOutlineRegular,
+  IconDownloadOutlineRegular,
+  IconRefreshOutlineRegular,
+  IconTrashOutlineRegular,
+  IconWarningOutlineRegular,
   Modal,
   writeClipboard,
 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -83,7 +83,7 @@ function ProjectCard({ repository, detailUrl, copied, onCopy, onInstall, onRemov
       </div>
       <div className="dps-card-foot">
         <div className="dps-install-reference">
-          <IconCordisPluginOutline14 size={14} />
+          <IconCordisPluginOutlineRegular size={14} />
           <code title={command ?? t('store.topicListed')}>{command ?? t('store.topicListed')}</code>
         </div>
         {(command !== null || installed) && (
@@ -98,10 +98,10 @@ function ProjectCard({ repository, detailUrl, copied, onCopy, onInstall, onRemov
                 onClick={() => onInstall(repository)}
               >
                 {updateAvailable
-                  ? <IconRefreshOutline16 size={14} />
+                  ? <IconRefreshOutlineRegular size={14} />
                   : installed
-                    ? <IconCheckOutline16 size={14} />
-                    : <IconDownloadOutline16 size={14} />}
+                    ? <IconCheckOutlineRegular size={14} />
+                    : <IconDownloadOutlineRegular size={14} />}
                 <span>{updateAvailable ? t('store.update') : installed ? t('store.installed') : t('store.install')}</span>
               </Button>
             )}
@@ -113,7 +113,7 @@ function ProjectCard({ repository, detailUrl, copied, onCopy, onInstall, onRemov
                 aria-label={t('store.remove')}
                 title={t('store.remove')}
               >
-                <IconTrashOutline16 size={16} />
+                <IconTrashOutlineRegular size={16} />
               </button>
             )}
             {command !== null && <button
@@ -123,7 +123,7 @@ function ProjectCard({ repository, detailUrl, copied, onCopy, onInstall, onRemov
               aria-label={copied ? t('store.copied') : t('store.copyInstall')}
               title={copied ? t('store.copied') : t('store.copyInstall')}
             >
-              {copied ? <IconCheckOutline16 size={16} /> : <IconCopyOutline16 size={16} />}
+              {copied ? <IconCheckOutlineRegular size={16} /> : <IconCopyOutlineRegular size={16} />}
             </button>}
           </div>
         )}
@@ -132,7 +132,7 @@ function ProjectCard({ repository, detailUrl, copied, onCopy, onInstall, onRemov
   )
 }
 
-function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, t }) {
+function InstallRiskModal({ target, onClose, onInstalled, sessions, uiWorkspace, t }) {
   const [acknowledged, setAcknowledged] = React.useState(false)
   const [phase, setPhase] = React.useState('idle')
   const [message, setMessage] = React.useState('')
@@ -187,7 +187,7 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
     try {
       await sendInstallFailureToAgent({
         sessions,
-        workspaces,
+        uiWorkspace,
         fullName: target.fullName,
         install: plan,
         error: message,
@@ -212,7 +212,7 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
         <div className="dps-risk-shell">
           <header className="dps-risk-header">
             <div className="dps-risk-title">
-              <IconWarningOutline16 size={18} />
+              <IconWarningOutlineRegular size={18} />
               <h2>{t(updating ? 'store.updateRiskTitle' : 'store.riskTitle')}</h2>
             </div>
             <button
@@ -223,7 +223,7 @@ function InstallRiskModal({ target, onClose, onInstalled, sessions, workspaces, 
               aria-label={t('store.cancel')}
               title={t('store.cancel')}
             >
-              <IconCloseOutline16 size={16} />
+              <IconCloseOutlineRegular size={16} />
             </button>
           </header>
           <div className="dps-risk-body">
@@ -346,11 +346,11 @@ function RemovePluginModal({ target, onClose, onRemoved, t }) {
         <div className="dps-risk-shell">
           <header className="dps-risk-header">
             <div className="dps-risk-title dps-remove-title">
-              <IconTrashOutline16 size={18} />
+              <IconTrashOutlineRegular size={18} />
               <h2>{t('store.removeTitle')}</h2>
             </div>
             <button className="dps-icon-button" type="button" onClick={close} disabled={phase === 'removing'} aria-label={t('store.cancel')} title={t('store.cancel')}>
-              <IconCloseOutline16 size={16} />
+              <IconCloseOutlineRegular size={16} />
             </button>
           </header>
           <div className="dps-risk-body">
@@ -387,7 +387,7 @@ export function StoreView({
   requestedInstallTarget = null,
   onInstallRequestConsumed,
   sessions,
-  workspaces,
+  uiWorkspace,
   t,
 }) {
   const snapshot = React.useSyncExternalStore(
@@ -499,7 +499,7 @@ export function StoreView({
           title={t('store.refresh')}
           disabled={snapshot.status === 'loading'}
         >
-          <IconRefreshOutline16 size={16} />
+          <IconRefreshOutlineRegular size={16} />
         </button>
       </div>
 
@@ -612,7 +612,7 @@ export function StoreView({
         onClose={closeInstallTarget}
         onInstalled={() => { void refreshInstalled() }}
         sessions={sessions}
-        workspaces={workspaces}
+        uiWorkspace={uiWorkspace}
         t={t}
       />
       <RemovePluginModal
@@ -625,7 +625,7 @@ export function StoreView({
   )
 }
 
-export function StoreModal({ catalogStore, dialogController, open, installRequest, sessions, workspaces, t }) {
+export function StoreModal({ catalogStore, dialogController, open, installRequest, sessions, uiWorkspace, t }) {
   return (
     <Modal
       open={open}
@@ -645,7 +645,7 @@ export function StoreModal({ catalogStore, dialogController, open, installReques
             aria-label={t('dialog.close')}
             title={t('dialog.close')}
           >
-            <IconCloseOutline16 size={16} />
+            <IconCloseOutlineRegular size={16} />
           </button>
         </header>
         <StoreView
@@ -654,7 +654,7 @@ export function StoreModal({ catalogStore, dialogController, open, installReques
           requestedInstallTarget={installRequest}
           onInstallRequestConsumed={dialogController.consumeInstallRequest}
           sessions={sessions}
-          workspaces={workspaces}
+          uiWorkspace={uiWorkspace}
           t={t}
         />
       </div>
@@ -662,7 +662,7 @@ export function StoreModal({ catalogStore, dialogController, open, installReques
   )
 }
 
-export function StoreOverlay({ dialogController, catalogStore, sessions, workspaces, t }) {
+export function StoreOverlay({ dialogController, catalogStore, sessions, uiWorkspace, t }) {
   const dialog = React.useSyncExternalStore(
     dialogController.subscribe,
     dialogController.getSnapshot,
@@ -675,12 +675,12 @@ export function StoreOverlay({ dialogController, catalogStore, sessions, workspa
       open={dialog.open}
       installRequest={dialog.installRequest}
       sessions={sessions}
-      workspaces={workspaces}
+      uiWorkspace={uiWorkspace}
       t={t}
     />
   )
 }
 
-export function StoreSettingsTab({ catalogStore, sessions, workspaces, t }) {
-  return <StoreView catalogStore={catalogStore} mode="settings" sessions={sessions} workspaces={workspaces} t={t} />
+export function StoreSettingsTab({ catalogStore, sessions, uiWorkspace, t }) {
+  return <StoreView catalogStore={catalogStore} mode="settings" sessions={sessions} uiWorkspace={uiWorkspace} t={t} />
 }

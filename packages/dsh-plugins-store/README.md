@@ -20,6 +20,8 @@
 
 ## 一键安装
 
+本版本适配 DeepSeek Harness `0.2.1-alpha.2`（上游 alpha 发布）。新版使用 Session Controller 和 Workspace UI 的会话接口及当前图标导出，并声明对应的 DSH peer 版本，供宿主在安装和加载时检查兼容性。安装前请确认 DSH 版本匹配；需要更新时运行 `npm install -g @deepseek-ai/dsh@0.2.1-alpha.2`。
+
 ```sh
 dsh plugin --profile web add npm:dsh-plugins-store
 ```
@@ -40,8 +42,8 @@ dsh plugin --profile web add github:ZASENJC/dsh-plugins-store#path:packages/dsh-
 
 ```sh
 npm run build:plugin
-npm pack ./packages/dsh-plugins-store
-dsh plugin --profile web add ./dsh-plugins-store-0.1.1.tgz
+npm pack ./packages/dsh-plugins-store --pack-destination /tmp
+dsh plugin --profile web add /tmp/dsh-plugins-store-0.1.4.tgz
 ```
 
 卸载：
